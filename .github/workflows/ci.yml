@@ -1,0 +1,67 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install Allure
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/allure-framework/allure2/releases/download/2.28.0/allure-2.28.0.zip" -OutFile "allure.zip"
+        Expand-Archive -Path "allure.zip" -DestinationPath "allure" -Force
+        $env:PATH += ";$((Get-Location).Path)\allure\allure-2.28.0\bin"
+        allure --version
+
+    - name: Run tests
+      run: |
+        python run_suite.py
+
+    - name: Generate Allure report
+      if: always()
+      run: |
+        allure generate allure-results -o allure-report --clean
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: allure-report
+        retention-days: 7
+
+    - name: Archive raw test data
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: allure-results
+        retention-days: 7
+
+    - name: Send Slack notification (on failure)
+      if: failure()
+      uses: act10ns/slack@v2
+      with:
+        status: ${{ job.status }}
+        channel: '#test-alerts'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
