@@ -1,0 +1,7 @@
+pytest
+pytest-playwright
+playwright
+pyyaml
+allure-pytest
+pytest-xdist
+pytest-rerunfailures

@@ -1,0 +1,10 @@
+# 知末网登录弹框元素
+login_register_button: 'text=登录|注册'
+phone_login_option: 'text=手机'
+account_password_login_option: 'text=账号密码登录'
+username_input: 'input[placeholder="请输入手机号"]'
+password_input: 'input[placeholder="请输入密码"]'
+submit_button: 'text=登录/注册'
+success_message: '.toast-success, .login-success, [class*="success"]'
+user_agreement_checkbox: 'input[type="checkbox"]'
+

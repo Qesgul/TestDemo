@@ -1,0 +1,5 @@
+cases:
+  - case_name: "valid_login"
+    username: "17768100279"
+    password: "Qyff2011"
+    expected_message: "登录成功"

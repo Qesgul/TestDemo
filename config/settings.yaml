@@ -1,0 +1,31 @@
+execution:
+  env: "dev"
+  tags: []
+environments:
+  dev:
+    base_url: "https://www.znzmo.com/?from=personalCenter"
+    headless: false  # 先设置为非无头模式，方便观察
+    default_timeout_ms: 30000  # 增加超时时间
+    browser:
+      name: "chromium"
+      channel: "chrome"  # 使用系统安装的 Chrome 浏览器，无需额外下载
+      slow_mo_ms: 0
+      launch_args: []
+  test:
+    base_url: "https://example.com"
+    headless: true
+    default_timeout_ms: 12000
+    browser:
+      name: "chromium"
+      channel: ""
+      slow_mo_ms: 0
+      launch_args: []
+  prod:
+    base_url: "https://example.com"
+    headless: true
+    default_timeout_ms: 15000
+    browser:
+      name: "chromium"
+      channel: ""
+      slow_mo_ms: 0
+      launch_args: []
