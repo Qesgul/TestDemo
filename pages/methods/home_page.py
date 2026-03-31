@@ -24,12 +24,20 @@ class HomePage(BasePage):
         super().__init__(page, "pages/elements/home_page_elements.yaml", auto_close_popups)
 
     @classmethod
-    def with_popup_handling(cls, page: Optional[Page] = None) -> "HomePage":
+    def with_popup_handling(
+        cls,
+        page: Optional[Page] = None,
+        elements_yaml_path: Optional[str] = None
+    ) -> "HomePage":
         """工厂方法：创建会自动关闭弹框的 HomePage"""
         return cls(page=page, auto_close_popups=True)
 
     @classmethod
-    def without_popup_handling(cls, page: Optional[Page] = None) -> "HomePage":
+    def without_popup_handling(
+        cls,
+        page: Optional[Page] = None,
+        elements_yaml_path: Optional[str] = None
+    ) -> "HomePage":
         """工厂方法：创建不自动关闭弹框的 HomePage"""
         return cls(page=page, auto_close_popups=False)
 
