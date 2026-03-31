@@ -10,7 +10,7 @@ from pages.methods.home_page import HomePage
 class TestPopupHandling:
     """测试不同弹框处理方式的示例"""
 
-    def test_login_without_auto_close_popups(self):
+    def test_login_without_auto_close_popups(self, page):
         """
         方式1: 不自动关闭弹框（默认）
         适用于需要查看弹框内容的测试场景
@@ -18,7 +18,7 @@ class TestPopupHandling:
         print("=== 方式1: 不自动关闭弹框 ===")
 
         # 使用默认方式，auto_close_popups=False
-        login_page = LoginPage()
+        login_page = LoginPage(page)
         login_page.goto_login_page()
 
         # 此时可以检查弹框是否存在
@@ -32,7 +32,7 @@ class TestPopupHandling:
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
 
-    def test_login_with_auto_close_popups(self):
+    def test_login_with_auto_close_popups(self, page):
         """
         方式2: 初始化时自动关闭弹框
         适用于不需要关注弹框的常规测试
@@ -40,13 +40,13 @@ class TestPopupHandling:
         print("=== 方式2: 初始化时自动关闭弹框 ===")
 
         # 使用参数开启自动关闭
-        login_page = LoginPage(auto_close_popups=True)
+        login_page = LoginPage(page, auto_close_popups=True)
         login_page.goto_login_page()
 
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
 
-    def test_login_with_factory_method(self):
+    def test_login_with_factory_method(self, page):
         """
         方式3: 使用工厂方法
         with_popup_handling() - 自动关闭弹框
@@ -55,18 +55,18 @@ class TestPopupHandling:
         print("=== 方式3: 使用工厂方法 ===")
 
         # 使用工厂方法创建会自动关闭弹框的实例
-        login_page = LoginPage.with_popup_handling()
+        login_page = LoginPage.with_popup_handling(page)
         login_page.goto_login_page()
 
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
 
-    def test_homepage_without_auto_close(self):
+    def test_homepage_without_auto_close(self, page):
         """测试 HomePage 不自动关闭弹框（用于查看弹框）"""
         print("=== HomePage 不自动关闭弹框 ===")
 
         # 使用工厂方法创建不自动关闭弹框的实例
-        home_page = HomePage.without_popup_handling()
+        home_page = HomePage.without_popup_handling(page)
         home_page.goto_homepage()
 
         # 可以在这里检查弹框内容
@@ -74,11 +74,11 @@ class TestPopupHandling:
 
         print("✅ HomePage 加载完成，弹框未被自动关闭")
 
-    def test_homepage_with_auto_close(self):
+    def test_homepage_with_auto_close(self, page):
         """测试 HomePage 自动关闭弹框"""
         print("=== HomePage 自动关闭弹框 ===")
 
-        home_page = HomePage.with_popup_handling()
+        home_page = HomePage.with_popup_handling(page)
         home_page.goto_homepage()
 
         print("✅ HomePage 加载完成，弹框已自动关闭")
@@ -87,11 +87,11 @@ class TestPopupHandling:
 class TestGotoMethodPopupControl:
     """测试 goto 方法的弹框控制"""
 
-    def test_goto_without_closing_popups(self):
+    def test_goto_without_closing_popups(self, page):
         """访问页面但不自动关闭弹框"""
         print("=== goto 不关闭弹框 ===")
 
-        home_page = HomePage()
+        home_page = HomePage(page)
         # close_popups_after_load=False 表示访问页面后不关闭弹框
         home_page.goto(
             "https://www.znzmo.com/?from=personalCenter",
@@ -100,11 +100,11 @@ class TestGotoMethodPopupControl:
 
         print("✅ 页面加载完成，弹框保留")
 
-    def test_goto_with_closing_popups(self):
+    def test_goto_with_closing_popups(self, page):
         """访问页面并自动关闭弹框"""
         print("=== goto 自动关闭弹框 ===")
 
-        home_page = HomePage()
+        home_page = HomePage(page)
         # close_popups_after_load=True（默认）表示访问页面后关闭弹框
         home_page.goto(
             "https://www.znzmo.com/?from=personalCenter",

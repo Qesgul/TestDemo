@@ -1,13 +1,21 @@
+"""
+基础页面类 - POM基类，支持元素定位、弹框处理、智能等待
+"""
 from typing import Any, Optional
-import time
 
 from playwright.sync_api import Locator, Page
 
 from common.yaml_loader import load_yaml
 from core.browser_manager import BrowserManager
+from common.wait_utils import WaitUtils
 
 
 class BasePage:
+    """
+    页面基础类 - 提供页面操作的通用方法
+    支持元素定位、弹框处理、智能等待等功能
+    只允许通过定位器进行操作，不支持元素名称映射
+    """
     def __init__(
         self,
         page: Optional[Page] = None,
@@ -17,14 +25,17 @@ class BasePage:
         """
         BasePage 初始化
         :param page: Playwright Page 对象，可选
-        :param elements_yaml_path: 页面元素定位文件路径，可选
-        :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False（不自动关闭）
+        :param elements_yaml_path: 页面元素定位文件路径，可选（保留向后兼容）
+        :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False
         """
         # 不传 page 时，默认使用共享 page；保证不重复创建 playwright 实例
         self.page = page or BrowserManager.get_default_page()
         self._elements: dict[str, Any] = {}
         if elements_yaml_path:
             self._elements = load_yaml(elements_yaml_path) or {}
+
+        # 智能等待工具
+        self.wait = WaitUtils(self.page)
 
         # 初始化时自动关闭弹框（根据配置）
         if auto_close_popups:
@@ -84,7 +95,7 @@ class BasePage:
                             close_btn.click(force=True)
                             closed_count += 1
                             found_popup = True
-                            time.sleep(wait_between_tries)
+                            self.wait.wait_for_timeout(int(wait_between_tries * 1000))
                         except:
                             continue
                 except:
@@ -117,61 +128,55 @@ class BasePage:
         :param wait_state: 等待状态 (domcontentloaded, load, networkidle)
         """
         self.page.goto(url)
-        self.page.wait_for_load_state(wait_state)
+        self.wait.wait_for_page_load(wait_state)
         if close_popups_after_load:
             self.close_all_popups()
 
-    def locator(self, locator: str) -> Locator:
-        return self.page.locator(locator)
+    def locator(self, selector: str) -> Locator:
+        """获取 Playwright Locator 对象"""
+        return self.page.locator(selector)
 
-    def element_selector(self, name: str) -> str:
+    def get_locator(self, name: str) -> Locator:
+        """
+        从 YAML 配置中获取元素定位器
+        :param name: YAML 中定义的元素名称
+        :return: Playwright Locator 对象
+        """
         if name not in self._elements:
             raise KeyError(f"未在页面元素yaml中找到元素: {name}")
-        return str(self._elements[name])
+        return self.page.locator(str(self._elements[name]))
 
-    def element(self, name: str) -> Locator:
-        return self.locator(self.element_selector(name))
+    # ===== 元素操作方法 =====
+    def wait_for_element(self, selector: str, state: str = "visible") -> Locator:
+        """
+        等待元素进入指定状态
+        :param selector: CSS选择器
+        :param state: 等待状态 (visible/hidden)
+        :return: Locator 对象
+        """
+        element = self.locator(selector)
+        element.wait_for(state=state)
+        return element
 
-    def wait_element_visible(self, name: str) -> Locator:
-        target = self.element(name)
-        target.wait_for(state="visible")
-        return target
+    def fill(self, selector: str, value: str) -> None:
+        """填充输入框"""
+        self.wait_for_element(selector).fill(value)
 
-    def wait_visible(self, locator: str) -> Locator:
-        target = self.locator(locator)
-        target.wait_for(state="visible")
-        return target
+    def click(self, selector: str) -> None:
+        """点击元素"""
+        self.wait_for_element(selector).click()
 
-    def is_visible(self, locator: str) -> bool:
-        return self.locator(locator).is_visible()
-
-    def fill(self, locator: str, value: str) -> None:
-        self.wait_visible(locator).fill(value)
-
-    def fill_element(self, name: str, value: str) -> None:
-        self.wait_element_visible(name).fill(value)
-
-    def click(self, locator: str) -> None:
-        self.wait_visible(locator).click()
-
-    def click_element(self, name: str) -> None:
-        self.wait_element_visible(name).click()
-
-    def click_if_visible(self, locator: str) -> bool:
-        if not self.is_visible(locator):
+    def click_if_visible(self, selector: str) -> bool:
+        """如果可见就点击"""
+        if not self.locator(selector).is_visible():
             return False
-        self.locator(locator).click()
+        self.locator(selector).click()
         return True
 
-    def click_element_if_visible(self, name: str) -> bool:
-        target = self.element(name)
-        if not target.is_visible():
-            return False
-        target.click()
-        return True
+    def text_of(self, selector: str) -> str:
+        """获取元素文本"""
+        return self.wait_for_element(selector).inner_text()
 
-    def text_of(self, locator: str) -> str:
-        return self.wait_visible(locator).inner_text()
-
-    def text_of_element(self, name: str) -> str:
-        return self.wait_element_visible(name).inner_text()
+    def is_visible(self, selector: str) -> bool:
+        """检查元素是否可见"""
+        return self.locator(selector).is_visible()

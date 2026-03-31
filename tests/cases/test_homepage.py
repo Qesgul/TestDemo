@@ -13,16 +13,15 @@ class TestHomePage:
     @pytest.mark.core
     @pytest.mark.main
     @pytest.mark.ui
-    def test_homepage_elements_displayed(self):
+    def test_homepage_elements_displayed(self, page):
         """测试首页核心元素是否正常展示"""
         print("=== 开始校验首页核心元素 ===")
 
-        home_page = HomePage()
+        home_page = HomePage(page)
         home_page.goto_homepage()
 
         # 等待页面加载
-        import time
-        time.sleep(3)
+        home_page.wait.wait_for_timeout(3000)
 
         # 核心校验：筛选框是否正常展示（最重要的测试目标）
         print("1. 校验筛选框...")
@@ -38,7 +37,7 @@ class TestHomePage:
                 login_register_btn = home_page.page.locator("text=登录|注册").first
                 if login_register_btn.is_visible():
                     login_register_btn.click()
-                    time.sleep(2)
+                    home_page.wait.wait_for_timeout(2000)
         except Exception as e:
             print(f"筛选框检查异常: {e}")
             # 筛选框是核心功能，必须可见，否则测试失败

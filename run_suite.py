@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 from common.yaml_loader import load_yaml
+from config.settings import get_config
 
 
 class TestRunner:
@@ -24,15 +25,30 @@ class TestRunner:
         self.config_path = config_path
         self.config = self._load_config()
         self.base_command = [sys.executable, "-m", "pytest", "-v"]
+
+        # 从 config/settings.py 读取执行配置（统一配置管理）
+        self._config = get_config()
+
         # 并发执行配置
-        self.parallel_enabled = self.config.get("execution", {}).get("parallel", {}).get("enabled", False)
-        self.parallel_workers = self.config.get("execution", {}).get("parallel", {}).get("workers", 3)
-        self.parallel_dist_mode = self.config.get("execution", {}).get("parallel", {}).get("dist_mode", "file")
+        self.parallel_enabled = self._config.execution.parallel_enabled
+        self.parallel_workers = self._config.execution.parallel_workers
+        self.parallel_dist_mode = self._config.execution.parallel_dist_mode
+
         # 失败重试配置
-        self.retry_enabled = self.config.get("execution", {}).get("retry", {}).get("enabled", True)
-        self.retry_max_reruns = self.config.get("execution", {}).get("retry", {}).get("max_reruns", 2)
-        self.retry_delay = self.config.get("execution", {}).get("retry", {}).get("reruns_delay", 1)
-        self.retry_only_flaky = self.config.get("execution", {}).get("retry", {}).get("only_flaky", False)
+        self.retry_enabled = self._config.execution.retry_enabled
+        self.retry_max_reruns = self._config.execution.retry_max_reruns
+        self.retry_delay = self._config.execution.retry_delay
+        self.retry_only_flaky = self._config.execution.retry_only_flaky
+
+        # Allure 报告配置
+        self.allure_config = {
+            "enabled": self._config.allure.enabled,
+            "results_dir": self._config.allure.results_dir,
+            "report_dir": self._config.allure.report_dir,
+            "clean_results": self._config.allure.clean_results,
+            "open_report": self._config.allure.open_report,
+            "report_title": self._config.allure.report_title
+        }
 
     def _load_config(self) -> Dict[str, Any]:
         """加载配置文件"""
@@ -44,18 +60,12 @@ class TestRunner:
     def _get_default_config(self) -> Dict[str, Any]:
         """获取默认配置"""
         return {
+            "groups": [],
+            "available_tags": [],
             "execution": {
                 "default_mode": "group",
-                "default_group": "快速检查",
+                "default_group": "核心功能",
                 "default_tags": []
-            },
-            "allure": {
-                "enabled": True,
-                "results_dir": "allure-results",
-                "report_dir": "allure-report",
-                "clean_results": True,
-                "open_report": True,
-                "report_title": "知末网自动化测试报告"
             }
         }
 
@@ -120,23 +130,20 @@ class TestRunner:
                 "-n", str(workers_count)
             ])
 
-        # 处理失败重试参数
+        # 处理失败重试参数 - 使用自定义异常类型定向重试机制
         retry_enabled = self.retry_enabled
         retry_reruns = reruns if reruns is not None else self.retry_max_reruns
-        retry_delay = reruns_delay if reruns_delay is not None else self.retry_delay
         if retry_enabled:
             command.extend([
-                "--reruns", str(retry_reruns),
-                "--reruns-delay", str(retry_delay)
+                "--max-reruns", str(retry_reruns)
             ])
 
         # 添加 Allure 报告配置
-        allure_config = self.config.get("allure", {})
-        if allure_config.get("enabled", True):
+        if self.allure_config.get("enabled", True):
             command.extend([
-                "--alluredir", allure_config.get("results_dir", "allure-results")
+                "--alluredir", self.allure_config.get("results_dir", "allure-results")
             ])
-            if allure_config.get("clean_results", True):
+            if self.allure_config.get("clean_results", True):
                 command.append("--clean-alluredir")
 
         command.append("-s")
@@ -189,23 +196,20 @@ class TestRunner:
                 "-n", str(workers_count)
             ])
 
-        # 处理失败重试参数
+        # 处理失败重试参数 - 使用自定义异常类型定向重试机制
         retry_enabled = self.retry_enabled
         retry_reruns = reruns if reruns is not None else self.retry_max_reruns
-        retry_delay = reruns_delay if reruns_delay is not None else self.retry_delay
         if retry_enabled:
             command.extend([
-                "--reruns", str(retry_reruns),
-                "--reruns-delay", str(retry_delay)
+                "--max-reruns", str(retry_reruns)
             ])
 
         # 添加 Allure 报告配置
-        allure_config = self.config.get("allure", {})
-        if allure_config.get("enabled", True):
+        if self.allure_config.get("enabled", True):
             command.extend([
-                "--alluredir", allure_config.get("results_dir", "allure-results")
+                "--alluredir", self.allure_config.get("results_dir", "allure-results")
             ])
-            if allure_config.get("clean_results", True):
+            if self.allure_config.get("clean_results", True):
                 command.append("--clean-alluredir")
 
         command.append("-s")
@@ -271,7 +275,7 @@ class TestRunner:
         if not allure_config.get("enabled", True):
             return
 
-        results_dir = allure_config.get("results_dir", "allure-results")
+        results_dir = self.allure_config.get("results_dir", "allure-results")
         report_dir = allure_config.get("report_dir", "allure-report")
         report_title = allure_config.get("report_title", "自动化测试报告")
         open_report = allure_config.get("open_report", True)
@@ -484,6 +488,9 @@ def main():
   # 自定义并发分发模式
   python run_suite.py --tags popup ui --dist-mode class
 
+  # 配置参数
+  python run_suite.py --group "快速检查" --env test --base-url "https://test.znzmo.com" --headless
+
   # 安装 Allure 工具
   python run_suite.py --install-allure
         """
@@ -529,6 +536,30 @@ def main():
         type=str,
         default="test_suite.yaml",
         help="指定配置文件路径 (默认: test_suite.yaml)"
+    )
+
+    # 环境和基础配置参数
+    config_group = parser.add_argument_group("环境和基础配置选项")
+    config_group.add_argument(
+        "--env",
+        type=str,
+        choices=["dev", "test", "prod"],
+        help="测试环境：dev（开发）、test（测试）、prod（生产）（默认：dev）"
+    )
+    config_group.add_argument(
+        "--base-url",
+        type=str,
+        help="基础 URL（默认：从配置文件读取）"
+    )
+    config_group.add_argument(
+        "--headless",
+        action="store_true",
+        help="无头模式运行（默认：从配置文件读取）"
+    )
+    config_group.add_argument(
+        "--no-headless",
+        action="store_true",
+        help="非无头模式运行（默认：从配置文件读取）"
     )
 
     # 并发执行相关参数
@@ -589,6 +620,16 @@ def main():
         print("  scoop install allure")
         print("\n其他系统或从官网下载: https://docs.qameta.io/allure/")
         return 0
+
+    # 设置配置相关的环境变量
+    if args.env:
+        os.environ["TEST_ENV"] = args.env
+    if args.base_url:
+        os.environ["TEST_BASE_URL"] = args.base_url
+    if args.headless:
+        os.environ["TEST_HEADLESS"] = "true"
+    if args.no_headless:
+        os.environ["TEST_HEADLESS"] = "false"
 
     runner = TestRunner(config_path=args.config)
 

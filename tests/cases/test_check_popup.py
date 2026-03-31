@@ -14,7 +14,7 @@ class TestPopupDefaultDisplay:
     @pytest.mark.smoke
     @pytest.mark.popup
     @pytest.mark.ui
-    def test_homepage_popup_default_display(self):
+    def test_homepage_popup_default_display(self, page):
         """
         测试首页在默认状态下是否弹出弹框
         要点：不自动关闭弹框，直接检查弹框存在
@@ -22,7 +22,7 @@ class TestPopupDefaultDisplay:
         print("=== 测试首页弹框默认显示状态 ===")
 
         # 使用默认方式初始化，不自动关闭弹框
-        home_page = HomePage.without_popup_handling()
+        home_page = HomePage.without_popup_handling(page)
 
         # 访问页面，也不关闭弹框
         home_page.goto(
@@ -32,8 +32,7 @@ class TestPopupDefaultDisplay:
         )
 
         # 等待一段时间让弹框加载
-        import time
-        time.sleep(2)
+        home_page.wait.wait_for_timeout(2000)
 
         # 检查可能的弹框选择器
         popup_selectors = [
@@ -141,21 +140,20 @@ class TestPopupDefaultDisplay:
 
     @pytest.mark.popup
     @pytest.mark.ui
-    def test_login_page_popup_default_display(self):
+    def test_login_page_popup_default_display(self, page):
         """
         测试登录页面前置弹框检查
         """
         print("\n=== 测试登录页面弹框默认显示状态 ===")
 
-        login_page = LoginPage.without_popup_handling()
+        login_page = LoginPage.without_popup_handling(page)
         login_page.goto(
             "https://www.znzmo.com/?from=personalCenter",
             close_popups_after_load=False,
             wait_state="networkidle"
         )
 
-        import time
-        time.sleep(2)
+        login_page.wait.wait_for_timeout(2000)
 
         # 截图
         screenshot_path = "reports/screenshots/login_page_before_close.png"

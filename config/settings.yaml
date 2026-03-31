@@ -1,14 +1,40 @@
 execution:
   env: "dev"
   tags: []
+  # 执行模式配置
+  default_mode: "group"
+  default_group: "核心功能"
+  default_tags: []
+  # 并发执行配置
+  parallel:
+    enabled: true
+    workers: 2
+    dist_mode: "file"
+  # 失败重试配置
+  retry:
+    enabled: true
+    max_reruns: 2
+    reruns_delay: 1
+    only_flaky: false
+
+# 报告配置
+allure:
+  enabled: true
+  results_dir: "allure-results"
+  report_dir: "allure-report"
+  clean_results: true
+  open_report: true
+  report_title: "知末网自动化测试报告"
+
+# 多环境配置
 environments:
   dev:
     base_url: "https://www.znzmo.com/?from=personalCenter"
-    headless: false  # 先设置为非无头模式，方便观察
-    default_timeout_ms: 30000  # 增加超时时间
+    headless: false
+    default_timeout_ms: 30000
     browser:
       name: "chromium"
-      channel: "chrome"  # 使用系统安装的 Chrome 浏览器，无需额外下载
+      channel: ""
       slow_mo_ms: 0
       launch_args: []
   test:

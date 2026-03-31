@@ -19,17 +19,15 @@ class TestLogin:
     @pytest.mark.parametrize("case_data", LOGIN_CASES, ids=LOGIN_CASE_IDS)
     @pytest.mark.core
     @pytest.mark.main
-    def test_login_success(self, case_data):
+    def test_login_success(self, case_data, page):
         print(f"=== 测试用例: {case_data.case_name} ===")
 
-        login_page = LoginPage()
+        login_page = LoginPage(page)
         login_page.goto_login_page()
 
         login_page.login_with(case_data.username, case_data.password)
 
         # 登录成功后，检查页面状态或URL变化
-        import time
-        time.sleep(3)
         print(f"当前页面URL: {login_page.page.url}")
         assert login_page.page.url != "https://www.znzmo.com/?from=personalCenter" or "登录" not in login_page.page.title()
         print("✅ 登录测试完成")
