@@ -129,3 +129,118 @@ class HomePage(BasePage):
         """等待页面加载完成"""
         self.nav_bar().wait_for(state="visible")
         self.search_input().wait_for(state="visible")
+
+    # ===== 创作灵感冒烟用例需要的方法（可按实际页面微调定位器）=====
+    def goto_create_inspiration_from_nav(self) -> None:
+        """
+        悬停导航“创作上传”，点击“创作灵感”。
+
+        说明：
+        - 定位器优先从 `pages/elements/home_page_elements.yaml` 读取；
+        - 若定位器尚未补齐（KeyError），则退化为使用文本定位的兜底写法，便于先跑通流程。
+        """
+        try:
+            upload = self.get_locator("nav_create_upload")
+            inspiration = self.get_locator("nav_create_inspiration")
+            upload.first.hover()
+            inspiration.first.click()
+
+        except KeyError:
+            # 兜底：用文本匹配尽量靠近真实页面结构
+            self.page.locator("text=创作上传").first.hover()
+            self.page.locator("text=创作灵感").first.click()
+
+        # 等待二级菜单/页面跳转稳定
+        self.wait.wait_for_timeout(2000)
+
+    def goto_create_inspiration_from_nav_and_switch(self) -> Page:
+        """
+        悬停导航“创作上传”，点击“创作灵感”，并切换到新标签页（如果打开了新标签页）。
+
+        说明：
+        - 如果点击后打开了新标签页，则自动切换到新标签页；
+        - 否则继续在当前页操作。
+        
+        :return: 切换（或保持）后的当前 `Page`
+        """
+        try:
+            upload = self.get_locator("nav_create_upload")
+            inspiration = self.get_locator("nav_create_inspiration")
+            upload.first.hover()
+
+            # 尝试点击并等待新标签页
+            self.click_locator_and_switch_to_new_tab(inspiration.first)
+            return self.page
+
+        except Exception:
+            # 如果没有打开新标签页，回退到普通点击
+            self.goto_create_inspiration_from_nav()
+            return self.page
+
+    def click_and_switch_to_new_tab_by_name(
+        self,
+        element_name: str,
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+        click_kwargs: Optional[dict] = None,
+    ) -> "HomePage":
+        """
+        通过 YAML 中定义的元素名称定位并点击，等待新标签页打开，自动切换 self.page。
+
+        :param element_name: YAML 中定义的元素名称
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :param click_kwargs: 传递给 click() 的额外参数字典
+        :return: 返回 self（支持链式调用）
+        """
+        self.click_element_by_name_and_switch_to_new_tab(
+            element_name, timeout, wait_state, click_kwargs
+        )
+        return self
+
+    def click_and_switch_to_new_tab_by_selector(
+        self,
+        selector: str,
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+        click_kwargs: Optional[dict] = None,
+    ) -> "HomePage":
+        """
+        通过 CSS 选择器定位并点击，等待新标签页打开，自动切换 self.page。
+
+        :param selector: CSS 选择器
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :param click_kwargs: 传递给 click() 的额外参数字典
+        :return: 返回 self（支持链式调用）
+        """
+        self.click_element_by_selector_and_switch_to_new_tab(
+            selector, timeout, wait_state, click_kwargs
+        )
+        return self
+
+    def close_current_tab_and_switch_back(self) -> "HomePage":
+        """
+        关闭当前标签页，切换回上一个标签页。
+
+        :return: 返回 self（支持链式调用）
+        """
+        self.close_current_and_switch_back()
+        return self
+
+    def close_other_tabs(self) -> "HomePage":
+        """
+        关闭除当前标签页之外的所有标签页。
+
+        :return: 返回 self（支持链式调用）
+        """
+        self._last_closed_tab_count = super().close_other_tabs()
+        return self
+
+    def get_last_closed_tab_count(self) -> int:
+        """
+        获取最后一次调用 close_other_tabs 关闭的标签页数量。
+
+        :return: 关闭的标签页数量
+        """
+        return getattr(self, '_last_closed_tab_count', 0)

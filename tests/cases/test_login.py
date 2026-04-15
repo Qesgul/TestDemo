@@ -19,7 +19,7 @@ class TestLogin:
     @pytest.mark.parametrize("case_data", LOGIN_CASES, ids=LOGIN_CASE_IDS)
     @pytest.mark.core
     @pytest.mark.main
-    def test_login_success(self, case_data, page):
+    def test_login_success(self, case_data, page, assertion):
         print(f"=== 测试用例: {case_data.case_name} ===")
 
         login_page = LoginPage(page)
@@ -29,6 +29,9 @@ class TestLogin:
 
         # 登录成功后，检查页面状态或URL变化
         print(f"当前页面URL: {login_page.page.url}")
-        assert login_page.page.url != "https://www.znzmo.com/?from=personalCenter" or "登录" not in login_page.page.title()
+        assertion.assert_true(
+            login_page.page.url != "https://www.znzmo.com/?from=personalCenter" or "登录" not in login_page.page.title(),
+            message="登录失败，URL或页面标题未发生预期变化"
+        )
         print("✅ 登录测试完成")
 

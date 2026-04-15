@@ -5,3 +5,5 @@ pyyaml
 allure-pytest
 pytest-xdist
 pytest-rerunfailures
+pymysql
+redis

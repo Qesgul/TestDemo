@@ -20,6 +20,7 @@
 │  └─settings.py            # 统一配置管理模块（单例模式）
 ├─core/                     # 框架核心基类
 │  ├─browser_manager.py     # Playwright 浏览器生命周期管理
+│  ├─cookie_manager.py      # Cookie 管理器 - 支持快捷登录和环境隔离
 │  └─base_page.py           # 基础页面类（POM基类）- 内置弹框处理
 ├─data_types/               # 数据类型定义（dataclass）
 ├─pages/
@@ -367,6 +368,22 @@ class TestLogin:
         assert login_page.page.url != "https://www.znzmo.com/?from=personalCenter"
 ```
 
+## Cookie 快捷登录
+
+CookieManager 提供智能的 Cookie 管理和快捷登录功能：
+
+### 核心功能
+- **自动Cookie登录**：每次执行登录前检查本地是否存在有效Cookie
+- **环境隔离存储**：按环境（dev/test/prod）独立存储Cookie文件
+- **自动有效性验证**：检测Cookie过期时间（默认24小时）
+- **失效自动回退**：Cookie无效时自动执行正常登录流程
+- **登录成功保存**：自动保存新登录成功的Cookie
+
+### 存储特点
+- 文件位置：`core/` 目录下
+- 文件命名：`cookies_{环境}_{账号标识}.json`
+- 存储格式：JSON格式，包含Cookie内容和时间戳
+
 ## 架构特点
 1. **POM 模式**：页面方法和元素分离，统一管理页面操作
 2. **统一配置管理**：单例模式配置，支持命令行 > 环境变量 > 配置文件优先级
@@ -380,3 +397,4 @@ class TestLogin:
 10. **并发执行优化**：pytest-xdist loadfile 分发模式，避免共享资源竞争
 11. **异常类型定向重试**：支持对特定异常类型进行重试
 12. **元素定位隔离**：从 YAML 文件读取定位器，而非硬编码在页面类中
+13. **Cookie 快捷登录**：支持自动管理登录状态，显著提升执行效率

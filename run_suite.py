@@ -7,8 +7,7 @@ import argparse
 import subprocess
 import sys
 import os
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import List, Dict, Any
 
 from common.yaml_loader import load_yaml
 from config.settings import get_config
@@ -61,12 +60,7 @@ class TestRunner:
         """获取默认配置"""
         return {
             "groups": [],
-            "available_tags": [],
-            "execution": {
-                "default_mode": "group",
-                "default_group": "核心功能",
-                "default_tags": []
-            }
+            "available_tags": []
         }
 
     def list_groups(self) -> None:
@@ -115,8 +109,13 @@ class TestRunner:
 
         print("\n" + "=" * 70)
 
-    def build_group_command(self, group_name: str, parallel: bool = None, workers: int = None, dist_mode: str = None,
-                          reruns: int = None, reruns_delay: int = None) -> List[str]:
+    def build_group_command(
+        self,
+        group_name: str,
+        parallel: bool = None,
+        workers: int = None,
+        reruns: int = None,
+    ) -> List[str]:
         """构建分组执行命令"""
         command = self.base_command.copy()
 
@@ -131,9 +130,8 @@ class TestRunner:
             ])
 
         # 处理失败重试参数 - 使用自定义异常类型定向重试机制
-        retry_enabled = self.retry_enabled
-        retry_reruns = reruns if reruns is not None else self.retry_max_reruns
-        if retry_enabled:
+        if self.retry_enabled:
+            retry_reruns = reruns if reruns is not None else self.retry_max_reruns
             command.extend([
                 "--max-reruns", str(retry_reruns)
             ])
@@ -181,8 +179,13 @@ class TestRunner:
         command.extend(test_paths)
         return command
 
-    def build_tags_command(self, tags: List[str], parallel: bool = None, workers: int = None, dist_mode: str = None,
-                         reruns: int = None, reruns_delay: int = None) -> List[str]:
+    def build_tags_command(
+        self,
+        tags: List[str],
+        parallel: bool = None,
+        workers: int = None,
+        reruns: int = None,
+    ) -> List[str]:
         """构建标签执行命令"""
         command = self.base_command.copy()
 
@@ -197,9 +200,8 @@ class TestRunner:
             ])
 
         # 处理失败重试参数 - 使用自定义异常类型定向重试机制
-        retry_enabled = self.retry_enabled
-        retry_reruns = reruns if reruns is not None else self.retry_max_reruns
-        if retry_enabled:
+        if self.retry_enabled:
+            retry_reruns = reruns if reruns is not None else self.retry_max_reruns
             command.extend([
                 "--max-reruns", str(retry_reruns)
             ])
@@ -232,25 +234,36 @@ class TestRunner:
             print(f"执行失败: {e}")
             return 1
 
-    def run_group(self, group_name: str, parallel: bool = None, workers: int = None, dist_mode: str = None,
-                  reruns: int = None, reruns_delay: int = None) -> int:
+    def run_group(
+        self,
+        group_name: str,
+        parallel: bool = None,
+        workers: int = None,
+        reruns: int = None,
+    ) -> int:
         """运行指定分组"""
         print(f"运行分组: {group_name}")
         if parallel or (parallel is None and self.parallel_enabled):
             workers_count = workers if workers is not None else self.parallel_workers
-            dist_mode_val = dist_mode if dist_mode is not None else self.parallel_dist_mode
-            print(f"并发执行: 启用，进程数={workers_count}，分发模式={dist_mode_val}")
+            print(
+                f"并发执行: 启用，进程数={workers_count}，分发模式={self.parallel_dist_mode}"
+            )
         if reruns is not None or self.retry_enabled:
             retry_count = reruns if reruns is not None else self.retry_max_reruns
-            retry_delay_val = reruns_delay if reruns_delay is not None else self.retry_delay
-            print(f"失败重试: 启用，最大重试次数={retry_count}，重试延迟={retry_delay_val}秒")
-        command = self.build_group_command(group_name, parallel, workers, dist_mode, reruns, reruns_delay)
+            # 当前 retry 延迟不进入 pytest 参数，仅用于提示
+            print(f"失败重试: 启用，最大重试次数={retry_count}，重试延迟={self.retry_delay}秒")
+        command = self.build_group_command(group_name, parallel, workers, reruns)
         if not command:
             return 1
         return self.run_command(command)
 
-    def run_tags(self, tags: List[str], parallel: bool = None, workers: int = None, dist_mode: str = None,
-                 reruns: int = None, reruns_delay: int = None) -> int:
+    def run_tags(
+        self,
+        tags: List[str],
+        parallel: bool = None,
+        workers: int = None,
+        reruns: int = None,
+    ) -> int:
         """运行指定标签的用例"""
         if not tags:
             print("错误: 没有指定标签")
@@ -258,27 +271,28 @@ class TestRunner:
         print(f"运行标签: {', '.join(tags)}")
         if parallel or (parallel is None and self.parallel_enabled):
             workers_count = workers if workers is not None else self.parallel_workers
-            dist_mode_val = dist_mode if dist_mode is not None else self.parallel_dist_mode
-            print(f"并发执行: 启用，进程数={workers_count}，分发模式={dist_mode_val}")
+            print(
+                f"并发执行: 启用，进程数={workers_count}，分发模式={self.parallel_dist_mode}"
+            )
         if reruns is not None or self.retry_enabled:
             retry_count = reruns if reruns is not None else self.retry_max_reruns
-            retry_delay_val = reruns_delay if reruns_delay is not None else self.retry_delay
-            print(f"失败重试: 启用，最大重试次数={retry_count}，重试延迟={retry_delay_val}秒")
-        command = self.build_tags_command(tags, parallel, workers, dist_mode, reruns, reruns_delay)
+            # 当前 retry 延迟不进入 pytest 参数，仅用于提示
+            print(f"失败重试: 启用，最大重试次数={retry_count}，重试延迟={self.retry_delay}秒")
+        command = self.build_tags_command(tags, parallel, workers, reruns)
         if not command:
             return 1
         return self.run_command(command)
 
     def generate_allure_report(self) -> None:
         """生成 Allure 报告"""
-        allure_config = self.config.get("allure", {})
-        if not allure_config.get("enabled", True):
+        # Allure 相关配置以 config/settings.py 的解析结果为准
+        if not self.allure_config.get("enabled", True):
             return
 
         results_dir = self.allure_config.get("results_dir", "allure-results")
-        report_dir = allure_config.get("report_dir", "allure-report")
-        report_title = allure_config.get("report_title", "自动化测试报告")
-        open_report = allure_config.get("open_report", True)
+        report_dir = self.allure_config.get("report_dir", "allure-report")
+        report_title = self.allure_config.get("report_title", "自动化测试报告")
+        open_report = self.allure_config.get("open_report", True)
 
         if not os.path.exists(results_dir) or len(os.listdir(results_dir)) == 0:
             print("⚠️  Allure 结果目录为空，跳过报告生成")
@@ -633,12 +647,6 @@ def main():
 
     runner = TestRunner(config_path=args.config)
 
-    if args.no_allure:
-        runner.config.setdefault("allure", {})["enabled"] = False
-
-    if args.no_open_report:
-        runner.config.setdefault("allure", {})["open_report"] = False
-
     if args.list_groups:
         runner.list_groups()
         return 0
@@ -655,11 +663,8 @@ def main():
         parallel = False
 
     workers = args.workers
-    dist_mode = args.dist_mode
-
     # 处理失败重试参数
     reruns = args.reruns
-    reruns_delay = args.reruns_delay
 
     if args.disable_reruns:
         runner.retry_enabled = False
@@ -668,27 +673,28 @@ def main():
     if args.only_flaky:
         runner.retry_only_flaky = True
 
-    # 确定执行方式
-    execution_mode = runner.config.get("execution", {}).get("default_mode", "group")
-
     if args.group:
-        exit_code = runner.run_group(args.group, parallel=parallel, workers=workers, dist_mode=dist_mode,
-                                   reruns=reruns, reruns_delay=reruns_delay)
+        exit_code = runner.run_group(
+            args.group, parallel=parallel, workers=workers, reruns=reruns
+        )
     elif args.tags:
-        exit_code = runner.run_tags(args.tags, parallel=parallel, workers=workers, dist_mode=dist_mode,
-                                  reruns=reruns, reruns_delay=reruns_delay)
+        exit_code = runner.run_tags(
+            args.tags, parallel=parallel, workers=workers, reruns=reruns
+        )
     else:
-        # 使用默认配置执行
-        default_mode = runner.config.get("execution", {}).get("default_mode", "group")
+        # 使用 config/settings.py 的默认配置执行
+        default_mode = runner._config.execution.default_mode
         if default_mode == "group":
-            default_group = runner.config.get("execution", {}).get("default_group", "快速检查")
-            exit_code = runner.run_group(default_group, parallel=parallel, workers=workers, dist_mode=dist_mode,
-                                       reruns=reruns, reruns_delay=reruns_delay)
+            default_group = runner._config.execution.default_group
+            exit_code = runner.run_group(
+                default_group, parallel=parallel, workers=workers, reruns=reruns
+            )
         elif default_mode == "tags":
-            default_tags = runner.config.get("execution", {}).get("default_tags", [])
+            default_tags = runner._config.execution.default_tags
             if default_tags:
-                exit_code = runner.run_tags(default_tags, parallel=parallel, workers=workers, dist_mode=dist_mode,
-                                          reruns=reruns, reruns_delay=reruns_delay)
+                exit_code = runner.run_tags(
+                    default_tags, parallel=parallel, workers=workers, reruns=reruns
+                )
             else:
                 print("错误: 默认标签模式但未配置 default_tags")
                 exit_code = 1
@@ -697,7 +703,7 @@ def main():
             exit_code = 1
 
     # 生成报告
-    if runner.config.get("allure", {}).get("enabled", True):
+    if runner._config.allure.enabled:
         runner.generate_allure_report()
 
     return exit_code

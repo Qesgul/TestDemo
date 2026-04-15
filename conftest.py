@@ -29,13 +29,29 @@ def test_setup_teardown(page):
     每个测试函数的前后置操作
     :param page: Playwright page fixture
     """
-    # 启用诊断信息捕获
     enable_diagnostics()
 
     yield
 
-    # 测试结束后的清理
-    pass
+    # 测试结束后：关闭除主页面之外的所有标签页，防止泄漏到下一个测试
+    try:
+        context = page.context
+        alive_pages = [p for p in context.pages if not p.is_closed()]
+        if len(alive_pages) > 1:
+            print(f"\n🔄 测试结束，清理 {len(alive_pages) - 1} 个多余标签页...")
+            closed = 0
+            for p in alive_pages:
+                if p is not page and not p.is_closed():
+                    try:
+                        p.close()
+                        closed += 1
+                    except Exception as e:
+                        print(f"⚠️ 关闭标签页失败: {e}")
+                        continue
+            if closed > 0:
+                print(f"✅ 成功关闭 {closed} 个多余标签页")
+    except Exception as e:
+        print(f"⚠️ 标签页清理过程中出错: {e}")
 
 
 @pytest.fixture(scope="function")

@@ -64,7 +64,7 @@ class LoginPage(BasePage):
             login_register_btn = self.get_locator("login_register_button").first
             login_register_btn.click(force=True)
         except:
-            login_register_btn = self.page.locator("a").filter(has_text="登录|注册").first
+            login_register_btn = self.page.locator("div").filter(has_text="登录/注册").first
             login_register_btn.click(force=True)
         self.wait.wait_for_timeout(2000)
 
@@ -107,24 +107,8 @@ class LoginPage(BasePage):
 
         # 6. 点击登录按钮
         print("6. 点击登录按钮...")
-        login_btn = None
-        login_btn_texts = ["登录/注册", "登录"]
-        for btn_text in login_btn_texts:
-            try:
-                btn = self.page.locator(f"text={btn_text}").filter(visible=True).first
-                if btn.is_visible():
-                    login_btn = btn
-                    print(f"   - 找到登录按钮: '{btn_text}'")
-                    break
-            except:
-                continue
-
-        if login_btn:
-            login_btn.click(force=True)
-            self.wait.wait_for_timeout(2000)
-            print("=== 登录流程执行完成 ===")
-        else:
-            print("⚠️ 未找到登录按钮，但流程已完成")
+        self.click_submit()
+        self.wait.wait_for_timeout(1000)
 
     # ===== 页面元素定位方法（从 YAML 读取） =====
     def username_input(self) -> Locator:

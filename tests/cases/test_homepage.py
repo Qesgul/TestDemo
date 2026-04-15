@@ -13,7 +13,7 @@ class TestHomePage:
     @pytest.mark.core
     @pytest.mark.main
     @pytest.mark.ui
-    def test_homepage_elements_displayed(self, page):
+    def test_homepage_elements_displayed(self, page, assertion):
         """测试首页核心元素是否正常展示"""
         print("=== 开始校验首页核心元素 ===")
 
@@ -41,7 +41,7 @@ class TestHomePage:
         except Exception as e:
             print(f"筛选框检查异常: {e}")
             # 筛选框是核心功能，必须可见，否则测试失败
-            assert False, "筛选框容器未正常展示"
+            assertion.assert_true(False, message="筛选框容器未正常展示")
 
         # 校验搜索功能
         print("2. 校验搜索框...")

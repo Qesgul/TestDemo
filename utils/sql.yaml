@@ -1,0 +1,82 @@
+---
+# SQL配置文件
+# 格式说明:
+# - 可以包含多个SQL语句，每个SQL语句以分号;结尾
+# - SQL语句可以包含多行（使用|或>符号）
+# - 支持注释说明
+
+sql_statements:
+  - description: 更新模型变成独家异常
+    sql: update znzmo_exclusive_price set exclusive_type=2 where sku_id in (1161441553);
+
+  - description: 删除补足分成数据
+    sql: DELETE FROM znzmo_revenue_complement_record WHERE account_id='2638170324148';
+
+  - description: 删除申诉状态
+    sql: DELETE FROM exclusive_model_review WHERE sku_id IN (1161441553);
+
+  - description: 删除补足记录，防止多次补足
+    sql: DELETE FROM znzmo_order_sum_complement WHERE order_sum_id IN (SELECT id FROM userorder_sum WHERE skuId IN (1161441553));
+
+  - description: 删除委托申诉记录
+    sql: DELETE FROM exclusive_official_handling_record WHERE sku_id IN (1161441553);
+
+  - description: 删除自主申诉记录
+    sql: DELETE FROM exclusive_self_handling_record WHERE sku_id IN (1161441553);
+
+  - description: 删除冻结记录
+    sql: DELETE FROM znzmo_exclusive_error_freeze_record WHERE sku_id IN (1161441553);
+
+  - description: 独家异常表插入数据使其展示在独家异常tab下
+    sql: |
+      INSERT INTO `znzmo`.`exclusive_model_review` (
+        `sku_id`,
+        `account_id`,
+        `review_status`,
+        `exception_source`,
+        `rights_protection_flag`,
+        `certificate_url`,
+        `certificate_time`,
+        `create_time`,
+        `update_time`
+      ) VALUES (
+        '1161441553',
+        '2638170324148',
+        '0',
+        '[{\"competitionWebsite\": 0, \"competitionDetail\": \"https://www.3d66.com/reshtml/model/items/X57w/X57wOluwla6EySoB.html?sof=JIH47045671177822\", \"competitionCreateTime\": \"2022-07-25 00:00:00\", \"modelmainimage\": \"https://pic.3d66.com/coverimg/cache/5339/9d8f652ba974ac72c4fd66c568dbefd2.jpg\", \"lastModifiedDate\": \"\"}]',
+        '0',
+        '/20250925ExclusiveError.pdf',
+        '2025-10-28 14:58:32',
+        '2025-10-31 10:28:06',
+        '2025-10-31 10:33:15'
+      );
+
+  - description: 塞一条冻结记录
+    sql: |
+      INSERT INTO `znzmo`.`znzmo_exclusive_error_freeze_record`(
+        `account_id`,
+        `sku_id`,
+        `freeze_income`,
+        `freeze_reason`,
+        `freeze_time`,
+        `freeze_status`,
+        `freeze_type`,
+        `unfreeze_time`,
+        `clean_income_time`,
+        `del_status`,
+        `create_time`,
+        `update_time`
+      ) VALUES (
+        '2638170324148',
+        1161441553,
+        30000,
+        '独家异常冻结',
+        '2025-09-25 15:01:05',
+        1,
+        0,
+        NULL,
+        NULL,
+        0,
+        '2025-10-28 15:01:05',
+        '2025-10-28 15:01:05'
+      );

@@ -36,9 +36,9 @@ def test_login_page_architecture():
     ]
     missing_methods = [method for method in expected_methods if not hasattr(LoginPage, method)]
 
-    assert not missing_methods, (
-        f"❌ LoginPage 缺少方法: {', '.join(missing_methods)}"
-    )
+    if missing_methods:
+        pytest.fail(f"❌ LoginPage 缺少方法: {', '.join(missing_methods)}")
+
     print(f"✅ LoginPage 有所有预期的方法: {', '.join(expected_methods)}")
 
 
@@ -51,7 +51,9 @@ def test_data_loading_and_typing():
     cases = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
     case_ids_list = case_ids(cases)
 
-    assert len(cases) > 0, "❌ 没有加载到任何测试用例"
+    if not len(cases) > 0:
+        pytest.fail("❌ 没有加载到任何测试用例")
+
     print(f"✅ 成功加载了 {len(cases)} 个测试用例")
 
     # 验证第一个测试用例包含所有字段
@@ -59,9 +61,9 @@ def test_data_loading_and_typing():
     required_fields = ["case_name", "username", "password", "expected_message"]
     missing_fields = [field for field in required_fields if not hasattr(first_case, field)]
 
-    assert not missing_fields, (
-        f"❌ 第一个测试用例缺少字段: {', '.join(missing_fields)}"
-    )
+    if missing_fields:
+        pytest.fail(f"❌ 第一个测试用例缺少字段: {', '.join(missing_fields)}")
+
     print("✅ 第一个测试用例包含所有字段")
 
     print(f"  - 用例名: {first_case.case_name}")
@@ -70,10 +72,14 @@ def test_data_loading_and_typing():
     print(f"  - 预期消息: {first_case.expected_message}")
 
     # 验证数据类型
-    assert isinstance(first_case.case_name, str), "❌ case_name 必须是字符串"
-    assert isinstance(first_case.username, str), "❌ username 必须是字符串"
-    assert isinstance(first_case.password, str), "❌ password 必须是字符串"
-    assert isinstance(first_case.expected_message, str), "❌ expected_message 必须是字符串"
+    if not isinstance(first_case.case_name, str):
+        pytest.fail("❌ case_name 必须是字符串")
+    if not isinstance(first_case.username, str):
+        pytest.fail("❌ username 必须是字符串")
+    if not isinstance(first_case.password, str):
+        pytest.fail("❌ password 必须是字符串")
+    if not isinstance(first_case.expected_message, str):
+        pytest.fail("❌ expected_message 必须是字符串")
 
     print("✅ 所有字段的类型都是字符串")
 
@@ -85,13 +91,15 @@ def test_data_tag_filtering():
     print("\n=== 测试标签过滤功能 ===")
 
     cases = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
-    assert len(cases) > 0, "❌ 没有加载到测试用例"
+    if not len(cases) > 0:
+        pytest.fail("❌ 没有加载到测试用例")
 
     # 如果没有标签，返回所有数据
     filtered_cases = __import__('tests.steps.test_base', fromlist=['filter_cases_by_tags']).filter_cases_by_tags(cases, tags=[])
-    assert len(filtered_cases) == len(cases), "❌ 标签为空时应该返回所有数据"
-    print("✅ 标签为空时返回所有数据")
+    if not len(filtered_cases) == len(cases):
+        pytest.fail("❌ 标签为空时应该返回所有数据")
 
+    print("✅ 标签为空时返回所有数据")
     print("✅ 标签过滤功能正常")
 
 
@@ -108,7 +116,8 @@ def test_assertion_helper():
         # 测试断言静态方法可以访问
         methods = ['assert_true', 'assert_equal', 'assert_visible', 'assert_text', 'assert_contains']
         for method in methods:
-            assert hasattr(TestAssertionHelper, method), f"❌ TestAssertionHelper 缺少方法: {method}"
+            if not hasattr(TestAssertionHelper, method):
+                pytest.fail(f"❌ TestAssertionHelper 缺少方法: {method}")
             print(f"  ✓ 找到方法: {method}")
         print("✅ TestAssertionHelper 包含所有断言方法")
     except Exception as e:
@@ -135,10 +144,14 @@ def test_login_case_data():
         print(f"  - 密码: {test_case.password}")
         print(f"  - 预期消息: {test_case.expected_message}")
 
-        assert test_case.case_name == "test_architecture_check"
-        assert test_case.username == "test_user"
-        assert test_case.password == "test_password"
-        assert test_case.expected_message == "登录成功！"
+        if not test_case.case_name == "test_architecture_check":
+            pytest.fail("❌ case_name 不匹配")
+        if not test_case.username == "test_user":
+            pytest.fail("❌ username 不匹配")
+        if not test_case.password == "test_password":
+            pytest.fail("❌ password 不匹配")
+        if not test_case.expected_message == "登录成功！":
+            pytest.fail("❌ expected_message 不匹配")
     except Exception as e:
         pytest.fail(f"❌ LoginCaseData 创建失败: {e}")
 
@@ -152,8 +165,11 @@ def test_page_elements_yaml_loading():
 
     try:
         elements = load_yaml("pages/elements/login_page_elements.yaml")
-        assert elements is not None, "❌ 页面元素定位加载失败，结果为 None"
-        assert isinstance(elements, dict), "❌ 页面元素定位不是字典类型"
+        if elements is None:
+            pytest.fail("❌ 页面元素定位加载失败，结果为 None")
+        if not isinstance(elements, dict):
+            pytest.fail("❌ 页面元素定位不是字典类型")
+
         print(f"✅ 页面元素定位成功加载，包含 {len(elements)} 个元素")
 
         expected_elements = ["username_input", "password_input", "submit_button", "success_message"]
@@ -161,6 +177,7 @@ def test_page_elements_yaml_loading():
 
         if missing_elements:
             pytest.fail(f"❌ 页面元素定位缺少元素: {', '.join(missing_elements)}")
+
         print(f"✅ 所有预期的页面元素定位都存在: {', '.join(expected_elements)}")
 
         for name, selector in elements.items():

@@ -4,6 +4,10 @@
 nav_bar: ".nav-wrap"
 nav_logo: ".logo-wrap"
 
+# 创作上传(悬停) -> 创作灵感(点击)（占位，后续补齐更精确定位器）
+nav_create_upload: '[class^="creatorCenterBox"]'
+nav_create_inspiration: "text=创作灵感"
+
 # 筛选框相关
 filter_container: ".filter-wrap"
 filter_tab_all: "text=全部"

@@ -1,9 +1,9 @@
 """
-基础页面类 - POM基类，支持元素定位、弹框处理、智能等待
+基础页面类 - POM基类，支持元素定位、弹框处理、智能等待、多标签页管理
 """
-from typing import Any, Optional
+from typing import Any, Callable, List, Optional
 
-from playwright.sync_api import Locator, Page
+from playwright.sync_api import Locator, Page, TimeoutError as PlaywrightTimeoutError
 
 from common.yaml_loader import load_yaml
 from core.browser_manager import BrowserManager
@@ -127,8 +127,18 @@ class BasePage:
         :param close_popups_after_load: 是否在页面加载后关闭弹框
         :param wait_state: 等待状态 (domcontentloaded, load, networkidle)
         """
-        self.page.goto(url)
-        self.wait.wait_for_page_load(wait_state)
+        # Playwright 默认等待 "load" 在某些页面可能持续资源加载而卡住；
+        # 这里先按 "domcontentloaded" 返回，随后由 WaitUtils 再按 wait_state 做最终等待。
+        self.page.goto(url, wait_until="domcontentloaded")
+        try:
+            self.wait.wait_for_page_load(wait_state)
+        except PlaywrightTimeoutError:
+            # 对于部分站点可能持续发起请求，导致 networkidle 不稳定；
+            # 这里做降级等待，避免整个用例因页面“永远不 idle”失败。
+            if wait_state == "networkidle":
+                self.wait.wait_for_page_load("domcontentloaded", timeout=10.0)
+            else:
+                raise
         if close_popups_after_load:
             self.close_all_popups()
 
@@ -180,3 +190,159 @@ class BasePage:
     def is_visible(self, selector: str) -> bool:
         """检查元素是否可见"""
         return self.locator(selector).is_visible()
+
+    # ===== 多标签页管理方法 =====
+
+    def switch_to_page(self, target_page: Page) -> None:
+        """
+        切换 self.page 到指定的 Page 对象，同步更新 self.wait。
+        :param target_page: 要切换到的 Playwright Page 对象
+        """
+        self.page = target_page
+        self.wait = WaitUtils(self.page)
+
+    def click_and_switch_to_new_tab(
+        self,
+        click_action: Callable[[], Any],
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+    ) -> Page:
+        """
+        执行点击操作并等待新标签页打开，自动切换 self.page 到新标签页。
+
+        :param click_action: 可调用对象，执行实际的点击（如 lambda: locator.click()）
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :return: 新标签页的 Page 对象（self.page 已更新）
+        """
+        context = self.page.context
+        with context.expect_page(timeout=timeout) as new_page_info:
+            click_action()
+        new_page: Page = new_page_info.value
+        new_page.wait_for_load_state(wait_state, timeout=timeout)
+        self.switch_to_page(new_page)
+        return new_page
+
+    def click_locator_and_switch_to_new_tab(
+        self,
+        locator: Locator,
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+        click_kwargs: Optional[dict] = None,
+    ) -> Page:
+        """
+        点击指定的 Locator 并等待新标签页打开，自动切换 self.page 到新标签页。
+
+        :param locator: 要点击的 Playwright Locator 对象
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :param click_kwargs: 传递给 click() 的额外参数字典
+        :return: 新标签页的 Page 对象（self.page 已更新）
+        """
+        click_kwargs = click_kwargs or {}
+
+        def do_click():
+            locator.click(**click_kwargs)
+
+        return self.click_and_switch_to_new_tab(do_click, timeout, wait_state)
+
+    def click_element_by_selector_and_switch_to_new_tab(
+        self,
+        selector: str,
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+        click_kwargs: Optional[dict] = None,
+    ) -> Page:
+        """
+        通过 CSS 选择器定位元素并点击，等待新标签页打开，自动切换 self.page。
+
+        :param selector: CSS 选择器
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :param click_kwargs: 传递给 click() 的额外参数字典
+        :return: 新标签页的 Page 对象（self.page 已更新）
+        """
+        locator = self.locator(selector)
+        return self.click_locator_and_switch_to_new_tab(
+            locator, timeout, wait_state, click_kwargs
+        )
+
+    def click_element_by_name_and_switch_to_new_tab(
+        self,
+        element_name: str,
+        timeout: int = 30000,
+        wait_state: str = "domcontentloaded",
+        click_kwargs: Optional[dict] = None,
+    ) -> Page:
+        """
+        通过 YAML 中定义的元素名称定位并点击，等待新标签页打开，自动切换 self.page。
+
+        :param element_name: YAML 中定义的元素名称
+        :param timeout: 等待新标签页的超时时间（毫秒）
+        :param wait_state: 新标签页加载等待状态
+        :param click_kwargs: 传递给 click() 的额外参数字典
+        :return: 新标签页的 Page 对象（self.page 已更新）
+        """
+        locator = self.get_locator(element_name)
+        return self.click_locator_and_switch_to_new_tab(
+            locator, timeout, wait_state, click_kwargs
+        )
+
+    def close_current_and_switch_back(self) -> Page:
+        """
+        关闭当前标签页，切换回 context 中最后一个存活的标签页。
+        :return: 切换后的 Page 对象（self.page 已更新）
+        """
+        context = self.page.context
+        if not self.page.is_closed():
+            self.page.close()
+
+        alive_pages: List[Page] = [p for p in context.pages if not p.is_closed()]
+        if not alive_pages:
+            raise RuntimeError("所有标签页均已关闭，无法切换")
+        self.switch_to_page(alive_pages[-1])
+        return self.page
+
+    def close_current_and_switch_to_original(self, original_page: Page) -> Page:
+        """
+        关闭当前标签页，切换回指定的原始标签页。
+
+        :param original_page: 要切换回的原始 Page 对象
+        :return: 切换后的 Page 对象（self.page 已更新）
+        """
+        if self.page is not original_page and not self.page.is_closed():
+            self.page.close()
+
+        if original_page.is_closed():
+            raise RuntimeError("原始标签页已关闭，无法切换")
+
+        self.switch_to_page(original_page)
+        return self.page
+
+    def close_other_tabs(self) -> int:
+        """
+        关闭除当前 self.page 之外的所有标签页。
+        :return: 关闭的标签页数量
+        """
+        context = self.page.context
+        closed = 0
+        for p in context.pages:
+            if p is not self.page and not p.is_closed():
+                try:
+                    p.close()
+                    closed += 1
+                except Exception:
+                    pass
+        return closed
+
+    def get_all_alive_pages(self) -> List[Page]:
+        """
+        获取所有存活的标签页列表。
+        :return: 存活的 Page 对象列表
+        """
+        context = self.page.context
+        return [p for p in context.pages if not p.is_closed()]
+
+    def get_current_url(self):
+        # 强制获取浏览器真实URL
+        return self.page.evaluate("window.location.href")

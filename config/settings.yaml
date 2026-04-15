@@ -34,12 +34,12 @@ environments:
     default_timeout_ms: 30000
     browser:
       name: "chromium"
-      channel: ""
+      channel: "chrome"
       slow_mo_ms: 0
       launch_args: []
   test:
     base_url: "https://example.com"
-    headless: true
+    headless: false
     default_timeout_ms: 12000
     browser:
       name: "chromium"
@@ -48,7 +48,7 @@ environments:
       launch_args: []
   prod:
     base_url: "https://example.com"
-    headless: true
+    headless: false
     default_timeout_ms: 15000
     browser:
       name: "chromium"
