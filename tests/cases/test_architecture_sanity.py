@@ -5,6 +5,9 @@
 import pytest
 from unittest.mock import Mock, MagicMock
 from data_types.test_data_types import LoginCaseData
+from common.browser_manager import BrowserManager
+from common.cookie_manager import CookieManager
+from pages.base_page import BasePage
 from pages.methods.login_page import LoginPage
 from tests.steps.test_base import (
     load_typed_cases_from_yaml,
@@ -31,8 +34,7 @@ def test_login_page_architecture():
 
     # 测试 LoginPage 有预期的方法
     expected_methods = [
-        'username_input', 'password_input', 'submit_button', 'success_message_locator',
-        'input_username', 'input_password', 'click_submit', 'wait_until_ready', 'login_with'
+        'goto_login_page', 'login_with', 'login_with_password', 'wait_until_ready',
     ]
     missing_methods = [method for method in expected_methods if not hasattr(LoginPage, method)]
 
@@ -82,6 +84,22 @@ def test_data_loading_and_typing():
         pytest.fail("❌ expected_message 必须是字符串")
 
     print("✅ 所有字段的类型都是字符串")
+
+
+def test_core_components_import_path():
+    """
+    验证核心组件已迁移到目标路径并可正常导入
+    """
+    print("\n=== 测试核心组件导入路径 ===")
+    if BrowserManager is None:
+        pytest.fail("❌ BrowserManager 导入失败")
+    if CookieManager is None:
+        pytest.fail("❌ CookieManager 导入失败")
+    if BasePage is None:
+        pytest.fail("❌ BasePage 导入失败")
+    print("✅ BrowserManager 来自 common.browser_manager")
+    print("✅ CookieManager 来自 common.cookie_manager")
+    print("✅ BasePage 来自 pages.base_page")
 
 
 def test_data_tag_filtering():

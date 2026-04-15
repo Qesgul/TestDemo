@@ -3,8 +3,11 @@
 支持元素可点击、页面加载完成、网络请求完成等多维度等待
 """
 import re
-from typing import Optional, List, Union
-from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeoutError
+import threading
+import time
+from typing import Callable, List, Union
+
+from playwright.sync_api import Locator, Page, TimeoutError as PlaywrightTimeoutError
 
 
 class WaitUtils:
@@ -16,6 +19,18 @@ class WaitUtils:
         :param page: Playwright Page 对象
         """
         self.page = page
+
+    def _poll_until(self, predicate: Callable[[], bool], timeout_sec: float, error_msg: str) -> None:
+        """在 Python 侧轮询条件，避免 wait_for_function 与闭包/序列化边界问题。"""
+        deadline = time.monotonic() + timeout_sec
+        while time.monotonic() < deadline:
+            try:
+                if predicate():
+                    return
+            except PlaywrightTimeoutError:
+                pass
+            self.page.wait_for_timeout(50)
+        raise PlaywrightTimeoutError(error_msg)
 
     def wait_for_element_visible(self, selector: str, timeout: float = 30.0) -> Locator:
         """
@@ -84,23 +99,14 @@ class WaitUtils:
         else:
             pattern = url_pattern
 
-        def check_url():
-            current_url = self.page.url
-            if pattern.search(current_url):
-                return current_url
-            return None
-
         try:
-            self.page.wait_for_function(
-                lambda: check_url() is not None,
-                timeout=int(timeout * 1000)
-            )
+            self.page.wait_for_url(pattern, timeout=int(timeout * 1000))
             return self.page.url
         except PlaywrightTimeoutError:
             raise PlaywrightTimeoutError(
                 f"URL匹配超时。当前URL: {self.page.url}, "
                 f"期望模式: {url_pattern}"
-            )
+            ) from None
 
     def wait_for_network_idle(self, timeout: float = 30.0) -> None:
         """
@@ -111,32 +117,26 @@ class WaitUtils:
 
     def wait_for_request_finished(self, url_pattern: Union[str, re.Pattern], timeout: float = 30.0) -> None:
         """
-        等待特定网络请求完成
-        :param url_pattern: 请求URL模式（字符串或正则表达式）
-        :param timeout: 超时时间（秒）
+        等待特定网络请求完成（在调用后一段时间内出现的匹配请求）。
+        使用 Python 侧 threading.Event + 正确 remove_listener(handler)，避免监听器泄漏。
         """
-        request_finished = False
+        done = threading.Event()
 
-        def on_request_finished(request):
-            nonlocal request_finished
+        def on_request_finished(request) -> None:
             if isinstance(url_pattern, str):
                 if url_pattern in request.url:
-                    request_finished = True
-            else:
-                if url_pattern.search(request.url):
-                    request_finished = True
+                    done.set()
+            elif url_pattern.search(request.url):
+                done.set()
 
-        # 监听请求完成事件
-        listener = self.page.on("requestfinished", on_request_finished)
-
+        self.page.on("requestfinished", on_request_finished)
         try:
-            self.page.wait_for_function(
-                lambda: request_finished,
-                timeout=int(timeout * 1000)
-            )
+            if not done.wait(timeout=timeout):
+                raise PlaywrightTimeoutError(
+                    f"等待 requestfinished 超时（{timeout}s），URL 模式: {url_pattern!r}，当前页: {self.page.url}"
+                )
         finally:
-            # 移除监听器
-            self.page.remove_listener("requestfinished", listener)
+            self.page.remove_listener("requestfinished", on_request_finished)
 
     def wait_for_response(self, url_pattern: Union[str, re.Pattern], timeout: float = 30.0) -> None:
         """
@@ -160,15 +160,17 @@ class WaitUtils:
         :param timeout: 超时时间（秒）
         :return: 匹配到的元素列表
         """
-        def check_count():
-            elements = self.page.locator(selector)
-            return elements.count() == count
+        loc = self.page.locator(selector)
 
-        self.page.wait_for_function(
-            lambda: check_count(),
-            timeout=int(timeout * 1000)
+        def predicate() -> bool:
+            return loc.count() == count
+
+        self._poll_until(
+            predicate,
+            timeout,
+            f"选择器 {selector!r} 在 {timeout}s 内未达到数量 {count}，当前 URL: {self.page.url}",
         )
-        return list(self.page.locator(selector).all())
+        return list(loc.all())
 
     def wait_for_text(self, selector: str, text_pattern: Union[str, re.Pattern], timeout: float = 30.0) -> str:
         """
@@ -180,16 +182,16 @@ class WaitUtils:
         """
         locator = self.wait_for_element_visible(selector, timeout)
 
-        def check_text():
+        def predicate() -> bool:
             text = locator.inner_text()
             if isinstance(text_pattern, str):
                 return text_pattern in text
-            else:
-                return text_pattern.search(text) is not None
+            return text_pattern.search(text) is not None
 
-        self.page.wait_for_function(
-            lambda: check_text(),
-            timeout=int(timeout * 1000)
+        self._poll_until(
+            predicate,
+            timeout,
+            f"元素 {selector!r} 在 {timeout}s 内未匹配文本模式: {text_pattern!r}",
         )
         return locator.inner_text()
 
@@ -205,16 +207,16 @@ class WaitUtils:
         """
         locator = self.wait_for_element_visible(selector, timeout)
 
-        def check_attribute():
+        def predicate() -> bool:
             value = locator.get_attribute(attribute) or ""
             if isinstance(value_pattern, str):
                 return value_pattern in value
-            else:
-                return value_pattern.search(value) is not None
+            return value_pattern.search(value) is not None
 
-        self.page.wait_for_function(
-            lambda: check_attribute(),
-            timeout=int(timeout * 1000)
+        self._poll_until(
+            predicate,
+            timeout,
+            f"元素 {selector!r} 属性 {attribute!r} 在 {timeout}s 内未匹配: {value_pattern!r}",
         )
         return locator.get_attribute(attribute) or ""
 
@@ -238,12 +240,9 @@ class WaitUtils:
                 # 可能需要滚动到元素可见位置
                 self.page.evaluate(f"document.querySelector('{selector}')?.scrollIntoView()")
 
-    @staticmethod
-    def wait_for_timeout(milliseconds: float) -> None:
+    def wait_for_timeout(self, milliseconds: float) -> None:
         """
-        显式等待（替代time.sleep）
+        显式等待（仍应优先使用条件等待）；使用 Playwright 计时，与浏览器调度一致。
         :param milliseconds: 等待时间（毫秒）
         """
-        # 注意：尽量避免使用这种方式，优先使用其他等待方法
-        import time
-        time.sleep(milliseconds / 1000)
+        self.page.wait_for_timeout(int(max(0, milliseconds)))

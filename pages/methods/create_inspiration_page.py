@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from playwright.sync_api import Page
 
-from core.base_page import BasePage
+from pages.base_page import BasePage
 
 
 class CreateInspirationPage(BasePage):
@@ -98,7 +98,7 @@ class CreateInspirationPage(BasePage):
         """
         original_page = self.page
         # 使用 BasePage 的方法点击并切换到新标签页
-        self.click_locator_and_switch_to_new_tab(
+        self.switch_to_new_tab(
             self.get_locator("reference_images").first,
             timeout=30000,
             wait_state="domcontentloaded",
@@ -121,7 +121,7 @@ class CreateInspirationPage(BasePage):
         """
         original_page = self.page
         # 使用 BasePage 的方法点击并切换到新标签页
-        self.click_locator_and_switch_to_new_tab(
+        self.switch_to_new_tab(
             self.get_locator("reference_more_button").first,
             timeout=30000,
             wait_state="domcontentloaded",

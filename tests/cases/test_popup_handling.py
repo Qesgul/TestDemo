@@ -46,31 +46,12 @@ class TestPopupHandling:
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
 
-    def test_login_with_factory_method(self, page):
-        """
-        方式3: 使用工厂方法
-        with_popup_handling() - 自动关闭弹框
-        without_popup_handling() - 不自动关闭弹框（默认）
-        """
-        print("=== 方式3: 使用工厂方法 ===")
-
-        # 使用工厂方法创建会自动关闭弹框的实例
-        login_page = LoginPage.with_popup_handling(page)
-        login_page.goto_login_page()
-
-        login_page.login_with("17768100279", "Qyff2011")
-        print("✅ 登录流程完成")
-
     def test_homepage_without_auto_close(self, page):
         """测试 HomePage 不自动关闭弹框（用于查看弹框）"""
         print("=== HomePage 不自动关闭弹框 ===")
 
-        # 使用工厂方法创建不自动关闭弹框的实例
-        home_page = HomePage.without_popup_handling(page)
+        home_page = HomePage(page)
         home_page.goto_homepage()
-
-        # 可以在这里检查弹框内容
-        # ... 弹框相关断言 ...
 
         print("✅ HomePage 加载完成，弹框未被自动关闭")
 
@@ -78,7 +59,7 @@ class TestPopupHandling:
         """测试 HomePage 自动关闭弹框"""
         print("=== HomePage 自动关闭弹框 ===")
 
-        home_page = HomePage.with_popup_handling(page)
+        home_page = HomePage(page, auto_close_popups=True)
         home_page.goto_homepage()
 
         print("✅ HomePage 加载完成，弹框已自动关闭")

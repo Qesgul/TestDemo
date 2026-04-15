@@ -22,31 +22,31 @@ class TestRunner:
         :param config_path: 配置文件路径
         """
         self.config_path = config_path
-        self.config = self._load_config()
+        self.suite_config = self._load_config()
         self.base_command = [sys.executable, "-m", "pytest", "-v"]
 
         # 从 config/settings.py 读取执行配置（统一配置管理）
-        self._config = get_config()
+        self.app_config = get_config()
 
         # 并发执行配置
-        self.parallel_enabled = self._config.execution.parallel_enabled
-        self.parallel_workers = self._config.execution.parallel_workers
-        self.parallel_dist_mode = self._config.execution.parallel_dist_mode
+        self.parallel_enabled = self.app_config.execution.parallel_enabled
+        self.parallel_workers = self.app_config.execution.parallel_workers
+        self.parallel_dist_mode = self.app_config.execution.parallel_dist_mode
 
         # 失败重试配置
-        self.retry_enabled = self._config.execution.retry_enabled
-        self.retry_max_reruns = self._config.execution.retry_max_reruns
-        self.retry_delay = self._config.execution.retry_delay
-        self.retry_only_flaky = self._config.execution.retry_only_flaky
+        self.retry_enabled = self.app_config.execution.retry_enabled
+        self.retry_max_reruns = self.app_config.execution.retry_max_reruns
+        self.retry_delay = self.app_config.execution.retry_delay
+        self.retry_only_flaky = self.app_config.execution.retry_only_flaky
 
         # Allure 报告配置
         self.allure_config = {
-            "enabled": self._config.allure.enabled,
-            "results_dir": self._config.allure.results_dir,
-            "report_dir": self._config.allure.report_dir,
-            "clean_results": self._config.allure.clean_results,
-            "open_report": self._config.allure.open_report,
-            "report_title": self._config.allure.report_title
+            "enabled": self.app_config.allure.enabled,
+            "results_dir": self.app_config.allure.results_dir,
+            "report_dir": self.app_config.allure.report_dir,
+            "clean_results": self.app_config.allure.clean_results,
+            "open_report": self.app_config.allure.open_report,
+            "report_title": self.app_config.allure.report_title
         }
 
     def _load_config(self) -> Dict[str, Any]:
@@ -69,7 +69,7 @@ class TestRunner:
         print("可用的测试分组:")
         print("=" * 70)
 
-        groups = self.config.get("groups", [])
+        groups = self.suite_config.get("groups", [])
         if not groups:
             print("  没有配置任何分组")
             return
@@ -99,7 +99,7 @@ class TestRunner:
         print("可用的测试标签:")
         print("=" * 70)
 
-        tags = self.config.get("available_tags", [])
+        tags = self.suite_config.get("available_tags", [])
         if not tags:
             print("  没有配置任何标签")
             return
@@ -146,7 +146,7 @@ class TestRunner:
 
         command.append("-s")
 
-        groups = self.config.get("groups", [])
+        groups = self.suite_config.get("groups", [])
         found_group = None
         for group in groups:
             if group.get("name") == group_name:
@@ -683,14 +683,14 @@ def main():
         )
     else:
         # 使用 config/settings.py 的默认配置执行
-        default_mode = runner._config.execution.default_mode
+        default_mode = runner.app_config.execution.default_mode
         if default_mode == "group":
-            default_group = runner._config.execution.default_group
+            default_group = runner.app_config.execution.default_group
             exit_code = runner.run_group(
                 default_group, parallel=parallel, workers=workers, reruns=reruns
             )
         elif default_mode == "tags":
-            default_tags = runner._config.execution.default_tags
+            default_tags = runner.app_config.execution.default_tags
             if default_tags:
                 exit_code = runner.run_tags(
                     default_tags, parallel=parallel, workers=workers, reruns=reruns
@@ -703,7 +703,7 @@ def main():
             exit_code = 1
 
     # 生成报告
-    if runner._config.allure.enabled:
+    if runner.app_config.allure.enabled:
         runner.generate_allure_report()
 
     return exit_code

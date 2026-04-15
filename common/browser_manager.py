@@ -24,10 +24,10 @@ class BrowserManager:
     """
 
     # 每个进程独立的实例存储（key: 进程ID）
-    _instances: Dict[int, 'BrowserManager'] = {}
+    _instances: Dict[int, "BrowserManager"] = {}
 
     @classmethod
-    def _get_current_process(cls) -> 'BrowserManager':
+    def _get_current_process(cls) -> "BrowserManager":
         """获取当前进程的 BrowserManager 实例"""
         pid = os.getpid()
         if pid not in cls._instances:

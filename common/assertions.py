@@ -4,11 +4,14 @@
 """
 import os
 import json
+import logging
 from datetime import datetime
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 from pathlib import Path
 
 from playwright.sync_api import expect, Page, Locator
+
+logger = logging.getLogger(__name__)
 
 
 class DiagnosticAssertion:
@@ -30,7 +33,65 @@ class DiagnosticAssertion:
         """
         self.page = page
         self.test_name = test_name or "unknown_test"
+        self._console_logs: List[Dict[str, Any]] = []
+        self._network_logs: List[Dict[str, Any]] = []
+        self._bind_page_listeners()
         self._setup_diagnostic_dir()
+
+    def _bind_page_listeners(self) -> None:
+        """绑定页面事件监听器，记录最近的 console/network 信息。"""
+        try:
+            self.page.on("console", self._on_console_message)
+            self.page.on("requestfinished", self._on_request_finished)
+            self.page.on("requestfailed", self._on_request_failed)
+        except Exception:
+            # 监听失败不影响断言主流程
+            pass
+
+    def _on_console_message(self, message) -> None:
+        try:
+            self._console_logs.append(
+                {
+                    "type": message.type,
+                    "text": message.text,
+                    "timestamp": datetime.now().isoformat(),
+                    "location": message.location,
+                }
+            )
+            self._console_logs = self._console_logs[-200:]
+        except Exception:
+            pass
+
+    def _on_request_finished(self, request) -> None:
+        try:
+            response = request.response()
+            self._network_logs.append(
+                {
+                    "event": "requestfinished",
+                    "timestamp": datetime.now().isoformat(),
+                    "method": request.method,
+                    "url": request.url,
+                    "status": response.status if response else None,
+                }
+            )
+            self._network_logs = self._network_logs[-300:]
+        except Exception:
+            pass
+
+    def _on_request_failed(self, request) -> None:
+        try:
+            self._network_logs.append(
+                {
+                    "event": "requestfailed",
+                    "timestamp": datetime.now().isoformat(),
+                    "method": request.method,
+                    "url": request.url,
+                    "failure": request.failure,
+                }
+            )
+            self._network_logs = self._network_logs[-300:]
+        except Exception:
+            pass
 
     @classmethod
     def _setup_diagnostic_dir(cls) -> None:
@@ -56,7 +117,7 @@ class DiagnosticAssertion:
             self.page.screenshot(path=screenshot_path, full_page=True)
             return screenshot_path
         except Exception as e:
-            print(f"⚠️ 截图捕获失败: {e}")
+            logger.warning("截图捕获失败: %s", e)
             return None
 
     def _capture_dom(self, diagnostic_id: str) -> Optional[str]:
@@ -73,7 +134,7 @@ class DiagnosticAssertion:
                 f.write(page_content)
             return dom_path
         except Exception as e:
-            print(f"⚠️ DOM捕获失败: {e}")
+            logger.warning("DOM捕获失败: %s", e)
             return None
 
     def _capture_console_logs(self, diagnostic_id: str) -> Optional[str]:
@@ -85,35 +146,21 @@ class DiagnosticAssertion:
         """
         try:
             console_path = os.path.join(self.diagnostic_dir, f"{diagnostic_id}_console.json")
-
-            # 通过evaluate获取控制台错误
-            console_errors = self.page.evaluate("""
-                () => {
-                    const errors = [];
-                    const originalError = console.error;
-                    // 这里尝试获取已经记录的错误
-                    // 在实际测试中，更好的方式是监听console事件
-                    return errors;
-                }
-            """)
-
-            # 如果没有监听到，至少记录URL和页面状态
+            console_errors = list(self._console_logs)
             if not console_errors:
-                console_errors = [
-                    {
-                        "type": "info",
-                        "timestamp": datetime.now().isoformat(),
-                        "message": "Page state at failure",
-                        "url": self.page.url,
-                        "title": self.page.title()
-                    }
-                ]
+                console_errors = [{
+                    "type": "info",
+                    "timestamp": datetime.now().isoformat(),
+                    "text": "No captured console logs. Fallback page state.",
+                    "url": self.page.url,
+                    "title": self.page.title(),
+                }]
 
             with open(console_path, "w", encoding="utf-8") as f:
                 json.dump(console_errors, f, ensure_ascii=False, indent=2)
             return console_path
         except Exception as e:
-            print(f"⚠️ 控制台日志捕获失败: {e}")
+            logger.warning("控制台日志捕获失败: %s", e)
             return None
 
     def _capture_network_logs(self, diagnostic_id: str) -> Optional[str]:
@@ -125,19 +172,18 @@ class DiagnosticAssertion:
         """
         try:
             network_path = os.path.join(self.diagnostic_dir, f"{diagnostic_id}_network.json")
-
-            # 记录当前页面的网络状态
             network_info = {
                 "timestamp": datetime.now().isoformat(),
                 "url": self.page.url,
                 "title": self.page.title(),
+                "recent_requests": list(self._network_logs),
             }
 
             with open(network_path, "w", encoding="utf-8") as f:
                 json.dump(network_info, f, ensure_ascii=False, indent=2)
             return network_path
         except Exception as e:
-            print(f"⚠️ 网络日志捕获失败: {e}")
+            logger.warning("网络日志捕获失败: %s", e)
             return None
 
     def _capture_cookies(self, diagnostic_id: str) -> Optional[str]:
@@ -156,7 +202,7 @@ class DiagnosticAssertion:
                     json.dump(cookies, f, ensure_ascii=False, indent=2)
                 return cookies_path
         except Exception as e:
-            print(f"⚠️ Cookie捕获失败: {e}")
+            logger.warning("Cookie捕获失败: %s", e)
             return None
 
     def _write_summary(self, diagnostic_id: str, assertion_info: Dict[str, Any],
@@ -198,7 +244,7 @@ class DiagnosticAssertion:
             return {}
 
         diagnostic_id = self._generate_diagnostic_id()
-        print(f"\n📊 捕获诊断信息: {diagnostic_id}")
+        logger.info("捕获诊断信息: %s", diagnostic_id)
 
         # 并行捕获各类诊断信息
         files = {
@@ -212,7 +258,7 @@ class DiagnosticAssertion:
         # 写入摘要
         files["summary"] = self._write_summary(diagnostic_id, assertion_info, files)
 
-        print("✅ 诊断信息捕获完成\n")
+        logger.info("诊断信息捕获完成: %s", diagnostic_id)
         return files
 
     def _wrap_assertion(self, assertion_name: str, func, *args, **kwargs):

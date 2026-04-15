@@ -47,6 +47,7 @@ def retry_on_exceptions(
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             last_exception = None
+            current_delay = float(delay)
 
             for attempt in range(max_retries + 1):
                 try:
@@ -55,9 +56,9 @@ def retry_on_exceptions(
                     last_exception = e
                     if attempt < max_retries:
                         logger(f"❌ 尝试 {attempt + 1} 失败: {type(e).__name__}: {e}")
-                        logger(f"🔄 等待 {delay} 秒后重试...")
-                        time.sleep(delay)
-                        delay *= 1.5  # 指数退避
+                        logger(f"🔄 等待 {current_delay} 秒后重试...")
+                        time.sleep(current_delay)
+                        current_delay *= 1.5  # 指数退避（不修改装饰器参数 delay）
                     else:
                         logger(f"❌ 所有 {max_retries + 1} 次尝试均失败")
                 except Exception as e:
@@ -101,20 +102,22 @@ class RetryContext:
         retry_exceptions: Tuple[Type[Exception], ...] = RETRY_EXCEPTIONS,
     ):
         self.max_retries = max_retries
-        self.delay = delay
+        self._initial_delay = float(delay)
         self.retry_exceptions = retry_exceptions
         self.attempt = 0
+        self._current_delay = self._initial_delay
 
     def __enter__(self):
         self.attempt = 0
+        self._current_delay = self._initial_delay
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type and issubclass(exc_type, self.retry_exceptions):
             if self.attempt < self.max_retries:
                 self.attempt += 1
-                time.sleep(self.delay)
-                self.delay *= 1.5
+                time.sleep(self._current_delay)
+                self._current_delay *= 1.5
                 return True  # 继续执行
         return False
 

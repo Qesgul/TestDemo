@@ -22,7 +22,7 @@ class TestPopupDefaultDisplay:
         print("=== 测试首页弹框默认显示状态 ===")
 
         # 使用默认方式初始化，不自动关闭弹框
-        home_page = HomePage.without_popup_handling(page)
+        home_page = HomePage(page)
 
         # 访问页面，也不关闭弹框
         home_page.goto(
@@ -146,7 +146,7 @@ class TestPopupDefaultDisplay:
         """
         print("\n=== 测试登录页面弹框默认显示状态 ===")
 
-        login_page = LoginPage.without_popup_handling(page)
+        login_page = LoginPage(page)
         login_page.goto(
             "https://www.znzmo.com/?from=personalCenter",
             close_popups_after_load=False,

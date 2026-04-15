@@ -14,60 +14,32 @@
 ├─common/                   # 基础共用方法（断言、通用工具）
 │  ├─assertions.py          # 增强的断言诊断工具
 │  ├─retry_utils.py         # 异常类型定向重试装饰器
-│  └─wait_utils.py          # 智能等待工具类
+│  ├─wait_utils.py          # 智能等待工具类
+│  ├─browser_manager.py     # Playwright 浏览器生命周期管理
+│  └─cookie_manager.py      # Cookie 管理器 - 支持快捷登录和环境隔离
 ├─config/                   # 配置
 │  ├─settings.yaml          # 单文件多环境配置yaml
 │  └─settings.py            # 统一配置管理模块（单例模式）
-├─core/                     # 框架核心基类
-│  ├─browser_manager.py     # Playwright 浏览器生命周期管理
-│  ├─cookie_manager.py      # Cookie 管理器 - 支持快捷登录和环境隔离
-│  └─base_page.py           # 基础页面类（POM基类）- 内置弹框处理
 ├─data_types/               # 数据类型定义（dataclass）
 ├─pages/
+│  ├─base_page.py           # 基础页面类（POM基类）- 内置弹框处理
 │  ├─elements/              # 页面元素定位（yaml）
 │  └─methods/               # 页面方法（POM）
 ├─tests/
 │  ├─cases/                 # 测试用例（已添加标签）
 │  ├─data/                  # 测试数据（yaml）
 │  └─steps/                 # 测试基础能力（test_base.py）
-├─allure-results/           # Allure 测试结果数据
-├─allure-report/            # Allure HTML 报告
+├─.cursor/
+│  └─rules/
+│     └─testcase-generation.mdc # 自动化用例生成规则
+├─allure-results/           # Allure 测试结果数据（运行后生成）
+├─allure-report/            # Allure HTML 报告（运行后生成）
 ├─conftest.py               # pytest fixture（浏览器/上下文/页面）
 ├─pytest.ini                # pytest 配置（已添加标记注册）
 ├─test_suite.yaml           # 测试套件配置（YAML 调度器）
 ├─run_suite.py              # 测试执行器（分组/标签执行）
 └─requirements.txt
 ```
-
-## 安装与初始化
-```bash
-# 1. 安装 Python 依赖
-pip install -r requirements.txt
-
-# 2. 安装 Playwright 浏览器（必须步骤）
-# 方式 1: 直接安装（可能比较慢）
-python -m playwright install chromium
-
-# 方式 2: 使用国内镜像加速（推荐）
-# Windows:
-set PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright/
-python -m playwright install chromium
-
-# Linux/Mac:
-PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright/ python -m playwright install chromium
-```
-
-### Allure 安装
-
-**Windows (使用 Scoop)**
-```powershell
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-irm get.scoop.sh | iex
-scoop install allure
-```
-
-**其他系统**
-访问：https://docs.qameta.io/allure/
 
 ## 运行测试
 
@@ -236,6 +208,19 @@ environments:
 - `config/settings.yaml` - 主要环境配置
 - `test_suite.yaml` - 测试分组和执行配置
 
+### 路径类配置（新增）
+`config/settings.yaml` 支持 `paths.cookie_dir`，用于指定 Cookie 文件存放路径：
+
+```yaml
+paths:
+  cookie_dir: "core"
+```
+
+说明：
+- 相对路径会按项目根目录解析；
+- 可通过环境变量 `TEST_COOKIE_DIR` 覆盖；
+- `CookieManager` 会自动创建目录。
+
 ### 命令行参数
 ```bash
 # 环境配置
@@ -265,6 +250,7 @@ TEST_HEADLESS=true
 TEST_WORKERS=4
 TEST_MAX_RERUNS=2
 TEST_RERUNS_DELAY=1
+TEST_COOKIE_DIR=core
 ```
 
 ### Python中使用配置
@@ -380,9 +366,19 @@ CookieManager 提供智能的 Cookie 管理和快捷登录功能：
 - **登录成功保存**：自动保存新登录成功的Cookie
 
 ### 存储特点
-- 文件位置：`core/` 目录下
+- 文件位置：由 `config.settings` 中的 `cookie_dir` 控制（默认 `core/`）
 - 文件命名：`cookies_{环境}_{账号标识}.json`
 - 存储格式：JSON格式，包含Cookie内容和时间戳
+
+## 自动化用例生成标准
+
+项目已内置规则文件：`.cursor/rules/testcase-generation.mdc`，新增用例请遵循以下关键约束：
+
+1. **Page 先行**：先建 `pages/elements/*.yaml` 与 `pages/methods/*_page.py`，再写 `tests/cases/*`
+2. **元素读取统一**：页面内通过 `self.get_locator("yaml_key")` 读取，不硬编码选择器
+3. **数据与断言分离**：期望值尽量放在 `tests/data/*.yaml`，步骤中避免写死
+4. **数据对象归位**：参数化对象统一放 `data_types/`
+5. **公共方法归位**：可复用工具统一放 `common/` 并在 `common/__init__.py` 导出
 
 ## 架构特点
 1. **POM 模式**：页面方法和元素分离，统一管理页面操作

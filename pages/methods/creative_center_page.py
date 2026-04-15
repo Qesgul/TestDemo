@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from playwright.sync_api import Page
 
-from core.base_page import BasePage
+from pages.base_page import BasePage
 
 
 class CreativeCenterPage(BasePage):

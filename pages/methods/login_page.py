@@ -1,12 +1,23 @@
 """
 登录页面类 - 提供登录功能操作
+
+支持两种登录方式：
+1. Cookie 优先登录（默认）：先尝试 cookie 恢复会话，失效时自动回退到密码登录
+2. 纯密码登录：跳过 cookie，直接走账号密码流程
 """
+import logging
 from typing import Optional
 
-from playwright.sync_api import Locator
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from core.base_page import BasePage
+from pages.base_page import BasePage
+from common.cookie_manager import CookieManager
+
+_logger = logging.getLogger(__name__)
+
+_LOGIN_STATE_CHECK_TIMEOUT = 3000
 
 
 class LoginPage(BasePage):
@@ -16,125 +27,154 @@ class LoginPage(BasePage):
         page: Optional[Page] = None,
         auto_close_popups: bool = False
     ) -> None:
-        """
-        LoginPage 初始化
-        :param page: Playwright Page 对象，可选
-        :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False
-        """
         super().__init__(page, "pages/elements/login_page_elements.yaml", auto_close_popups)
 
-    @classmethod
-    def with_popup_handling(
-        cls,
-        page: Optional[Page] = None,
-        elements_yaml_path: Optional[str] = None
-    ) -> "LoginPage":
-        """工厂方法：创建会自动关闭弹框的 LoginPage"""
-        return cls(page=page, auto_close_popups=True)
-
-    @classmethod
-    def without_popup_handling(
-        cls,
-        page: Optional[Page] = None,
-        elements_yaml_path: Optional[str] = None
-    ) -> "LoginPage":
-        """工厂方法：创建不自动关闭弹框的 LoginPage"""
-        return cls(page=page, auto_close_popups=False)
-
-    # ===== 页面操作方法 =====
+    # ===== 页面导航 =====
     def goto_login_page(self, url: str = "https://www.znzmo.com/?from=personalCenter") -> None:
         """访问登录页面，自动关闭弹框"""
         self.goto(url, close_popups_after_load=True)
 
-    # ===== 简化版登录流程 - 知末网专用 =====
-    def login_with(self, username: str, password: str) -> None:
-        """知末网简化版登录流程"""
-        print("=== 开始知末网登录流程 ===")
+    # ===== 登录状态判断 =====
+    def _is_logged_in(self) -> bool:
+        """
+        检测当前页面是否处于已登录状态。
 
-        # 1. 尝试关闭所有可能的弹窗（使用 BasePage 封装的方法）
-        print("1. 尝试关闭弹窗...")
-        closed_count = self.close_all_popups()
-        if closed_count > 0:
-            print(f"   - 成功关闭 {closed_count} 个弹窗")
-        self.wait.wait_for_timeout(1000)
-
-        # 2. 点击登录|注册按钮
-        print("2. 点击登录|注册...")
+        判断依据：未登录时 login_register_button（notLoginBox）可见；
+        已登录时该元素不存在或不可见。
+        """
         try:
-            login_register_btn = self.get_locator("login_register_button").first
-            login_register_btn.click(force=True)
-        except:
-            login_register_btn = self.page.locator("div").filter(has_text="登录/注册").first
-            login_register_btn.click(force=True)
-        self.wait.wait_for_timeout(2000)
+            btn = self.get_locator("login_register_button").first
+            return not btn.is_visible(timeout=_LOGIN_STATE_CHECK_TIMEOUT)
+        except (KeyError, PlaywrightTimeoutError, PlaywrightError):
+            return False
 
-        # 3. 直接点击手机按钮
-        print("3. 点击手机按钮...")
+    # ===== Cookie 登录 =====
+    def _try_cookie_login(self, username: str) -> bool:
+        """
+        尝试用本地 cookie 恢复登录会话。
+
+        :return: True 表示 cookie 登录成功且验证通过
+        """
+        cookie_data = CookieManager.load_cookies(username)
+        if not cookie_data or not CookieManager.is_cookie_valid(cookie_data):
+            _logger.info("未找到有效 cookie，跳过 cookie 登录")
+            return False
+
+        _logger.info("检测到有效 cookie，尝试恢复会话")
+        context = self.page.context
         try:
-            phone_tab = self.get_locator("phone_login_option").first
-            if phone_tab.is_visible():
-                phone_tab.click(force=True)
-                self.wait.wait_for_timeout(1000)
-        except:
+            context.clear_cookies()
+            CookieManager.set_cookies_to_context(context, cookie_data)
+            try:
+                self.page.reload(wait_until="networkidle")
+            except PlaywrightTimeoutError:
+                self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+
+            if self._is_logged_in():
+                _logger.info("cookie 登录验证通过")
+                return True
+
+            _logger.warning("cookie 已注入但登录状态验证失败，cookie 可能已失效")
+            CookieManager.delete_cookies(username)
+            return False
+        except Exception as e:
+            _logger.warning("cookie 登录过程异常: %s", e)
+            return False
+
+    # ===== 密码登录（内部实现） =====
+    def _login_with_credentials(self, username: str, password: str) -> None:
+        """账号密码登录的完整流程（不涉及 cookie）。"""
+        _logger.info("开始账号密码登录流程")
+
+        phone_login_opt = self.get_locator("phone_login_option").first
+        if not phone_login_opt.is_visible():
+            _logger.info("点击登录/注册入口")
+            try:
+                self.get_locator("login_register_button").first.click(force=True)
+            except (KeyError, PlaywrightTimeoutError, PlaywrightError):
+                self.page.locator("div").filter(has_text="登录/注册").first.click(force=True)
+            phone_login_opt.wait_for(state="visible", timeout=5000)
+
+        _logger.info("尝试切换到手机登录")
+        try:
+            if phone_login_opt.is_visible():
+                phone_login_opt.click(force=True)
+                self.get_locator("username_input").first.wait_for(
+                    state="visible", timeout=3000
+                )
+        except (KeyError, PlaywrightTimeoutError, PlaywrightError):
             pass
 
-        # 4. 切换到账号密码登录
-        print("4. 切换到账号密码登录...")
-        login_options = ["账号密码登录", "密码登录"]
-        for option_text in login_options:
+        _logger.info("切换到账号密码登录")
+        for option_text in ("账号密码登录", "密码登录"):
             try:
                 option = self.page.locator(f"text={option_text}").first
                 if option.is_visible():
-                    print(f"   - 找到并点击: '{option_text}'")
+                    _logger.info("找到并点击: %s", option_text)
                     option.click(force=True)
-                    self.wait.wait_for_timeout(1000)
+                    self.get_locator("username_input").first.wait_for(
+                        state="visible", timeout=3000
+                    )
                     break
-            except:
+            except (PlaywrightTimeoutError, PlaywrightError):
                 continue
 
-        # 5. 填写账号密码
-        print("5. 填写账号密码...")
+        _logger.info("填写账号密码")
         try:
-            phone_input = self.get_locator("username_input").first
-            if phone_input.is_visible():
-                phone_input.fill(username)
-            pwd_input = self.get_locator("password_input").first
-            if pwd_input.is_visible():
-                pwd_input.fill(password)
-        except:
+            username_el = self.get_locator("username_input").first
+            if username_el.is_visible():
+                username_el.fill(username)
+            password_el = self.get_locator("password_input").first
+            if password_el.is_visible():
+                password_el.fill(password)
+        except (KeyError, PlaywrightTimeoutError, PlaywrightError):
             pass
-        self.wait.wait_for_timeout(500)
 
-        # 6. 点击登录按钮
-        print("6. 点击登录按钮...")
-        self.click_submit()
-        self.wait.wait_for_timeout(1000)
+        _logger.info("点击登录提交")
+        self.get_locator("submit_button").click()
+        try:
+            self.page.wait_for_load_state("networkidle", timeout=10000)
+        except PlaywrightTimeoutError:
+            self.page.wait_for_load_state("domcontentloaded", timeout=5000)
 
-    # ===== 页面元素定位方法（从 YAML 读取） =====
-    def username_input(self) -> Locator:
-        return self.get_locator("username_input")
+    # ===== 公开登录方法 =====
+    def login_with(self, username: str, password: str, *, use_cookie: bool = True) -> None:
+        """
+        默认登录入口 —— 优先尝试 cookie 登录，失败后自动回退到密码登录。
 
-    def password_input(self) -> Locator:
-        return self.get_locator("password_input")
+        :param username: 用户名（手机号）
+        :param password: 密码
+        :param use_cookie: 是否启用 cookie 优先策略，默认 True
+        """
+        _logger.info("开始知末网登录流程 (cookie 优先=%s)", use_cookie)
 
-    def submit_button(self) -> Locator:
-        return self.get_locator("submit_button")
+        if use_cookie and self._try_cookie_login(username):
+            return
 
-    def success_message_locator(self) -> Locator:
-        return self.get_locator("success_message")
+        self._login_with_credentials(username, password)
 
-    # ===== 标准登录操作方法 =====
-    def input_username(self, username: str) -> None:
-        self.username_input().fill(username)
+        try:
+            CookieManager.save_cookies(username, self.page.context)
+            _logger.info("登录成功，cookie 已保存")
+        except Exception as e:
+            _logger.warning("cookie 保存失败（不影响本次登录）: %s", e)
 
-    def input_password(self, password: str) -> None:
-        self.password_input().fill(password)
+    def login_with_password(self, username: str, password: str) -> None:
+        """
+        强制使用账号密码登录，跳过 cookie 策略。
 
-    def click_submit(self) -> None:
-        self.submit_button().click()
+        适用于需要确保走完整密码登录流程的场景（如测试登录 UI）。
+        """
+        _logger.info("强制密码登录（跳过 cookie）")
+        self._login_with_credentials(username, password)
 
     def wait_until_ready(self) -> None:
-        """等待登录页面加载完成"""
-        self.username_input().wait_for(state="visible")
-        self.password_input().wait_for(state="visible")
-        self.submit_button().wait_for(state="visible")
+        """
+        等待登录页面关键元素可交互。
+
+        Playwright 的 action 方法（fill / click）内置 auto-wait，
+        多数场景无需显式调用。仅在需要「先断言页面就绪」时使用。
+        """
+        self.get_locator("username_input").wait_for(state="visible")
+        self.get_locator("password_input").wait_for(state="visible")
+        self.get_locator("submit_button").wait_for(state="visible")

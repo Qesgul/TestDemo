@@ -109,6 +109,7 @@ class Config:
         self.env: Environment = Environment.DEV
         self.environments: Dict[str, EnvironmentConfig] = {}
         self.current_env: EnvironmentConfig = EnvironmentConfig({})
+        self.cookie_dir: str = str(PROJECT_ROOT / "core")
 
         # 解析后的配置对象（会在后续应用覆盖逻辑后最终用于校验/快照）
         self._execution: Optional[ExecutionConfig] = None
@@ -120,6 +121,7 @@ class Config:
 
         # 先构建环境配置并解析最终环境与环境相关字段（base_url/headless）
         self._load_environment_config()
+        self._load_path_config()
 
         # 再构建执行/Allure配置并应用命令行 + 环境变量覆盖
         self._execution = ExecutionConfig(self._config.get("execution", {}))
@@ -186,6 +188,23 @@ class Config:
             # 允许 true/false/1/0/yes/no 等
             test_headless_raw = os.environ["TEST_HEADLESS"].strip().lower()
             self.current_env.headless = test_headless_raw in {"true", "1", "yes", "y", "on"}
+
+    def _load_path_config(self) -> None:
+        """加载路径类配置（例如 cookie 存储目录）"""
+        path_config = self._config.get("paths", {}) or {}
+        raw_cookie_dir = path_config.get("cookie_dir", "core")
+
+        cookie_dir_path = Path(str(raw_cookie_dir))
+        if not cookie_dir_path.is_absolute():
+            cookie_dir_path = PROJECT_ROOT / cookie_dir_path
+
+        if "TEST_COOKIE_DIR" in os.environ:
+            env_cookie_dir = Path(os.environ["TEST_COOKIE_DIR"])
+            if not env_cookie_dir.is_absolute():
+                env_cookie_dir = PROJECT_ROOT / env_cookie_dir
+            cookie_dir_path = env_cookie_dir
+
+        self.cookie_dir = str(cookie_dir_path.resolve())
 
     def _parse_args(self):
         """解析命令行参数（不直接应用覆盖逻辑）"""

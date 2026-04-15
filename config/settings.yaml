@@ -17,6 +17,9 @@ execution:
     reruns_delay: 1
     only_flaky: false
 
+paths:
+  cookie_dir: "common"
+
 # 报告配置
 allure:
   enabled: true

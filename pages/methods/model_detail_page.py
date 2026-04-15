@@ -4,7 +4,7 @@
 from typing import Optional, List, Dict
 from playwright.sync_api import Locator, Page
 
-from core.base_page import BasePage
+from pages.base_page import BasePage
 
 
 class RechargePackageInfo:
@@ -43,24 +43,6 @@ class ModelDetailPage(BasePage):
         :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False
         """
         super().__init__(page, "pages/elements/model_detail_elements.yaml", auto_close_popups)
-
-    @classmethod
-    def with_popup_handling(
-        cls,
-        page: Optional[Page] = None,
-        elements_yaml_path: Optional[str] = None
-    ) -> "ModelDetailPage":
-        """工厂方法：创建会自动关闭弹框的 ModelDetailPage"""
-        return cls(page=page, auto_close_popups=True)
-
-    @classmethod
-    def without_popup_handling(
-        cls,
-        page: Optional[Page] = None,
-        elements_yaml_path: Optional[str] = None
-    ) -> "ModelDetailPage":
-        """工厂方法：创建不自动关闭弹框的 ModelDetailPage"""
-        return cls(page=page, auto_close_popups=False)
 
     # ===== 页面操作方法 =====
     def goto_model_detail_page(self, url: str = "https://3d.znzmo.com/3dmoxing/1198790555.html?requestId=22a843f6-3354-4146-a7b2-23f5c56a2d3d") -> None:

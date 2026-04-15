@@ -1,6 +1,6 @@
-pytest
-pytest-playwright
-playwright
+pytest>=8.2,<9
+pytest-playwright>=0.5,<1
+playwright>=1.49,<2
 pyyaml
 allure-pytest
 pytest-xdist

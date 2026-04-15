@@ -41,3 +41,9 @@ htmlcov/
 allure-report/
 allure-results/
 reports/
+
+# Diagnostic and local runtime artifacts
+diagnostic_reports/
+core/cookies*.json
+**/cookies*.json
+recharge_test_results.json

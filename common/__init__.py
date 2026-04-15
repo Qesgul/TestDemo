@@ -18,6 +18,8 @@ from common.retry_utils import (
     RETRY_EXCEPTIONS,
 )
 from common.wait_utils import WaitUtils
+from common.browser_manager import BrowserManager
+from common.cookie_manager import CookieManager
 
 __all__ = [
     "load_yaml",
@@ -36,4 +38,7 @@ __all__ = [
     "RETRY_EXCEPTIONS",
     # 等待工具
     "WaitUtils",
+    # 浏览器与cookie
+    "BrowserManager",
+    "CookieManager",
 ]

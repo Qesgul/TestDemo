@@ -33,6 +33,8 @@ jobs:
         allure --version
 
     - name: Run tests
+      env:
+        TEST_HEADLESS: "true"
       run: |
         python run_suite.py
 
