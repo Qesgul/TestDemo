@@ -1,0 +1,20 @@
+
+# 3D模型详情页 - 元素定位器
+recharge_button: ".topUpItemBox"
+recharge_modal: ".ant-modal-content"
+modal_title: ".ant-modal-title"
+download_btn: '[class^="detail__vipFreeDownloadBtn__"]'
+# 套餐卡片相关
+package_card: '[class^="RechargeModalNew__noFirstMeal"]'
+package_name: '[class^="RechargeModalNew__zhibi"]'
+package_price: '[class^="RechargeModalNew__price"]'
+package_discount: '[class^="RechargeModalNew__tips1"]'
+# 加购福利相关
+bonus_item: '[class^="RechargeModalNew__combo__"]'
+# 套餐备注
+package_remark: '[class^="RechargeModalNew__tips2__"]'
+# 实际支付
+actual_pay_price: '[class^="RechargeModalNew__payPrice__"]'
+actual_discount_amount: '[class^="RechargeModalNew__youhuiPrice__"]'
+# 关闭按钮
+modal_close: '[class^="RechargeModalNew__closeIcon__"]'

@@ -1,0 +1,8 @@
+# 发布作品页元素定位器（占位示例，后续补齐更精确选择器）
+
+# 发布页标题（用于最小校验）
+publish_title: "text=发布作品"
+
+# 返回创作中心按钮
+back_to_creative_center_button: "text=返回创作中心"
+

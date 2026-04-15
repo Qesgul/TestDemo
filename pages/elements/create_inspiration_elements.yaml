@@ -1,0 +1,18 @@
+# 创作灵感页元素定位器（占位示例，后续补齐更精确选择器）
+
+# SU 二级 Tab（用于步骤6切换）
+su_secondary_tabs: '[class^="creativeInspiration__catBtn"]'
+
+# SU 模型列表/相关项（用于步骤5/6校验列表非空）
+su_model_items: '[class^="creativeInspiration__listItem__"]'
+active_item: ".ant-tabs-tab.ant-tabs-tab-active"
+
+# SU 列表 item（用于步骤7点击触发参考区域展开）
+su_list_items: ".su-list-item"
+
+# 参考模型/参考灵感区域图片（步骤7校验 5 张 img + 步骤8/9点击图片）
+reference_images: '[class^="creativeInspiration__refImgItem__"]'
+
+# 参考区域“更多”按钮（步骤7/9）
+reference_more_button: '[class^="creativeInspiration__moreMask__"]'
+

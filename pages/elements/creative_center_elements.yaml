@@ -1,0 +1,15 @@
+# 创作中心页元素定位器（占位示例，后续补齐更精确定位器）
+
+# 用于步骤3：“点击首页->进入创作中心”
+home_to_creative_center: ".creatorNav2"
+
+# 用于步骤3：”校验 3D爆款榜/SU爆款榜默认数据”
+rank_3d_items: '[class^="creatorCenter__leftBox__"] [class^="RankingListNew__listItem__"]'
+rank_su_items: '[class^="creatorCenter__rightBox__"] [class^="RankingListNew__listItem__"]'
+
+# 用于步骤4：“点击去创作->发布作品页”
+rank_go_create_button: '[class^="RankingListNew__listItem__"] [class^="RankingListNew__createBtn"]'
+
+# 用于步骤5：“点 SU榜 item -> 跳转创作灵感页”
+rank_su_items_clickable: ".rank-su .rank-item"
+
