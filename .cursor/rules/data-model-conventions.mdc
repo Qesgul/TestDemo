@@ -1,0 +1,44 @@
+---
+globs: data_types/**/*.py
+description: testA 数据对象（dataclass）约定
+---
+
+# 数据对象约定（testA）
+
+## 设计原则
+
+1. **用例输入 / 期望值结构**用 `@dataclass` 定义在 `data_types/`，文件名建议 `{domain}_data_types.py`。
+2. 与 **页面 DOM 结构**强绑定的临时结构，优先放在对应 `pages/methods` 内或测试私有辅助；只有跨用例复用再提升到 `data_types/`。
+3. 字段命名使用 **snake_case**，与 YAML 键名一致，便于 `load_typed_cases_from_yaml` 直接解包。
+
+## 与 YAML 对齐
+
+参数化用例数据在对应功能的 **`tests/data/{feature}_data.yaml`** 的 `cases` 列表中；每一项字段应与 dataclass 字段一一对应；多余字段会导致构造失败，缺失字段需有默认值。
+
+## 推荐写法
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class LoginCaseData:
+    case_name: str
+    username: str
+    password: str
+    expected_message: str
+```
+
+- 需要可变或可选字段时使用 `field(default=...)` / `Optional[...]`。
+- `frozen=True` 适合纯数据用例，避免测试中误改。
+
+## 加载方式
+
+在测试中通过 `tests/steps/test_base.py`：
+
+- `load_typed_cases_from_yaml("tests/data/{feature}_data.yaml", XxxCaseData)`
+- `case_ids(cases)` 作为 `pytest.mark.parametrize` 的 `ids`
+
+## 禁止
+
+- 在 `data_types` 中引用 `Page` / `Locator` 或执行浏览器操作。
+- 在数据类中写断言逻辑（断言留在用例 + `assertion` fixture）。

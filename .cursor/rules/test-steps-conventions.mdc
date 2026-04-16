@@ -1,0 +1,72 @@
+---
+globs: tests/plans/**/*.yaml
+description: testA 用例步骤设计约定（可选 YAML，与代码用例对照；非 pytest 直接执行）
+---
+
+# 用例步骤约定（testA）
+
+## 定位说明
+
+本仓库**默认执行路径**是 `tests/cases/test_{feature}.py` + **`tests/data/{feature}_data.yaml`**（每功能单数据文件），**不**内置「YAML 驱动执行引擎」。
+
+本约定下的 **`tests/plans/*.yaml`** 用于：
+
+- 需求 / 评审阶段的**步骤说明**与用例设计归档；
+- 与已实现 pytest 用例**对照追溯**（同一功能可同名前缀，如 `login_flow` ↔ `test_login.py`）。
+
+若团队后续接入 YAML 执行器，再单独扩展，不在本文件假设运行时行为。
+
+## 目录约定
+
+```text
+tests/plans/
+├── login/
+│   └── login_smoke_tc001.yaml
+└── inspiration/
+    └── create_inspiration_flow_tc001.yaml
+```
+
+- 按业务分子目录；文件名建议 `{场景}_{类型}_tc{序号}.yaml`（全小写、下划线）。
+
+## YAML 结构（segment + steps）
+
+与「用户视角、可验证结果」一致；`test_data` 为逻辑键名，对应 **`{feature}_data.yaml`** 中 `cases` 某条或同文件内断言键（非强制解析）。
+
+```yaml
+wiki_urls: []
+test_plan: |
+  简述本计划验证的范围与前置条件（环境、账号来源等）。
+
+segments:
+  - segment: "环境准备"
+    description: "进入目标页、处理弹窗等"
+    steps:
+      - number: 1
+        action: "打开登录入口并完成登录"
+        result: "首页或业务页处于已登录可用状态"
+        test_data: "login_data.yaml / cases / valid_login"
+
+  - segment: "核心验证"
+    description: "主路径操作与断言点"
+    steps:
+      - number: 2
+        action: "执行业务主操作（从用户视角描述）"
+        result: "界面或 URL 出现可观察的预期状态"
+        test_data: "{feature}_data.yaml / expected_* 或 expectations 子键"
+
+changes: {}
+```
+
+## 编写要求
+
+1. **segment** 边界清晰：准备 → 主流程 → 清理（如需要）。
+2. **action / result** 可验收：避免「测一下」「正常」等模糊表述。
+3. **数据依赖**：先写创建/登录，再写依赖该状态的步骤；清理步骤与创建对应。
+4. **与自动化对齐**：步骤中的结果描述，应能在 `tests/cases` 中找到对应 `assertion` 或等价断言。
+
+## 质量自检清单
+
+- [ ] 每个 segment 目标单一、命名可读
+- [ ] 步骤顺序与真实用户操作顺序一致
+- [ ] `test_data` 能映射到 `tests/data/{feature}_data.yaml` 或数据说明文档
+- [ ] YAML 语法有效、UTF-8 编码

@@ -11,7 +11,8 @@ from pages.methods.publish_work_page import PublishWorkPage
 
 
 
-EXPECTED = load_yaml("tests/data/create_inspiration_flow_expected.yaml")
+_DATA = load_yaml("tests/data/create_inspiration_flow_data.yaml")
+EXPECTED = _DATA
 
 EXPECTED_SEARCH_URL = EXPECTED.get("expected_search_url")
 

@@ -1,0 +1,73 @@
+---
+alwaysApply: true
+description: testA 项目结构与导航（Playwright + pytest + POM）
+---
+
+# testA 项目结构与导航
+
+## 项目概述
+
+基于 **Python + pytest + Playwright（sync API）** 的 UI 自动化框架，采用 **Page Object**，配置集中在 `config/`，用例与数据分离在 `tests/cases` 与 `tests/data`。
+
+## 目录结构
+
+```text
+testA/
+├── common/                    # 公共能力（断言、等待、浏览器、Cookie 等）
+│   ├── assertions.py
+│   ├── browser_manager.py
+│   ├── cookie_manager.py
+│   ├── retry_utils.py
+│   ├── wait_utils.py
+│   ├── yaml_loader.py
+│   └── __init__.py
+├── config/
+│   ├── settings.yaml          # 多环境与执行相关配置
+│   └── settings.py            # 配置加载与校验（单例）
+├── data_types/                # 用例数据对象（dataclass）
+├── pages/
+│   ├── base_page.py           # 所有 Page 的基类
+│   ├── elements/              # 页面元素 YAML（与 methods 一一对应）
+│   └── methods/               # 页面对象实现（POM）
+├── tests/
+│   ├── cases/                 # pytest 用例
+│   ├── data/                  # 用例数据 YAML
+│   └── steps/
+│       └── test_base.py       # 数据加载、标签过滤、断言辅助类
+├── core/
+│   └── __init__.py            # 兼容 re-export（过渡期，新代码勿依赖）
+├── .cursor/rules/             # 自动化与项目约定（Cursor 规则）
+├── conftest.py
+├── pytest.ini
+├── test_suite.yaml            # run_suite 分组/标签调度
+├── run_suite.py
+├── requirements.txt
+└── README.md
+```
+
+## 技术栈
+
+- pytest、pytest-playwright（`page` fixture）
+- Playwright sync API
+- PyYAML
+- allure-pytest、pytest-xdist（可选）
+
+## 核心入口
+
+| 用途 | 路径 |
+|------|------|
+| 页面基类 | `pages/base_page.py` |
+| 用例数据加载 / 断言辅助 | `tests/steps/test_base.py` |
+| 全局 fixture、诊断断言 | `conftest.py` |
+| 统一配置 | `config/settings.py` + `config/settings.yaml` |
+| 套件执行 | `run_suite.py` + `test_suite.yaml` |
+
+## 新代码放置约定（摘要）
+
+- 新页面：`pages/elements/{name}_elements.yaml` + `pages/methods/{name}_page.py`
+- 新用例：`tests/cases/test_{feature}.py`
+- 测试数据：`tests/data/{feature}_data.yaml`（与 `test_{feature}.py` 一一对应，单文件含执行与断言数据），详见 `test-data-conventions.mdc`
+- 新数据类型：`data_types/{domain}_data_types.py`
+- 新公共工具：`common/{tool}.py` 并在 `common/__init__.py` 导出
+
+细则见同目录下 **`testcase-generation.mdc`（总索引）** 及 `pageobject-conventions.mdc`、`test-data-conventions.mdc`、`test-suite-conventions.mdc`、`test-steps-conventions.mdc` 等。

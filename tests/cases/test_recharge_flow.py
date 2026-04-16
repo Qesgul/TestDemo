@@ -9,10 +9,6 @@
 5. 获取并记录对应充值弹窗信息
 """
 import pytest
-import json
-from typing import Dict, List
-
-from redis.commands.json import JSON
 
 from data_types.test_data_types import LoginCaseData
 from pages.methods.login_page import LoginPage
@@ -20,7 +16,7 @@ from pages.methods.model_detail_page import ModelDetailPage
 from tests.steps.test_base import load_typed_cases_from_yaml, case_ids
 
 
-LOGIN_CASES = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
+LOGIN_CASES = load_typed_cases_from_yaml("tests/data/recharge_flow_data.yaml", LoginCaseData)
 LOGIN_CASE_IDS = case_ids(LOGIN_CASES)
 
 if not LOGIN_CASES:
@@ -37,7 +33,7 @@ class TestRechargeFlow:
     @pytest.mark.core
     @pytest.mark.ui
     @pytest.mark.popup
-    def test_recharge_modal_info_with_mock(self, case_data, page, assertion):
+    def test_recharge_modal_info_with_mock(self, case_data, page):
         """
         充值弹窗信息获取测试用例 - 带接口mock
 
@@ -73,9 +69,6 @@ class TestRechargeFlow:
         # 创建model_page实例用于点击按钮
         model_page = ModelDetailPage(page)
 
-        # 存储所有测试结果
-        all_results = {}
-
         # 先测试单个data值验证流程
         print(f"\n{'='*70}")
         print(f"先测试单个data值验证流程")
@@ -104,8 +97,7 @@ class TestRechargeFlow:
             modal_visible = model_page.is_recharge_modal_visible()
             print(f"充值弹窗可见性: {modal_visible}")
 
-            recharge_result = model_page.get_recharge_packages()
-            all_results[f"data_{data_value}_recharge"] = recharge_result
+            model_page.get_recharge_packages()
             #
             # # 关闭弹窗
             # model_page.close_recharge_modal()
@@ -137,9 +129,7 @@ class TestRechargeFlow:
 
         # 保存所有结果到文件
         print(f"\n{'='*70}")
-        print(f"✅ 测试完成，结果如下：" + json.dumps(all_results, ensure_ascii=False))
+        print(f"✅ 测试完成")
         print(f"{'='*70}")
-
-
 
 

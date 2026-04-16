@@ -8,6 +8,12 @@
 - allure-pytest
 - pytest-xdist（并发执行）
 
+## Cursor 索引（.cursorignore）
+
+仓库根目录的 **`.cursorignore`** 供 **Cursor** 在索引/检索时忽略大目录与生成物（如 `__pycache__`、`.pytest_cache`、`allure-results`、`diagnostic_reports`、Cookie 落盘等），与 **`.gitignore`** 互补：前者优化 IDE，后者控制 Git。
+
+无需额外开关；保存文件后 Cursor 会按规则生效。若需索引某类被忽略的文件，可在 `.cursorignore` 中删除对应行或使用否定模式（如已提供的 `!.env.example`）。
+
 ## 目录结构
 ```text
 .
@@ -323,7 +329,10 @@ python run_suite.py --tags popup ui --dist-mode class
 ## 示例说明
 
 ### 测试数据
-`tests/data/login_data.yaml`：
+每个 `tests/cases/test_{feature}.py` 对应 **`tests/data/{feature}_data.yaml`**（单文件同时放参数化 `cases` 与流程/断言字段，勿再拆 `*_expected.yaml`）。
+
+`tests/data/login_data.yaml` 示例：
+
 ```yaml
 cases:
   - case_name: "valid_login"
@@ -347,11 +356,14 @@ class TestLogin:
     @pytest.mark.parametrize("case_data", LOGIN_CASES, ids=LOGIN_CASE_IDS)
     @pytest.mark.core
     @pytest.mark.main
-    def test_login_success(self, case_data):
-        login_page = LoginPage()
+    def test_login_success(self, case_data, page, assertion):
+        login_page = LoginPage(page)
         login_page.goto_login_page()
         login_page.login_with(case_data.username, case_data.password)
-        assert login_page.page.url != "https://www.znzmo.com/?from=personalCenter"
+        assertion.assert_true(
+            login_page.page.url != "https://www.znzmo.com/?from=personalCenter",
+            message="登录后 URL 未发生预期变化",
+        )
 ```
 
 ## Cookie 快捷登录
@@ -376,7 +388,7 @@ CookieManager 提供智能的 Cookie 管理和快捷登录功能：
 
 1. **Page 先行**：先建 `pages/elements/*.yaml` 与 `pages/methods/*_page.py`，再写 `tests/cases/*`
 2. **元素读取统一**：页面内通过 `self.get_locator("yaml_key")` 读取，不硬编码选择器
-3. **数据与断言分离**：期望值尽量放在 `tests/data/*.yaml`，步骤中避免写死
+3. **数据与断言分离**：期望值放在与用例同名的 **`tests/data/{feature}_data.yaml`**，步骤中避免写死
 4. **数据对象归位**：参数化对象统一放 `data_types/`
 5. **公共方法归位**：可复用工具统一放 `common/` 并在 `common/__init__.py` 导出
 

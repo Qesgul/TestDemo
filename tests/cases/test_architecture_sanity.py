@@ -2,8 +2,10 @@
 """
 简单的架构验证测试，专门用于测试我们的代码逻辑，而不需要真实网页元素
 """
+from pathlib import Path
+
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from data_types.test_data_types import LoginCaseData
 from common.browser_manager import BrowserManager
 from common.cookie_manager import CookieManager
@@ -100,6 +102,50 @@ def test_core_components_import_path():
     print("✅ BrowserManager 来自 common.browser_manager")
     print("✅ CookieManager 来自 common.cookie_manager")
     print("✅ BasePage 来自 pages.base_page")
+
+
+def test_per_feature_data_yaml_convention():
+    """
+    校验「tests/cases/test_{feature}.py」对应的 tests/data/{feature}_data.yaml 存在且可加载。
+    """
+    print("\n=== 测试各功能数据文件约定（{feature}_data.yaml）===")
+
+    login_typed_paths = (
+        "tests/data/login_data.yaml",
+        "tests/data/recharge_flow_data.yaml",
+    )
+    for rel in login_typed_paths:
+        path = Path(rel)
+        if not path.is_file():
+            pytest.fail(f"❌ 缺少数据文件: {rel}")
+        cases = load_typed_cases_from_yaml(rel, LoginCaseData)
+        if not cases:
+            pytest.fail(f"❌ {rel} 未解析到任何 cases（LoginCaseData）")
+        first = cases[0]
+        for field in ("case_name", "username", "password", "expected_message"):
+            if not hasattr(first, field):
+                pytest.fail(f"❌ {rel} 首条 case 缺少字段: {field}")
+        print(f"✅ {rel} 存在且 cases 可转为 LoginCaseData（{len(cases)} 条）")
+
+    inspiration_path = Path("tests/data/create_inspiration_flow_data.yaml")
+    if not inspiration_path.is_file():
+        pytest.fail("❌ 缺少数据文件: tests/data/create_inspiration_flow_data.yaml")
+
+    from common.yaml_loader import load_yaml
+
+    raw = load_yaml("tests/data/create_inspiration_flow_data.yaml")
+    if not isinstance(raw, dict) or not raw:
+        pytest.fail("❌ create_inspiration_flow_data.yaml 应为非空字典")
+    for key in ("username", "password"):
+        if key not in raw or not raw[key]:
+            pytest.fail(f"❌ create_inspiration_flow_data.yaml 缺少或非空: {key}")
+    expected_keys = [k for k in raw if k.startswith("expected_")]
+    if not expected_keys:
+        pytest.fail("❌ create_inspiration_flow_data.yaml 应至少包含一个 expected_* 断言键")
+    print(
+        f"✅ tests/data/create_inspiration_flow_data.yaml 存在且含账号与断言键 "
+        f"（{len(expected_keys)} 个 expected_*）"
+    )
 
 
 def test_data_tag_filtering():
@@ -210,6 +256,7 @@ if __name__ == "__main__":
 
     test_login_page_architecture()
     test_data_loading_and_typing()
+    test_per_feature_data_yaml_convention()
     test_data_tag_filtering()
     test_assertion_helper()
     test_login_case_data()

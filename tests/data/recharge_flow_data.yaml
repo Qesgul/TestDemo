@@ -1,6 +1,7 @@
-# 登录相关用例数据（与 tests/cases/test_login.py 等同 feature 对应）
+# 充值流程用例数据（与 tests/cases/test_recharge_flow.py 对应；含登录参数化 cases）
 cases:
   - case_name: "valid_login"
     username: "17768100279"
     password: "Qyff2011"
     expected_message: "登录成功"
+

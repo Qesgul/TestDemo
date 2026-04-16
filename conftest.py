@@ -4,6 +4,7 @@ import pytest
 
 from common.browser_manager import BrowserManager
 from common.assertions import create_assertion, enable_diagnostics, disable_diagnostics
+from tests.steps.test_base import assertion_helper
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "no_diagnostics: 禁用诊断信息捕获"
     )
-
     # 检查 pytest-xdist 兼容性
     if config.pluginmanager.hasplugin("xdist"):
         # 设置 xdist 插件配置，避免共享资源竞争问题

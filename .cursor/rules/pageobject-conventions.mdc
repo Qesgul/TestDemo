@@ -1,0 +1,59 @@
+---
+globs: pages/**/*.py
+description: testA PageObject 与元素 YAML 约定
+---
+
+# PageObject 约定（testA）
+
+## 核心原则
+
+- 页面操作封装在 `pages/methods/{page_name}_page.py`。
+- 选择器只定义在 `pages/elements/{page_name}_elements.yaml`，**不在 Page 方法内硬编码** CSS/XPath（兜底场景须注释说明原因并尽量收敛）。
+- 所有业务 Page **继承** `pages/base_page.py` 中的 `BasePage`。
+
+## 类与文件命名
+
+| 类型 | 命名 |
+|------|------|
+| 页面类 | `{Feature}Page`，如 `LoginPage` |
+| 元素文件 | `{page_name}_elements.yaml`，与 `{page_name}_page.py` 对应 |
+| 页面模块文件 | `{page_name}_page.py`，小写 + 下划线 |
+
+## 构造函数
+
+```python
+from typing import Optional
+from playwright.sync_api import Page
+from pages.base_page import BasePage
+
+class ExamplePage(BasePage):
+    def __init__(self, page: Optional[Page] = None, auto_close_popups: bool = False) -> None:
+        super().__init__(
+            page=page,
+            elements_yaml_path="pages/elements/example_page_elements.yaml",
+            auto_close_popups=auto_close_popups,
+        )
+```
+
+## 元素访问
+
+- 统一使用：`self.get_locator("yaml中的键名")`。
+- 需要 `.first` / `.nth(i)` 时在业务方法中链式调用，键名仍来自 YAML。
+- 不为「仅用一两次」的定位单独封装成 `def xxx_input(self)` 之类方法；**高频复用**再考虑封装。
+
+## 方法分层（与 BasePage 对齐）
+
+建议按注释区块组织：
+
+1. **页面导航**：`goto_*`、`open_*`
+2. **业务操作**：点击、填写、切换 Tab 等
+3. **状态查询**：`is_*`、`get_*`（返回 bool / str / int 等，不做断言）
+
+## 等待与稳定性
+
+- 优先使用 Playwright **auto-wait**（`click`/`fill`/`wait_for`），避免无意义固定 `sleep`。
+- 需要等待页面状态时，使用 `self.wait`（`WaitUtils`）或 `self.page.wait_for_load_state`，与 `BasePage.goto` 的 `wait_state` 约定一致。
+
+## 跨页面
+
+- 单个 Page 类只负责**当前页面**；跳转到其他页面应返回新 Page 或由用例持有下一页的 `Page` 并构造对应 Page 对象。

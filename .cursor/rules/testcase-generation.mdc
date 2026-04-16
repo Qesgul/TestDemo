@@ -1,46 +1,34 @@
 ---
-description: testA 自动化用例生成标准
+description: testA 自动化生成约定总览（.cursor/rules 分包索引）
 globs:
   - "tests/**/*.py"
   - "pages/**/*.py"
+  - "tests/**/*.yaml"
+  - "data_types/**/*.py"
 alwaysApply: true
 ---
 
-# 自动化用例生成标准（testA）
+# 自动化用例生成约定（testA）— 总览
 
-## 1) 文件存放规范
-- 页面元素 YAML 放在 `pages/elements/{page_name}_elements.yaml`
-- 页面对象类放在 `pages/methods/{page_name}_page.py`
-- 页面基类统一使用 `pages/base_page.py`
-- 公共方法统一放在 `common/`
-- 数据对象放在 `data_types/`
-- 测试用例放在 `tests/cases/test_{feature}.py`
-- 测试数据放在 `tests/data/{feature}_data.yaml` 或 `{feature}_expected.yaml`
+生成或扩展 UI 自动化时，按下列文档分角色阅读；**目录与命名以本文件为纲**，细则见各子文件。
 
-## 2) Page 先行原则
-- 新增自动化功能时，必须先创建 Page 与 elements YAML，再写测试用例。
-- Page 内选择器必须通过 `self.get_locator("yaml_key")` 读取，不在方法里硬编码 CSS/XPath。
-- Page 结构对齐 `pages/base_page.py`：导航方法、业务操作方法、状态查询方法分层清晰。
+| 文档 | 内容 |
+|------|------|
+| [project-structure.mdc](project-structure.mdc) | 仓库目录、技术栈、新代码放置摘要 |
+| [pageobject-conventions.mdc](pageobject-conventions.mdc) | Page + elements YAML、`BasePage`、分层与等待 |
+| [data-model-conventions.mdc](data-model-conventions.mdc) | `data_types` dataclass 与 YAML 字段对齐 |
+| [test-data-conventions.mdc](test-data-conventions.mdc) | 每功能 `tests/data/{feature}_data.yaml`（执行 + 断言数据合一） |
+| [test-suite-conventions.mdc](test-suite-conventions.mdc) | `tests/cases`、`page`/`assertion`、参数化模板 |
+| [test-steps-conventions.mdc](test-steps-conventions.mdc) | 可选 `tests/plans` 步骤 YAML（设计/对照用） |
 
-## 3) 公共能力归位
-- `BrowserManager` 使用 `common/browser_manager.py`
-- `CookieManager` 使用 `common/cookie_manager.py`
-- 新增可复用工具必须放 `common/`，并在 `common/__init__.py` 导出。
+## 强制顺序（新功能）
 
-## 4) 配置扩展规范
-- 新配置先加到 `config/settings.yaml`
-- 再在 `config/settings.py` 增加读取和校验逻辑
-- 优先级遵循：环境变量 > 配置文件（现有实现）
+1. `pages/elements/{page}_elements.yaml`
+2. `pages/methods/{page}_page.py`（继承 `pages/base_page.py`，`get_locator` 取元素）
+3. `data_types/`（若参数化）
+4. `tests/data/{feature}_data.yaml`（与 `test_{feature}.py` 同名；单文件含 cases 与断言预期）
+5. `tests/cases/test_*.py`
 
-## 5) 数据与断言规范
-- 测试步骤中的断言期望值尽量来自 `tests/data/`，避免写死在用例代码中。
-- 参数化场景使用 `tests/steps/test_base.py` 的：
-  - `load_typed_cases_from_yaml`
-  - `case_ids`
-- 测试数据对象使用 `@dataclass` 定义于 `data_types/`。
+## 规则位置
 
-## 6) 用例模板约束
-- 用例入口统一使用 pytest 的 `page` 和 `assertion` fixture
-- 推荐模板：
-  - 加载数据 -> 初始化 Page -> 执行业务动作 -> 基于数据断言
-- 避免在步骤中定义业务常量，业务常量应沉淀到 YAML 数据文件。
+约定文档**仅**维护在 **`.cursor/rules/`**（本文件为总索引）；与 `README.md` 冲突时以仓库实际代码与 README 为准。

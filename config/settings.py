@@ -382,7 +382,6 @@ class Config:
             self._allure = AllureConfig(self._config.get("allure", {}))
         return self._allure
 
-
 # 创建单例实例
 config = Config()
 

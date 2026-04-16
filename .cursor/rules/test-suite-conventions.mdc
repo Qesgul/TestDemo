@@ -1,0 +1,85 @@
+---
+globs: tests/cases/**/*.py
+description: testA 测试套件与用例编写约定（pytest + Playwright + test_base + 诊断断言）
+---
+
+# 测试套件约定（testA）
+
+## 核心架构
+
+- **用例位置**：`tests/cases/`，文件名 `test_{feature}.py`，类名 `Test*`，方法名 `test_*`（与 `pytest.ini` 一致）。
+- **浏览器页**：统一使用 pytest-playwright 的 **`page` fixture**，构造 Page 时**必须传入** `LoginPage(page)` 等，避免与 `BrowserManager.get_default_page()` 双轨。
+- **断言**：优先使用 `conftest.py` 提供的 **`assertion` fixture**（`common/assertions.py` 的 `DiagnosticAssertion`），失败可落盘诊断产物。
+- **数据驱动**：参数化数据用 `tests/steps/test_base.py` 中的 `load_typed_cases_from_yaml`、`case_ids`，数据类型在 `data_types/`。
+
+## pytest 标记（与 `pytest.ini` 对齐）
+
+| 标记 | 含义 |
+|------|------|
+| `quick` | 快速检查 |
+| `smoke` | 冒烟 |
+| `core` | 核心功能 |
+| `main` | 主流程 |
+| `popup` | 弹框相关 |
+| `ui` | 界面元素 |
+| `flaky` | 不稳定用例（配合重试策略） |
+| `no_diagnostics` | 禁用诊断捕获 |
+
+示例：
+
+```python
+import pytest
+
+@pytest.mark.smoke
+@pytest.mark.ui
+def test_example(page, assertion):
+    ...
+```
+
+## Fixtures 约定
+
+- **`page`**：当前用例的 Playwright `Page`，不要自行 `sync_playwright()` 除非封装在 `common/` 且可复用。
+- **`assertion`**：诊断断言对象，常用：`assertion.assert_true(cond, message)`、`assertion.assert_equal(a, b, message)` 等。
+- 会话级浏览器回收见 **`conftest.py`** 中 `browser_lifecycle`（`BrowserManager.shutdown()`）。
+
+## 参数化用例模板
+
+```python
+import pytest
+from data_types.test_data_types import LoginCaseData
+from pages.methods.login_page import LoginPage
+from tests.steps.test_base import load_typed_cases_from_yaml, case_ids
+
+CASES = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
+CASE_IDS = case_ids(CASES)
+
+if not CASES:
+    pytest.skip("未匹配到可执行数据", allow_module_level=True)
+
+
+class TestLogin:
+    @pytest.mark.parametrize("case_data", CASES, ids=CASE_IDS)
+    @pytest.mark.core
+    def test_login_success(self, case_data, page, assertion):
+        login_page = LoginPage(page)
+        login_page.goto_login_page()
+        login_page.login_with(case_data.username, case_data.password)
+        assertion.assert_true(
+            login_page.page.url != "https://www.znzmo.com/?from=personalCenter",
+            message="登录后 URL 未发生预期变化",
+        )
+```
+
+## 非参数化流程用例
+
+- 预期、账号等与 **`tests/cases/test_{feature}.py`** 同名的 **`tests/data/{feature}_data.yaml`** 中维护；用例内 `load_yaml` / `load_typed_cases_from_yaml` 只读该文件，避免魔法字符串。
+
+## 执行入口
+
+- **本地 / CI 直接 pytest**：遵循 `pytest.ini` 的 `testpaths = tests/cases`。
+- **分组 / 标签批量跑**：`run_suite.py` + `test_suite.yaml`（与 `config/settings.yaml` 中的执行配置配合）。
+
+## 禁止
+
+- 在用例文件中硬编码大量选择器（应下沉到 `pages/elements/*.yaml`）。
+- 在用例中写与 `data_types` 字段不一致的 YAML 结构（会导致 `load_typed_cases_from_yaml` 构造失败）。

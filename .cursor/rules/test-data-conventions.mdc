@@ -1,0 +1,68 @@
+---
+globs: tests/data/**/*_data.yaml
+description: testA 测试数据约定（每功能单文件 {feature}_data.yaml）
+---
+
+# 测试数据约定（testA）
+
+## 一文件一功能
+
+每个 `tests/cases/test_{feature}.py` 对应**唯一**数据文件 **`tests/data/{feature}_data.yaml`**。
+
+- **禁止**为同一功能再拆多个 YAML（例如单独的 `*_expected.yaml`）；执行数据、参数化 `cases`、断言预期等均写入该 `{feature}_data.yaml`。
+- 用例只读取本功能对应路径下的上述文件（`load_yaml` / `load_typed_cases_from_yaml`）。
+
+## 门禁自检
+
+`tests/cases/test_architecture_sanity.py` 中的 **`test_per_feature_data_yaml_convention`** 会校验：`login_data.yaml`、`recharge_flow_data.yaml` 存在且 `cases` 可解析为 `LoginCaseData`；`create_inspiration_flow_data.yaml` 存在且含 `username` / `password` 与至少一个 `expected_*` 键。新增同类流程时可在该测试中扩展路径列表。
+
+## 文件内结构（推荐）
+
+### 参数化（与 `test_base.load_typed_cases_from_yaml` 一致）
+
+根键 **`cases`**，列表元素字段与 `data_types` 中 dataclass 一致：
+
+```yaml
+cases:
+  - case_name: "valid_login"
+    username: "example_user"
+    password: "example_pass"
+    expected_message: "登录成功"
+    tags: []   # 可选；与 settings.execution.tags 做交集过滤
+```
+
+### 流程 / 断言预期
+
+与 `cases` **同文件**：可根级平铺键（账号、`expected_*` 等），或使用 `expectations` 子对象集中存放；用例内 `load_yaml` 后按约定路径取用。
+
+```yaml
+cases: []
+username: "example_user"
+password: "example_pass"
+expected_url: "https://example.com/path"
+```
+
+## 读取示例
+
+```python
+from tests.steps.test_base import load_typed_cases_from_yaml, case_ids
+
+CASES = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
+```
+
+```python
+from common.yaml_loader import load_yaml
+
+data = load_yaml("tests/data/create_inspiration_flow_data.yaml")
+# data["expected_*"] 或 data["expectations"]["..."]，与文件内结构一致
+```
+
+## 数据与断言
+
+- **期望值、阈值、文案**优先写在本功能的 `{feature}_data.yaml`。
+- 用例中只做「读对应 `{feature}_data.yaml` → 调 Page → 断言」，避免写死魔法字符串。
+
+## YAML 质量
+
+- UTF-8；含特殊字符的字符串建议加引号。
+- 大段 JSON 字符串若不可避免，在文件头或该键上方用注释说明维护方式。
