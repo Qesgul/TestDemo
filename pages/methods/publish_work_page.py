@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from playwright.sync_api import Page
 
 from pages.base_page import BasePage
@@ -16,12 +14,12 @@ class PublishWorkPage(BasePage):
 
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False,
     ) -> None:
         super().__init__(
             page=page,
-            elements_yaml_path="pages/elements/sql.yaml",
+            elements_yaml_path="pages/elements/publish_work_elements.yaml",
             auto_close_popups=auto_close_popups,
         )
 

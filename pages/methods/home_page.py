@@ -1,11 +1,12 @@
 """
 首页类 - 提供首页相关操作
 """
-from typing import Optional
+from typing import List
 
 from playwright.sync_api import Locator
 from playwright.sync_api import Page
 
+from pages.base_page import PopupStrategy
 from pages.base_page import BasePage
 
 
@@ -13,7 +14,7 @@ class HomePage(BasePage):
     """首页类 - 知末网首页"""
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False
     ) -> None:
         """
@@ -22,6 +23,15 @@ class HomePage(BasePage):
         :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False
         """
         super().__init__(page, "pages/elements/home_page_elements.yaml", auto_close_popups)
+
+    def extra_popup_strategies(self) -> List[PopupStrategy]:
+        return [
+            PopupStrategy(
+                name="homepage_generic_dialog_close",
+                trigger_selector=".ant-modal, .modal, .popup, [role='dialog']",
+                close_selector=".ant-modal-close, .close-btn, [class*='closeIcon']",
+            ),
+        ]
 
     # ===== 页面操作方法 =====
     def goto_homepage(self, url: str = "https://www.znzmo.com/?from=personalCenter") -> None:

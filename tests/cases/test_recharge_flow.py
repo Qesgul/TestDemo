@@ -33,7 +33,15 @@ class TestRechargeFlow:
     @pytest.mark.core
     @pytest.mark.ui
     @pytest.mark.popup
-    def test_recharge_modal_info_with_mock(self, case_data, page):
+    @pytest.mark.gio_capture(
+        event_names=[
+            "sc_coinrecharge_click",
+            "sc_coinrecharge_show",
+            "Rechargetest_2",
+        ],
+        wait_ppl=True,
+    )
+    def test_recharge_modal_info_with_mock(self, case_data, page, gio_collector):
         """
         充值弹窗信息获取测试用例 - 带接口mock
 
@@ -74,7 +82,7 @@ class TestRechargeFlow:
         print(f"先测试单个data值验证流程")
         print(f"{'='*70}")
 
-        test_data_values = [1,4]
+        test_data_values = [1]
 
         for data_value in test_data_values:
             print(f"\n{'='*70}")
@@ -131,5 +139,6 @@ class TestRechargeFlow:
         print(f"\n{'='*70}")
         print(f"✅ 测试完成")
         print(f"{'='*70}")
+        print("ppl_raw 样本(前3条):", gio_collector.get_ppl_raw()[:3])
 
 

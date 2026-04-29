@@ -6,12 +6,13 @@
 2. 纯密码登录：跳过 cookie，直接走账号密码流程
 """
 import logging
-from typing import Optional
+from typing import List
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
+from pages.base_page import PopupStrategy
 from pages.base_page import BasePage
 from common.cookie_manager import CookieManager
 
@@ -24,10 +25,19 @@ class LoginPage(BasePage):
     """登录页面类 - 知末网登录功能"""
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False
     ) -> None:
         super().__init__(page, "pages/elements/login_page_elements.yaml", auto_close_popups)
+
+    def extra_popup_strategies(self) -> List[PopupStrategy]:
+        return [
+            PopupStrategy(
+                name="login_specific_close_icon",
+                trigger_selector=".ant-modal, .modal, .popup, [role='dialog']",
+                close_selector='[class*="closeIcon"], [class*="close-icon"]',
+            ),
+        ]
 
     # ===== 页面导航 =====
     def goto_login_page(self, url: str = "https://www.znzmo.com/?from=personalCenter") -> None:

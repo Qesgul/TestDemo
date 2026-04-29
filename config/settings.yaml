@@ -1,16 +1,11 @@
 execution:
   env: "dev"
   tags: []
-  # 执行模式配置
-  default_mode: "group"
-  default_group: "核心功能"
-  default_tags: []
-  # 并发执行配置
+  default_suite: "core"
   parallel:
     enabled: true
     workers: 2
     dist_mode: "file"
-  # 失败重试配置
   retry:
     enabled: true
     max_reruns: 2
@@ -20,7 +15,6 @@ execution:
 paths:
   cookie_dir: "common"
 
-# 报告配置
 allure:
   enabled: true
   results_dir: "allure-results"
@@ -29,7 +23,6 @@ allure:
   open_report: true
   report_title: "知末网自动化测试报告"
 
-# 多环境配置
 environments:
   dev:
     base_url: "https://www.znzmo.com/?from=personalCenter"

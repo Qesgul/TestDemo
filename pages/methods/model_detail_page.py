@@ -1,7 +1,7 @@
 """
 3D模型详情页 - 提供模型详情页相关操作和充值弹窗处理
 """
-from typing import Optional, List, Dict
+from typing import List, Dict
 from playwright.sync_api import Locator, Page
 
 from pages.base_page import BasePage
@@ -34,7 +34,7 @@ class ModelDetailPage(BasePage):
     """3D模型详情页类 - 知末网3D模型详情页"""
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False
     ) -> None:
         """

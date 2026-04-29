@@ -1,43 +1,29 @@
-# 知末网自动化测试套件配置
+default_suite: core
 
-# 测试分组配置 - 仅包含分组和标签执行相关的配置
-groups:
-  - name: "快速检查"
-    description: "快速验证关键功能"
+suites:
+  - id: smoke
+    name: 快速检查
+    description: 最短路径回归
+    aliases: ["快速检查"]
     tags: ["quick", "smoke"]
     cases:
-      - file: "tests/cases/test_check_popup.py"
-        case: "TestPopupDefaultDisplay::test_homepage_popup_default_display"
+      - tests/cases/test_check_popup.py::TestPopupDefaultDisplay::test_homepage_popup_default_display
 
-  - name: "核心功能"
-    description: "运行核心业务功能测试"
+  - id: core
+    name: 核心功能
+    description: 主业务回归
+    aliases: ["核心功能"]
     tags: ["core", "main"]
     cases:
-      - file: "tests/cases/test_homepage.py"
-        case: "TestHomePage::test_homepage_elements_displayed"
-      - file: "tests/cases/test_login.py"
-        case: "TestLogin::test_login_success"
-      - file: "tests/cases/test_check_popup.py"
-        case: "TestPopupDefaultDisplay::test_homepage_popup_default_display"
+      - tests/cases/test_homepage.py::TestHomePage::test_homepage_elements_displayed
+      - tests/cases/test_login.py::TestLogin::test_login_success
+      - tests/cases/test_check_popup.py::TestPopupDefaultDisplay::test_homepage_popup_default_display
 
-  - name: "弹框专项"
-    description: "弹框相关所有测试"
+  - id: popup
+    name: 弹窗专项
+    description: 弹窗相关测试集合
+    aliases: ["弹窗专项"]
     tags: ["popup", "ui"]
     cases:
-      - file: "tests/cases/test_check_popup.py"
-      - file: "tests/cases/test_popup_handling.py"
-
-# 标签配置（供测试用例使用）
-available_tags:
-  - name: "quick"
-    description: "快速检查用例，执行时间短"
-  - name: "smoke"
-    description: "冒烟测试用例"
-  - name: "core"
-    description: "核心功能用例"
-  - name: "main"
-    description: "主要业务流程"
-  - name: "popup"
-    description: "弹框相关测试"
-  - name: "ui"
-    description: "界面元素测试"
+      - tests/cases/test_check_popup.py
+      - tests/cases/test_popup_handling.py

@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
 from playwright.sync_api import Page
 
-from pages.base_page import BasePage
+from pages.base_page import BasePage, PopupStrategy
 
 
 class CreativeCenterPage(BasePage):
@@ -16,7 +16,7 @@ class CreativeCenterPage(BasePage):
 
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False,
     ) -> None:
         super().__init__(
@@ -24,6 +24,15 @@ class CreativeCenterPage(BasePage):
             elements_yaml_path="pages/elements/creative_center_elements.yaml",
             auto_close_popups=auto_close_popups,
         )
+
+    def extra_popup_strategies(self) -> List[PopupStrategy]:
+        return [
+            PopupStrategy(
+                name="creative_center_close_icon",
+                trigger_selector=".ant-modal, .modal, .popup, [role='dialog']",
+                close_selector=".ant-modal-close, .close-btn, [class*='closeIcon']",
+            ),
+        ]
 
     def _safe_get_texts(self, locator, max_items: int = 5) -> List[str]:
         try:

@@ -20,6 +20,7 @@ from common.retry_utils import (
 from common.wait_utils import WaitUtils
 from common.browser_manager import BrowserManager
 from common.cookie_manager import CookieManager
+from common.gio_collector import GioCollector
 
 __all__ = [
     "load_yaml",
@@ -41,4 +42,5 @@ __all__ = [
     # 浏览器与cookie
     "BrowserManager",
     "CookieManager",
+    "GioCollector",
 ]

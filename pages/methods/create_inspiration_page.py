@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
 from playwright.sync_api import Page
 
@@ -16,7 +16,7 @@ class CreateInspirationPage(BasePage):
 
     def __init__(
         self,
-        page: Optional[Page] = None,
+        page: Page,
         auto_close_popups: bool = False,
     ) -> None:
         super().__init__(
