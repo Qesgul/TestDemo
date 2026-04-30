@@ -87,7 +87,11 @@ class CreativeCenterPage(BasePage):
             # 若 URL 不变化，后续榜单校验会给出更明确失败点
             pass
 
-        self.wait.wait_for_timeout(2000)
+        # 等待 URL 或内容稳定，而不是盲等
+        try:
+            self.wait.wait_for_url(r"regex:.*creatorCenter.*", timeout=5)
+        except Exception:
+            self.wait.wait_for_timeout(500)
 
 
     def get_rank_3d_default_items_texts(self, max_items: int = 5) -> List[str]:
@@ -135,14 +139,12 @@ class CreativeCenterPage(BasePage):
         btn = self.get_locator("rank_go_create_button").first
         btn.wait_for(state="visible", timeout=5000)
         btn.click(force=True)
-        self.wait.wait_for_timeout(3000)
+        self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 
     def click_su_rank_item(self, index: int = 0) -> None:
-        """点击 SU榜 item，进入创作灵感页"""
-
-        items = self.get_locator("rank_su_items").first
-        if items.is_visible():
-           items.click(force=True)
-
-        self.wait.wait_for_timeout(3000)
+        """点击 SU榜 第 index 个 item，进入创作灵感页"""
+        item = self.get_locator("rank_su_items").nth(index)
+        if item.is_visible():
+            item.click(force=True)
+        self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 

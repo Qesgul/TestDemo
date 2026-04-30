@@ -33,15 +33,7 @@ class TestRechargeFlow:
     @pytest.mark.core
     @pytest.mark.ui
     @pytest.mark.popup
-    @pytest.mark.gio_capture(
-        event_names=[
-            "sc_coinrecharge_click",
-            "sc_coinrecharge_show",
-            "Rechargetest_2",
-        ],
-        wait_ppl=True,
-    )
-    def test_recharge_modal_info_with_mock(self, case_data, page, gio_collector):
+    def test_recharge_modal_info_with_mock(self, case_data, page):
         """
         充值弹窗信息获取测试用例 - 带接口mock
 
@@ -104,8 +96,10 @@ class TestRechargeFlow:
             # 检查弹窗是否可见
             modal_visible = model_page.is_recharge_modal_visible()
             print(f"充值弹窗可见性: {modal_visible}")
+            assert modal_visible, "充值弹窗未显示"
 
-            model_page.get_recharge_packages()
+            packages = model_page.get_recharge_packages()
+            assert packages is not None, "未获取到充值套餐数据"
             #
             # # 关闭弹窗
             # model_page.close_recharge_modal()
@@ -139,6 +133,5 @@ class TestRechargeFlow:
         print(f"\n{'='*70}")
         print(f"✅ 测试完成")
         print(f"{'='*70}")
-        print("ppl_raw 样本(前3条):", gio_collector.get_ppl_raw()[:3])
 
 

@@ -250,8 +250,7 @@ class SuiteRunner:
         print(f"Running suite: {self._require_suite(selector).id}")
         print(f"Command: {' '.join(command)}")
         process = subprocess.run(command, env=env)
-        if process.returncode == 0:
-            self.generate_allure_report(allure_enabled=allure_enabled)
+        self.generate_allure_report(allure_enabled=allure_enabled)
         return process.returncode
 
     def generate_allure_report(self, *, allure_enabled: Optional[bool] = None) -> None:

@@ -3,10 +3,14 @@ Cookie storage and reuse helpers for login flows.
 """
 
 import json
+import logging
 import os
+import stat
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 from playwright.sync_api import BrowserContext, Page
 
@@ -50,11 +54,12 @@ class CookieManager:
             "cookies": context.cookies(),
         }
 
-        cls._cookie_dir().mkdir(parents=True, exist_ok=True)
+        cls._cookie_dir().mkdir(parents=True, exist_ok=True, mode=0o700)
         filename = cls._get_cookie_filename(account_identifier, env)
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(cookie_data, f, ensure_ascii=False, indent=2, default=str)
+            os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR)
         except Exception as e:
             raise RuntimeError(f"Failed to save cookies: {e}") from e
 
@@ -164,7 +169,8 @@ class CookieManager:
                 for cookie in processed_cookies:
                     try:
                         context.add_cookies([cookie])
-                    except Exception:
+                    except Exception as e:
+                        logger.warning("注入 cookie '%s' 失败: %s", cookie.get("name"), e)
                         continue
 
     @classmethod
@@ -187,8 +193,8 @@ class CookieManager:
                 cls.set_cookies_to_context(context, cookie_data)
                 page.reload()
                 return page
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Cookie 恢复失败，回退至重新登录（account=%s）: %s", account_identifier, e)
 
         login_func(page)
         cls.save_cookies(account_identifier, context, env)
@@ -215,8 +221,8 @@ class CookieManager:
                 cls.set_cookies_to_context(context, cookie_data)
                 page.reload()
                 return page
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Cookie 恢复失败，回退至重新登录（account=%s）: %s", account_identifier, e)
 
         login_func(page)
         cls.save_cookies(account_identifier, context, env)

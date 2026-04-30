@@ -17,12 +17,9 @@ logger = logging.getLogger(__name__)
 class DiagnosticAssertion:
     """诊断性断言类 - 在断言失败时自动捕获诊断信息"""
 
-    # 诊断信息输出目录
+    # 类级共享配置（只读取，不在实例间共享计数）
     diagnostic_dir: str = "diagnostic_reports"
-    # 是否启用诊断信息捕获
     enabled: bool = True
-    # 已捕获的诊断信息计数
-    capture_count: int = 0
 
     def __init__(self, page: Page, test_name: Optional[str] = None):
         """
@@ -33,6 +30,7 @@ class DiagnosticAssertion:
         """
         self.page = page
         self.test_name = test_name or "unknown_test"
+        self._capture_count: int = 0  # 实例独立计数，避免跨实例共享
         self._console_logs: List[Dict[str, Any]] = []
         self._network_logs: List[Dict[str, Any]] = []
         self._bind_page_listeners()
@@ -102,8 +100,8 @@ class DiagnosticAssertion:
     def _generate_diagnostic_id(self) -> str:
         """生成诊断信息ID"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        DiagnosticAssertion.capture_count += 1
-        return f"{self.test_name}_{timestamp}_{DiagnosticAssertion.capture_count}"
+        self._capture_count += 1
+        return f"{self.test_name}_{timestamp}_{self._capture_count}"
 
     def _capture_screenshot(self, diagnostic_id: str) -> Optional[str]:
         """

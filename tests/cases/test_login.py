@@ -27,11 +27,13 @@ class TestLogin:
 
         login_page.login_with(case_data.username, case_data.password)
 
-        # 登录成功后，检查页面状态或URL变化
+        # 登录成功后，检查页面标题不再含"登录"字样（登录成功后标题会变化）
         print(f"当前页面URL: {login_page.page.url}")
+        page_title = login_page.page.title()
+        print(f"当前页面标题: {page_title}")
         assertion.assert_true(
-            login_page.page.url != "https://www.znzmo.com/?from=personalCenter" or "登录" not in login_page.page.title(),
-            message="登录失败，URL或页面标题未发生预期变化"
+            "登录" not in page_title,
+            message=f"登录失败，页面标题仍含'登录'，当前标题: {page_title}"
         )
         print("✅ 登录测试完成")
 

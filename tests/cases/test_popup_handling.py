@@ -27,10 +27,12 @@ class TestPopupHandling:
         # 需要时手动关闭
         closed_count = login_page.close_all_popups()
         print(f"手动关闭了 {closed_count} 个弹框")
+        assert isinstance(closed_count, int) and closed_count >= 0, f"close_all_popups 返回值异常: {closed_count}"
 
         # 继续登录流程
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
+        assert "znzmo.com" in login_page.page.url, f"登录后页面域名异常: {login_page.page.url}"
 
     def test_login_with_auto_close_popups(self, page):
         """
@@ -45,6 +47,7 @@ class TestPopupHandling:
 
         login_page.login_with("17768100279", "Qyff2011")
         print("✅ 登录流程完成")
+        assert "znzmo.com" in login_page.page.url, f"登录后页面域名异常: {login_page.page.url}"
 
     def test_homepage_without_auto_close(self, page):
         """测试 HomePage 不自动关闭弹框（用于查看弹框）"""
@@ -54,6 +57,7 @@ class TestPopupHandling:
         home_page.goto_homepage()
 
         print("✅ HomePage 加载完成，弹框未被自动关闭")
+        assert "znzmo.com" in home_page.page.url, f"页面域名异常: {home_page.page.url}"
 
     def test_homepage_with_auto_close(self, page):
         """测试 HomePage 自动关闭弹框"""
@@ -63,6 +67,7 @@ class TestPopupHandling:
         home_page.goto_homepage()
 
         print("✅ HomePage 加载完成，弹框已自动关闭")
+        assert "znzmo.com" in home_page.page.url, f"页面域名异常: {home_page.page.url}"
 
 
 class TestGotoMethodPopupControl:
@@ -80,19 +85,20 @@ class TestGotoMethodPopupControl:
         )
 
         print("✅ 页面加载完成，弹框保留")
+        assert "znzmo.com" in home_page.page.url, f"页面域名异常: {home_page.page.url}"
 
     def test_goto_with_closing_popups(self, page):
         """访问页面并自动关闭弹框"""
         print("=== goto 自动关闭弹框 ===")
 
         home_page = HomePage(page)
-        # close_popups_after_load=True（默认）表示访问页面后关闭弹框
         home_page.goto(
             "https://www.znzmo.com/?from=personalCenter",
             close_popups_after_load=True
         )
 
         print("✅ 页面加载完成，弹框已关闭")
+        assert "znzmo.com" in home_page.page.url, f"页面域名异常: {home_page.page.url}"
 
 
 if __name__ == "__main__":

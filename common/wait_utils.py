@@ -3,7 +3,6 @@
 支持元素可点击、页面加载完成、网络请求完成等多维度等待
 """
 import re
-import threading
 import time
 from typing import Callable, List, Union
 
@@ -60,11 +59,12 @@ class WaitUtils:
         :return: Locator对象
         """
         locator = self.wait_for_element_visible(selector, timeout)
-        # 等待元素启用
-        locator.wait_for(state="visible", timeout=int(timeout * 1000))
-        # 检查元素是否被禁用
-        if locator.is_disabled():
-            raise PlaywrightTimeoutError(f"元素 {selector} 已可见但不可点击（被禁用）")
+        # 轮询等待元素从 disabled 变为 enabled
+        self._poll_until(
+            lambda: not locator.is_disabled(),
+            timeout,
+            f"元素 {selector} 已可见但不可点击（被禁用），等待超时 {timeout}s",
+        )
         return locator
 
     def wait_for_page_load(self, wait_state: str = "networkidle", timeout: float = 60.0) -> None:
@@ -117,26 +117,24 @@ class WaitUtils:
 
     def wait_for_request_finished(self, url_pattern: Union[str, re.Pattern], timeout: float = 30.0) -> None:
         """
-        等待特定网络请求完成（在调用后一段时间内出现的匹配请求）。
-        使用 Python 侧 threading.Event + 正确 remove_listener(handler)，避免监听器泄漏。
+        等待特定网络请求完成。
+        使用 Playwright 内建 wait_for_event，与 sync API 事件循环兼容，避免 threading.Event 阻塞死锁。
         """
-        done = threading.Event()
-
-        def on_request_finished(request) -> None:
+        def predicate(request) -> bool:
             if isinstance(url_pattern, str):
-                if url_pattern in request.url:
-                    done.set()
-            elif url_pattern.search(request.url):
-                done.set()
+                return url_pattern in request.url
+            return bool(url_pattern.search(request.url))
 
-        self.page.on("requestfinished", on_request_finished)
         try:
-            if not done.wait(timeout=timeout):
-                raise PlaywrightTimeoutError(
-                    f"等待 requestfinished 超时（{timeout}s），URL 模式: {url_pattern!r}，当前页: {self.page.url}"
-                )
-        finally:
-            self.page.remove_listener("requestfinished", on_request_finished)
+            self.page.wait_for_event(
+                "requestfinished",
+                predicate=predicate,
+                timeout=int(timeout * 1000),
+            )
+        except PlaywrightTimeoutError:
+            raise PlaywrightTimeoutError(
+                f"等待 requestfinished 超时（{timeout}s），URL 模式: {url_pattern!r}，当前页: {self.page.url}"
+            ) from None
 
     def wait_for_response(self, url_pattern: Union[str, re.Pattern], timeout: float = 30.0) -> None:
         """
@@ -238,7 +236,7 @@ class WaitUtils:
                 # 等待一段时间后重试
                 self.page.wait_for_timeout(500)
                 # 可能需要滚动到元素可见位置
-                self.page.evaluate(f"document.querySelector('{selector}')?.scrollIntoView()")
+                self.page.evaluate("sel => document.querySelector(sel)?.scrollIntoView()", selector)
 
     def wait_for_timeout(self, milliseconds: float) -> None:
         """

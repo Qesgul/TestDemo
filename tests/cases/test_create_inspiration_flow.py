@@ -84,7 +84,7 @@ class TestCreateInspirationFlow:
         # 9. 点击“更多”按钮 -> 再次打开搜索页并校验关键词
         url_before_more = page.url
         search_url_2 = create_inspiration.click_reference_more_button_and_get_url()
-        assertion.assert_true(EXPECTED_SEARCH_URL , search_url_2, message="更多按钮跳转搜索页关键词不匹配")
+        assertion.assert_equal(EXPECTED_SEARCH_URL, search_url_2, message="更多按钮跳转搜索页关键词不匹配")
 
         print("✅ 创作灵感冒烟流程执行完成")
 

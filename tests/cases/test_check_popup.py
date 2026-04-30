@@ -131,12 +131,8 @@ class TestPopupDefaultDisplay:
 
         print("=" * 60 + "\n")
 
-        # 返回结果供参考
-        return {
-            "popup_found": found_popup,
-            "popup_details": popup_detailed_info,
-            "close_buttons": close_buttons_found
-        }
+        assert "znzmo.com" in home_page.page.url, f"页面未加载至预期域名，当前 URL: {home_page.page.url}"
+        assert isinstance(found_popup, bool), "弹框检测逻辑未正常完成"
 
     @pytest.mark.popup
     @pytest.mark.ui
@@ -177,7 +173,8 @@ class TestPopupDefaultDisplay:
         if not popup_found:
             print("登录页面未检测到弹框")
 
-        return popup_found
+        assert "znzmo.com" in login_page.page.url, f"页面未加载至预期域名，当前 URL: {login_page.page.url}"
+        assert isinstance(popup_found, bool), "弹框检测逻辑未正常完成"
 
 
 if __name__ == "__main__":

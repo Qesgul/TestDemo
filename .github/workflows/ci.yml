@@ -28,9 +28,14 @@ jobs:
     - name: Install Allure
       run: |
         Invoke-WebRequest -Uri "https://github.com/allure-framework/allure2/releases/download/2.28.0/allure-2.28.0.zip" -OutFile "allure.zip"
+        # TODO: 从 https://github.com/allure-framework/allure2/releases/tag/2.28.0 获取正确的 SHA256
+        $expectedHash = "REPLACE_WITH_OFFICIAL_SHA256_FROM_RELEASE_PAGE"
+        $actualHash = (Get-FileHash allure.zip -Algorithm SHA256).Hash
+        if ($actualHash -ne $expectedHash) {
+          throw "SHA256 mismatch! expected=$expectedHash actual=$actualHash"
+        }
         Expand-Archive -Path "allure.zip" -DestinationPath "allure" -Force
-        $env:PATH += ";$((Get-Location).Path)\allure\allure-2.28.0\bin"
-        allure --version
+        "$((Get-Location).Path)\allure\allure-2.28.0\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Run tests
       env:

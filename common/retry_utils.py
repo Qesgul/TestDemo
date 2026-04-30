@@ -4,7 +4,7 @@
 """
 import functools
 import time
-from typing import Callable, Type, List, Tuple, Any
+from typing import Any, Callable, List, Optional, Tuple, Type
 
 # 定义需要重试的异常类型
 RETRY_EXCEPTIONS = (
@@ -92,34 +92,71 @@ def flaky_test(max_retries: int = 2, delay: float = 1.0) -> Callable:
 
 class RetryContext:
     """
-    上下文管理器形式的重试工具
-    用于非装饰器场景的重试控制
+    重试工具。支持两种用法：
+
+    1. 推荐 — run() 方法自动重试：
+        ctx = RetryContext(max_retries=2)
+        ctx.run(lambda: risky_op())
+
+    2. 手动循环（with 块本身不会重进，只压制一次匹配异常）：
+        ctx = RetryContext(max_retries=2)
+        for _ in range(ctx.max_retries + 1):
+            with ctx:
+                risky_op()
+                break
     """
     def __init__(
         self,
         max_retries: int = 2,
         delay: float = 1.0,
         retry_exceptions: Tuple[Type[Exception], ...] = RETRY_EXCEPTIONS,
+        logger: Callable = print,
     ):
         self.max_retries = max_retries
         self._initial_delay = float(delay)
         self.retry_exceptions = retry_exceptions
+        self._logger = logger
         self.attempt = 0
         self._current_delay = self._initial_delay
 
     def __enter__(self):
-        self.attempt = 0
-        self._current_delay = self._initial_delay
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        # 仅压制可重试异常；重进 with 块需要调用方在外层套循环
         if exc_type and issubclass(exc_type, self.retry_exceptions):
             if self.attempt < self.max_retries:
                 self.attempt += 1
                 time.sleep(self._current_delay)
                 self._current_delay *= 1.5
-                return True  # 继续执行
+                return True
         return False
+
+    def run(self, func: Callable, *args, **kwargs) -> Any:
+        """真正的重试：自动循环调用 func，直到成功或耗尽次数。"""
+        self.attempt = 0
+        self._current_delay = self._initial_delay
+        last_exception: Optional[Exception] = None
+
+        for _ in range(self.max_retries + 1):
+            try:
+                return func(*args, **kwargs)
+            except self.retry_exceptions as e:
+                last_exception = e
+                if self.attempt < self.max_retries:
+                    self._logger(f"尝试 {self.attempt + 1} 失败: {type(e).__name__}: {e}")
+                    self._logger(f"等待 {self._current_delay:.1f}s 后重试...")
+                    time.sleep(self._current_delay)
+                    self._current_delay *= 1.5
+                    self.attempt += 1
+                else:
+                    self._logger(f"所有 {self.max_retries + 1} 次尝试均失败")
+                    raise
+            except Exception:
+                raise
+
+        if last_exception:
+            raise last_exception
 
 
 def should_retry(exception: Exception) -> bool:
