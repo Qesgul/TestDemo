@@ -47,6 +47,10 @@ def main() -> None:
         "--browser", default="chromium",
         choices=["chromium", "firefox", "webkit"],
     )
+    parser.add_argument(
+        "--cookies", default=None,
+        help="Path to cookies JSON file (same format as common/cookies_dev_*.json)",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.out)
@@ -63,6 +67,17 @@ def main() -> None:
     with sync_playwright() as pw:
         browser = getattr(pw, args.browser).launch(headless=True)
         ctx = browser.new_context(viewport={"width": 1280, "height": 800})
+
+        # Inject cookies if provided
+        if args.cookies:
+            raw = json.loads(Path(args.cookies).read_text(encoding="utf-8"))
+            cookie_list = raw if isinstance(raw, list) else raw.get("cookies", [])
+            # Filter to only valid Playwright cookie fields
+            pw_fields = {"name", "value", "domain", "path", "expires", "httpOnly", "secure", "sameSite"}
+            clean = [{k: v for k, v in c.items() if k in pw_fields} for c in cookie_list]
+            ctx.add_cookies(clean)
+            _log.info("Injected %d cookies from %s", len(clean), args.cookies)
+
         page = ctx.new_page()
         page.set_default_timeout(15_000)
 

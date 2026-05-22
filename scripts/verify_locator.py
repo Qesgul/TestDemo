@@ -30,6 +30,8 @@ import json
 import sys
 from pathlib import Path
 
+
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from playwright.sync_api import sync_playwright
@@ -45,6 +47,10 @@ def main() -> None:
     parser.add_argument(
         "--browser", default="chromium",
         choices=["chromium", "firefox", "webkit"],
+    )
+    parser.add_argument(
+        "--cookies", default=None,
+        help="Path to cookies JSON file (same format as common/cookies_dev_*.json)",
     )
     args = parser.parse_args()
 
@@ -65,7 +71,16 @@ def main() -> None:
 
     with sync_playwright() as pw:
         browser = getattr(pw, args.browser).launch(headless=True)
-        page = browser.new_context().new_page()
+        ctx = browser.new_context()
+
+        if args.cookies:
+            raw = json.loads(Path(args.cookies).read_text(encoding="utf-8"))
+            cookie_list = raw if isinstance(raw, list) else raw.get("cookies", [])
+            pw_fields = {"name", "value", "domain", "path", "expires", "httpOnly", "secure", "sameSite"}
+            clean = [{k: v for k, v in c.items() if k in pw_fields} for c in cookie_list]
+            ctx.add_cookies(clean)
+
+        page = ctx.new_page()
         page.set_default_timeout(8_000)
         try:
             page.goto(args.url, wait_until="domcontentloaded")

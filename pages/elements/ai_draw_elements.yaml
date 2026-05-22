@@ -1,0 +1,19 @@
+step1_"上传截图"按钮或上传图片的触发区域:
+  type: css
+  selector: input[type="file"]
+  action: upload
+step2_"家装"分类按钮:
+  type: text
+  text: 家装
+  exact: true
+  scope: '#operationForm'
+step3_"生成"按钮（按钮文本中包含知点数量）:
+  type: css
+  selector: '#OperationForm-btnSubmit'
+thinking_mode_switch_from_standard:
+  type: css
+  selector: '[class*="deepModeWrapperContainer"]'
+thinking_mode_panel_thinking_option:
+  type: text
+  text: 思考模式
+  exact: true
