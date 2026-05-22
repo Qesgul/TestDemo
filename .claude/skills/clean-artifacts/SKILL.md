@@ -17,6 +17,8 @@ description: >
 | 调试截图 | `scripts/*.png` | 开发时手动截取的调试图片 | ✅ 安全 |
 | 转换报告 | `CONVERSION-REPORT.md` | `case-to-code` skill 自动生成，可随时重新生成 | ✅ 安全 |
 | 废弃探索脚本 | `scripts/capture_selectors*.py`、`scripts/capture_aria.py` 等迭代产物 | 被更新版本替代的临时脚本，命名含版本号或序号 | ✅ 安全（确认后） |
+| 测试诊断报告 | `diagnostic_reports/` | pytest 失败时自动生成的截图/DOM/网络日志，可重新运行生成 | ✅ 安全 |
+| Selector 输入 md | `tests/data/*_selectors.md`、`tests/data/*_selectors_patch.md` | ai-selector 工作流的临时输入文件，yaml 生成后即可删除 | ✅ 安全 |
 | pytest 缓存 | `.pytest_cache/`、`__pycache__/` | pytest/Python 自动生成 | ✅ 安全 |
 | Allure 产物 | `allure-results/`、`allure-report/` | 测试报告，可重新运行生成 | ✅ 安全 |
 

@@ -57,3 +57,7 @@ scripts/*.png
 
 # 自动生成的转换报告（由 case-to-code skill 生成，每次可重新生成）
 CONVERSION-REPORT.md
+
+# ai-selector 工作流的临时输入文件（元素定位 md / patch md，用完即弃）
+tests/data/*_selectors.md
+tests/data/*_selectors_patch.md
