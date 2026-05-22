@@ -47,3 +47,13 @@ diagnostic_reports/
 core/cookies*.json
 **/cookies*.json
 recharge_test_results.json
+
+# AI Selector — 分析过程中产生的临时快照（a11y.yaml / screenshot.png）
+# 这些文件是 capture_snapshot.py 的工作输出，仅用于当次 AI 分析，不归档
+.planning/snapshot/
+
+# 脚本调试时产生的临时截图，不入库
+scripts/*.png
+
+# 自动生成的转换报告（由 case-to-code skill 生成，每次可重新生成）
+CONVERSION-REPORT.md
