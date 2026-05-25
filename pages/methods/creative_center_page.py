@@ -49,18 +49,15 @@ class CreativeCenterPage(BasePage):
         点击首页/面包屑进入创作中心。
 
         说明：
-        - 这里允许导航失败不抛出异常（让后续“榜单元素校验”给出更明确失败点）；
-        - 先尝试 YAML 定位器，再兜底点击“首页”，最后再尝试“创作中心”文本。
+        - 这里允许导航失败不抛出异常（让后续"榜单元素校验"给出更明确失败点）；
+        - 先尝试 YAML 定位器，再兜底点击"首页"，最后再尝试"创作中心"文本。
         """
-        # 标签页切换后页面渲染和弹窗遮挡可能尚未完全稳定
-        try:
-            self.close_all_popups(max_tries=2, wait_between_tries=0.2)
-        except Exception:
-            pass
+        # 标签页切换后页面渲染和弹窗遮挡可能尚未完全稳定，刷新一次关闭弹窗
+        self._reload_to_dismiss_popups()
 
         click_err: Exception | None = None
 
-        # 1) 优先 YAML 定位器：点击“首页/面包屑”
+        # 1) 优先 YAML 定位器：点击"首页/面包屑"
         try:
             btn = self.get_locator("home_to_creative_center").first
             btn.wait_for(state="visible", timeout=15000)
@@ -69,20 +66,16 @@ class CreativeCenterPage(BasePage):
         except Exception as e:
             click_err = e
 
-        # 2) YAML 定位器不可点：退化为点击文本“首页”
+        # 2) YAML 定位器不可点：退化为点击文本"首页"
         if click_err is not None:
-            try:
-                self.close_all_popups(max_tries=1, wait_between_tries=0.2)
-            except Exception:
-                pass
             home = self.page.locator("text=首页").first
             home.wait_for(state="visible", timeout=15000)
             home.scroll_into_view_if_needed()
             home.click(force=True)
 
-        # 3) 确认步骤执行成功：等待 URL 进入创作中心
+        # 3) 确认步骤执行成功：等待 URL 进入创作中心（timeout 单位为秒）
         try:
-            self.wait.wait_for_url(r"regex:.*creatorCenter.*", timeout=15000)
+            self.wait.wait_for_url(r"regex:.*creatorCenter.*", timeout=15)
         except Exception:
             # 若 URL 不变化，后续榜单校验会给出更明确失败点
             pass
@@ -91,7 +84,10 @@ class CreativeCenterPage(BasePage):
         try:
             self.wait.wait_for_url(r"regex:.*creatorCenter.*", timeout=5)
         except Exception:
-            self.wait.wait_for_timeout(500)
+            try:
+                self.wait.wait_for_timeout(500)
+            except Exception:
+                pass  # 页面可能已关闭或正在导航，忽略等待错误
 
 
     def get_rank_3d_default_items_texts(self, max_items: int = 5) -> List[str]:
@@ -104,7 +100,7 @@ class CreativeCenterPage(BasePage):
         except Exception:
             pass
 
-        # 兜底：更宽松的“页面已加载内容”信号，保证冒烟流程能继续往后
+        # 兜底：更宽松的"页面已加载内容"信号，保证冒烟流程能继续往后
         try:
             imgs = self.page.locator("img")
             if imgs.count() > 0:
@@ -124,7 +120,7 @@ class CreativeCenterPage(BasePage):
         except Exception:
             pass
 
-        # 兜底：更宽松的“页面已加载内容”信号
+        # 兜底：更宽松的"页面已加载内容"信号
         try:
             imgs = self.page.locator("img")
             if imgs.count() > 0:
@@ -135,16 +131,38 @@ class CreativeCenterPage(BasePage):
         return []
 
     def click_go_create_from_rank(self) -> None:
-        """点击榜单中的"去创作"，跳转发布作品页"""
+        """点击榜单中的"去创作"，跳转发布作品页（自动处理新标签页）。
+
+        "去创作"按钮可能打开新标签页，也可能在当前页导航。
+        使用 switch_to_new_tab 优先处理新标签页，失败则等待当前页导航。
+        调用后通过 self.page 获取当前活跃页面引用。
+        """
         btn = self.get_locator("rank_go_create_button").first
         btn.wait_for(state="visible", timeout=5000)
-        btn.click(force=True)
-        self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+        try:
+            # 优先尝试处理新标签页打开的情况
+            self.switch_to_new_tab(btn, timeout=5000, click_kwargs={"force": True})
+        except Exception:
+            # 没有新标签页，等待当前页导航
+            self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 
     def click_su_rank_item(self, index: int = 0) -> None:
-        """点击 SU榜 第 index 个 item，进入创作灵感页"""
-        item = self.get_locator("rank_su_items").nth(index)
-        if item.is_visible():
-            item.click(force=True)
-        self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+        """点击 SU榜 第 index 个 item，进入创作灵感页（自动处理新标签页）。
+
+        榜单 item 可能打开新标签页，也可能在当前页导航。
+        调用后通过 self.page 获取当前活跃页面引用。
+        """
+        items = self.get_locator("rank_su_items")
+        if items.count() == 0:
+            return
+        item = items.nth(min(index, items.count() - 1))
+        # 先滚动到元素，不依赖 viewport 可见性
+        try:
+            item.scroll_into_view_if_needed(timeout=5000)
+        except Exception:
+            pass
+        try:
+            self.switch_to_new_tab(item, timeout=5000, click_kwargs={"force": True})
+        except Exception:
+            self.page.wait_for_load_state("domcontentloaded", timeout=10000)
 
