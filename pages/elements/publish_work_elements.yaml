@@ -1,8 +1,13 @@
-# 发布作品页元素定位器（占位示例，后续补齐更精确选择器）
+# 发布作品页元素定位器
+# 注：is_on_publish_page() 和 back_to_creative_center() 均不使用 locator，
+# 这些 key 为兼容性保留，不参与当前测试流程断言。
 
-# 发布页标题（用于最小校验）
-publish_title: "text=发布作品"
+# 发布页标题（最小校验，tablist 中 "发布作品" tab 文本）
+publish_title: 'text=发布作品'
 
-# 返回创作中心按钮
-back_to_creative_center_button: "text=返回创作中心"
-
+# 侧边栏"首页"导航 -> 返回创作中心（备用，实际由 back_to_creative_center 逻辑处理）
+back_to_creative_center_button:
+  type: role
+  role: menuitem
+  name: 首页
+  exact: true

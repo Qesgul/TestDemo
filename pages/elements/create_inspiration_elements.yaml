@@ -1,18 +1,30 @@
-# 创作灵感页元素定位器（占位示例，后续补齐更精确选择器）
+# 创作灵感页元素定位器
+# 验证环境：https://www.znzmo.com/creatorCenter/creativeInspiration?tab=su
+# 实际类名（来自 JS 验证）：
+#   catBtn:   creativeInspiration__catBtn__hR4bZ
+#   listItem: creativeInspiration__listItem__c0sfZ
+#   refImgItem: creativeInspiration__refImgItem__seAXi
+#   moreMask: creativeInspiration__moreMask__xxx
 
-# SU 二级 Tab（用于步骤6切换）
-su_secondary_tabs: '[class^="creativeInspiration__catBtn"]'
+# 当前激活主 Tab（验证步骤5c：SU模型 tab 被选中）
+# 验证：.ant-tabs-tab.ant-tabs-tab-active count=1，text_content='SU模型'
+active_item: '.ant-tabs-tab.ant-tabs-tab-active'
 
-# SU 模型列表/相关项（用于步骤5/6校验列表非空）
-su_model_items: '[class^="creativeInspiration__listItem__"]'
-active_item: ".ant-tabs-tab.ant-tabs-tab-active"
+# SU 二级分类 Tab（步骤6切换；含"全部"/"硬装构件"等 11 个）
+# 验证：[class*=catBtn] count=11 on creativeInspiration?tab=su
+su_secondary_tabs: '[class*="creativeInspiration__catBtn"]'
 
-# SU 列表 item（用于步骤7点击触发参考区域展开）
-su_list_items: ".su-list-item"
+# SU 模型列表条目（步骤5/6校验非空 + 步骤7点击展开参考区）
+# 验证：[class*=listItem__] count=10 on creativeInspiration?tab=su
+su_model_items: '[class*="creativeInspiration__listItem__"]'
 
-# 参考模型/参考灵感区域图片（步骤7校验 5 张 img + 步骤8/9点击图片）
-reference_images: '[class^="creativeInspiration__refImgItem__"]'
+# SU 列表 item 别名（同 su_model_items）
+su_list_items: '[class*="creativeInspiration__listItem__"]'
 
-# 参考区域“更多”按钮（步骤7/9）
-reference_more_button: '[class^="creativeInspiration__moreMask__"]'
+# 参考模型/灵感区域图片（步骤7校验可见 + 步骤8点击跳搜索页）
+# 验证：点击 listItem 后 [class*=refImgItem] count=12
+reference_images: '[class*="creativeInspiration__refImgItem"]'
 
+# 参考区域"更多"按钮（步骤7校验可见 + 步骤9点击跳搜索页）
+# 验证：点击 listItem 后 [class*=creativeInspiration__moreMask] count=2，.first 可见
+reference_more_button: '[class*="creativeInspiration__moreMask"]'
