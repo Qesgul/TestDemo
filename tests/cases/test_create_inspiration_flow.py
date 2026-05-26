@@ -117,10 +117,12 @@ class TestCreateInspirationFlow:
         assertion.assert_true(
             all(text.strip() for text in rank_3d_items),
             message=f"3D爆款榜存在空文本条目，选择器可能命中了容器而非文本: {rank_3d_items}",
+            name="3D爆款榜无空文本",
         )
         assertion.assert_true(
             all(text.strip() for text in rank_su_items),
             message=f"SU爆款榜存在空文本条目，选择器可能命中了容器而非文本: {rank_su_items}",
+            name="SU爆款榜无空文本",
         )
 
         # -- 步骤 4：点击"去创作" -> 发布作品页 -----------------------------------
@@ -132,6 +134,7 @@ class TestCreateInspirationFlow:
         assertion.assert_true(
             publish_work.is_on_publish_page(),
             message=f"未进入发布作品页（URL 不含 creatorCenter/upload，实际: {publish_work.get_current_url()}，请调优定位器）",
+            name="进入发布作品页",
         )
 
         # -- 步骤 5a：返回创作中心 -----------------------------------------------
@@ -164,11 +167,13 @@ class TestCreateInspirationFlow:
             active_tab,
             "SU模型",
             message=f"默认激活 Tab 错误，期望「SU模型」，实际「{active_tab}」",
+            name="默认激活SU模型Tab",
         )
         assert_not_empty("SU模型列表", su_model_items, prev_data.get("su_model_items", []), assertion)
         assertion.assert_true(
             all(text.strip() for text in su_model_items),
             message=f"SU模型列表存在空文本条目，数据异常: {su_model_items}",
+            name="SU模型列表无空文本",
         )
 
         # -- 步骤 6：切换任意二级 tab -> 数据刷新比对 -----------------------------
@@ -186,6 +191,7 @@ class TestCreateInspirationFlow:
         assertion.assert_true(
             all(text.strip() for text in su_model_items_b),
             message=f"切换二级 tab 后存在空文本条目，数据异常: {su_model_items_b}",
+            name="二级Tab列表无空文本",
         )
 
         # -- 步骤 7：点击 item -> 展开参考模型/参考灵感区域 -----------------------
@@ -196,10 +202,12 @@ class TestCreateInspirationFlow:
         assertion.assert_true(
             reference_images_count >= 1,
             message=f"参考区域无图片（实际数量 {reference_images_count}，请调优选择器 reference_images）",
+            name="参考区域有图片",
         )
         assertion.assert_true(
             more_btn_visible,
             message="参考区域「更多」按钮不可见（请调优选择器 reference_more_button）",
+            name="更多按钮可见",
         )
 
         # -- 步骤 8：点击图片 -> 新 tab 搜索页，校验 URL 含预期 keyword ----------
@@ -209,17 +217,20 @@ class TestCreateInspirationFlow:
             assertion.assert_true(
                 _EXPECTED_SEARCH_KEYWORD in search_url_1,
                 message=f"图片跳转搜索页 keyword 不匹配，期望包含 {_EXPECTED_SEARCH_KEYWORD!r}，实际 URL: {search_url_1}",
+                name="图片跳转含keyword",
             )
         elif _EXPECTED_SEARCH_URL:
             assertion.assert_equal(
                 search_url_1,
                 _EXPECTED_SEARCH_URL,
                 message=f"图片跳转搜索页 URL 不匹配，实际 URL: {search_url_1}",
+                name="图片跳转URL匹配",
             )
         else:
             assertion.assert_true(
                 bool(search_url_1) and "znzmo.com" in search_url_1,
                 message=f"图片跳转的 URL 异常: {search_url_1!r}",
+                name="图片跳转URL有效",
             )
 
         # -- 步骤 9：点击"更多"按钮 -> 再次打开搜索页，校验关键词 ----------------
@@ -229,17 +240,20 @@ class TestCreateInspirationFlow:
             assertion.assert_true(
                 _EXPECTED_SEARCH_KEYWORD in search_url_2,
                 message=f"「更多」跳转搜索页 keyword 不匹配，期望包含 {_EXPECTED_SEARCH_KEYWORD!r}，实际 URL: {search_url_2}",
+                name="更多按钮跳转含keyword",
             )
         elif _EXPECTED_SEARCH_URL:
             assertion.assert_equal(
                 search_url_2,
                 _EXPECTED_SEARCH_URL,
                 message=f"「更多」跳转搜索页 URL 不匹配，实际 URL: {search_url_2}",
+                name="更多按钮跳转URL匹配",
             )
         else:
             assertion.assert_true(
                 bool(search_url_2) and "znzmo.com" in search_url_2,
                 message=f"「更多」按钮跳转的 URL 异常: {search_url_2!r}",
+                name="更多按钮跳转URL有效",
             )
 
         # -- 步骤 10：切换"为你精选" Tab -> 校验激活态 + 数据采集与比对 ----------
@@ -259,11 +273,13 @@ class TestCreateInspirationFlow:
             active_tab_10,
             "为你精选",
             message=f"切换 Tab 后激活项错误，期望「为你精选」，实际「{active_tab_10}」",
+            name="为你精选Tab激活",
         )
         assert_not_empty("为你精选 Tab 列表", for_you_items, prev_data.get("for_you_items", []), assertion)
         assertion.assert_true(
             all(text.strip() for text in for_you_items),
             message=f"「为你精选」Tab 存在空文本条目，数据异常: {for_you_items}",
+            name="为你精选无空文本",
         )
 
         # -- 步骤 11：切换"CAD图纸" Tab -> 校验激活态 + 数据采集与比对 ----------
@@ -283,11 +299,13 @@ class TestCreateInspirationFlow:
             active_tab_11,
             "CAD图纸",
             message=f"切换 Tab 后激活项错误，期望「CAD图纸」，实际「{active_tab_11}」",
+            name="CAD图纸Tab激活",
         )
         assert_not_empty("CAD图纸 Tab 列表", cad_items, prev_data.get("cad_items", []), assertion)
         assertion.assert_true(
             all(text.strip() for text in cad_items),
             message=f"「CAD图纸」Tab 存在空文本条目，数据异常: {cad_items}",
+            name="CAD图纸无空文本",
         )
 
         # -- 步骤 12：CAD Tab 下点击「去创作」-> 校验上传页 URL + CAD图纸预选 ----
@@ -305,10 +323,12 @@ class TestCreateInspirationFlow:
         assertion.assert_true(
             cad_url_ok,
             message=f"「去创作」未跳转至 CAD 品类上传页，URL 应含 classifyType=3，实际: {cad_upload_url}",
+            name="CAD去创作URL含classifyType",
         )
         assertion.assert_true(
             cad_selected,
             message="上传页品类「CAD图纸」未被预选（radio not checked）",
+            name="CAD图纸radio预选",
         )
 
         # 关闭上传新 tab，回到创作灵感页
