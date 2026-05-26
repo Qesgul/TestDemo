@@ -61,3 +61,11 @@ CONVERSION-REPORT.md
 # ai-selector 工作流的临时输入文件（元素定位 md / patch md，用完即弃）
 tests/data/*_selectors.md
 tests/data/*_selectors_patch.md
+
+# Superpowers 规划文档（brainstorming / plan 过程产物，本地保留，不入库）
+docs/superpowers/
+
+# 本地调试用独立脚本（不属于测试框架，不归档）
+utils/perf_test_give_voucher.py
+utils/一键修改_任意切量分组.py
+utils/埋点测试优化版本1.py
