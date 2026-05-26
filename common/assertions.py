@@ -455,48 +455,117 @@ class DiagnosticAssertion:
                 self.capture_diagnostics(assertion_info)
             raise
 
+    def _safe_text(self, locator: Locator) -> str:
+        """best-effort 读 locator 文本，失败返回 '<unable to read>'。"""
+        try:
+            t = locator.text_content()
+            return t if t is not None else ""
+        except Exception:
+            return "<unable to read>"
+
+    def _safe_visible(self, locator: Locator) -> str:
+        try:
+            return "可见" if locator.is_visible() else "不可见"
+        except Exception:
+            return "<unable to read>"
+
+    def _expect_with_checkpoint(
+        self,
+        assertion_name: str,
+        expected: Any,
+        actual_getter,
+        func,
+        name: Optional[str],
+    ):
+        """统一 expect_* checkpoint 记录路径。"""
+        start = time.perf_counter()
+        try:
+            func()
+            actual_val = actual_getter()
+            self._record_checkpoint(name, expected, actual_val, "PASS", start,
+                                    None, assertion_name)
+        except Exception as e:
+            try:
+                actual_val = actual_getter()
+            except Exception:
+                actual_val = "<unable to read>"
+            self._record_checkpoint(name, expected, actual_val, "FAIL", start,
+                                    str(e), assertion_name)
+            if DiagnosticAssertion.enabled:
+                assertion_info = {
+                    "name": assertion_name,
+                    "args": str((expected,)),
+                    "kwargs": "{}",
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+                self.capture_diagnostics(assertion_info)
+            raise
+
     # ===== Playwright expect 包装方法 =====
 
-    def expect_to_have_text(self, locator: Locator, expected_text: str, message: str = ""):
+    def expect_to_have_text(self, locator: Locator, expected_text: str,
+                            message: str = "", name: Optional[str] = None):
         """期望元素有指定文本"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_to_have_text",
-            lambda: expect(locator).to_have_text(expected_text, timeout=30000)
+            expected_text,
+            lambda: self._safe_text(locator),
+            lambda: expect(locator).to_have_text(expected_text, timeout=30000),
+            name,
         )
 
-    def expect_to_be_visible(self, locator: Locator, message: str = ""):
+    def expect_to_be_visible(self, locator: Locator, message: str = "",
+                             name: Optional[str] = None):
         """期望元素可见"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_to_be_visible",
-            lambda: expect(locator).to_be_visible(timeout=30000)
+            "可见",
+            lambda: self._safe_visible(locator),
+            lambda: expect(locator).to_be_visible(timeout=30000),
+            name,
         )
 
-    def expect_to_be_hidden(self, locator: Locator, message: str = ""):
+    def expect_to_be_hidden(self, locator: Locator, message: str = "",
+                            name: Optional[str] = None):
         """期望元素隐藏"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_to_be_hidden",
-            lambda: expect(locator).to_be_hidden(timeout=30000)
+            "隐藏",
+            lambda: self._safe_visible(locator),
+            lambda: expect(locator).to_be_hidden(timeout=30000),
+            name,
         )
 
-    def expect_url(self, url: str, message: str = ""):
+    def expect_url(self, url: str, message: str = "", name: Optional[str] = None):
         """期望URL匹配"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_url",
-            lambda: expect(self.page).to_have_url(url, timeout=30000)
+            url,
+            lambda: self.page.url,
+            lambda: expect(self.page).to_have_url(url, timeout=30000),
+            name,
         )
 
-    def expect_title(self, title: str, message: str = ""):
+    def expect_title(self, title: str, message: str = "", name: Optional[str] = None):
         """期望标题匹配"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_title",
-            lambda: expect(self.page).to_have_title(title, timeout=30000)
+            title,
+            lambda: self.page.title(),
+            lambda: expect(self.page).to_have_title(title, timeout=30000),
+            name,
         )
 
-    def expect_to_contain_text(self, locator: Locator, text: str, message: str = ""):
+    def expect_to_contain_text(self, locator: Locator, text: str,
+                               message: str = "", name: Optional[str] = None):
         """期望元素包含文本"""
-        self._wrap_assertion(
+        self._expect_with_checkpoint(
             "expect_to_contain_text",
-            lambda: expect(locator).to_contain_text(text, timeout=30000)
+            text,
+            lambda: self._safe_text(locator),
+            lambda: expect(locator).to_contain_text(text, timeout=30000),
+            name,
         )
 
 

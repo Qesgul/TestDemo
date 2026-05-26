@@ -197,3 +197,58 @@ def test_assert_not_in_records():
     a = _make_assertion()
     a.assert_not_in("z", "abc", name="不含 z")
     assert a._checkpoints[0].status == "PASS"
+
+
+# ===== Task 4: expect_* methods =====
+
+def test_expect_to_be_visible_records_pass(monkeypatch):
+    a = _make_assertion()
+    locator = MagicMock()
+    locator.is_visible.return_value = True
+
+    import common.assertions as mod
+    fake_expect = MagicMock()
+    fake_expect.return_value.to_be_visible.return_value = None
+    monkeypatch.setattr(mod, "expect", fake_expect)
+
+    a.expect_to_be_visible(locator, name="登录按钮")
+    assert a._checkpoints[0].status == "PASS"
+    assert a._checkpoints[0].name == "登录按钮"
+    assert _safe_repr("可见") in a._checkpoints[0].expected
+
+
+def test_expect_url_records(monkeypatch):
+    a = _make_assertion()
+    a.page.url = "https://test.com/home"
+
+    import common.assertions as mod
+    fake_expect = MagicMock()
+    fake_expect.return_value.to_have_url.return_value = None
+    monkeypatch.setattr(mod, "expect", fake_expect)
+
+    a.expect_url("https://test.com/home", name="跳转 URL")
+    cp = a._checkpoints[0]
+    assert cp.status == "PASS"
+    assert cp.name == "跳转 URL"
+
+
+def test_expect_fail_records_and_reraises(monkeypatch):
+    from common.assertions import disable_diagnostics, enable_diagnostics
+    a = _make_assertion()
+    locator = MagicMock()
+    locator.is_visible.return_value = False
+
+    import common.assertions as mod
+    fake_expect = MagicMock()
+    fake_expect.return_value.to_be_visible.side_effect = AssertionError("元素不可见")
+    monkeypatch.setattr(mod, "expect", fake_expect)
+
+    disable_diagnostics()
+    try:
+        with pytest.raises(AssertionError):
+            a.expect_to_be_visible(locator, name="登录按钮")
+    finally:
+        enable_diagnostics()
+    cp = a._checkpoints[0]
+    assert cp.status == "FAIL"
+    assert cp.error_msg is not None
