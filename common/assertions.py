@@ -58,6 +58,7 @@ class DiagnosticAssertion:
         self._capture_count: int = 0  # 实例独立计数，避免跨实例共享
         self._console_logs: List[Dict[str, Any]] = []
         self._network_logs: List[Dict[str, Any]] = []
+        self._checkpoints: List[Checkpoint] = []
         self._bind_page_listeners()
         self._setup_diagnostic_dir()
 
@@ -306,6 +307,39 @@ class DiagnosticAssertion:
                 }
                 self.capture_diagnostics(assertion_info)
             raise
+
+    def _record_checkpoint(
+        self,
+        name: Optional[str],
+        expected: Any,
+        actual: Any,
+        status: str,
+        start_perf: float,
+        error_msg: Optional[str],
+        fallback_name: str,
+    ) -> None:
+        """记录一条关键校验点，绝不向外抛异常。"""
+        try:
+            duration_ms = max(0, int((time.perf_counter() - start_perf) * 1000))
+            has_name = name is not None and str(name).strip() != ""
+            final_name = str(name) if has_name else fallback_name
+            err = None
+            if error_msg:
+                err = error_msg[:80]
+            self._checkpoints.append(
+                Checkpoint(
+                    name=final_name,
+                    expected=_safe_repr(expected),
+                    actual=_safe_repr(actual),
+                    status=status,
+                    duration_ms=duration_ms,
+                    error_msg=err,
+                    has_explicit_name=has_name,
+                )
+            )
+        except Exception:
+            # 记录失败必须吞掉，绝不影响测试主流程
+            pass
 
     # ===== 断言方法 =====
 
