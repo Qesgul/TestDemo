@@ -1,0 +1,9 @@
+step1_瀑布流图片卡片列表:
+  type: css
+  selector: '#masonry li:has(img)'
+step2_单张图片卡片:
+  type: css
+  selector: '#masonry li:has(img)'
+step3_图片卡片下载按钮:
+  type: css
+  selector: '[class*=''downloadBtn'']'

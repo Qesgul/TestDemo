@@ -72,17 +72,26 @@ class LoginPage(BasePage):
         """
         尝试用本地 cookie 恢复登录会话。
 
-        优化：注入 cookie 后不再 ``page.reload(networkidle)``，
-        直接校验当前页面登录态（cookie 已对后续请求生效）。
+        改进点：
+        - 调用 is_cookie_valid 时传入 username，校验 cookie 文件内账号与请求账号一致
+        - cookie 不可用时主动清理 context 残留 cookie，防止切换账号时串号
+        - 注入 cookie 后不再 page.reload(networkidle)，直接校验登录态
 
         :return: True 表示 cookie 登录成功且验证通过
         """
         cookie_data = CookieManager.load_cookies(username)
-        if not cookie_data or not CookieManager.is_cookie_valid(cookie_data):
-            _logger.info("未找到有效 cookie，跳过 cookie 登录")
+        if not cookie_data or not CookieManager.is_cookie_valid(
+            cookie_data, expected_account_identifier=username
+        ):
+            _logger.info("账号 %s 未找到匹配的有效 cookie，跳过 cookie 登录", username)
+            # 主动清理 context 残留 cookie，防止切换账号时复用旧登录态
+            try:
+                self.page.context.clear_cookies()
+            except Exception:
+                pass
             return False
 
-        _logger.info("检测到有效 cookie，尝试恢复会话")
+        _logger.info("账号 %s 检测到有效 cookie，尝试恢复会话", username)
         context = self.page.context
         try:
             context.clear_cookies()
@@ -91,10 +100,10 @@ class LoginPage(BasePage):
             self.page.wait_for_timeout(200)
 
             if self._is_logged_in():
-                _logger.info("cookie 登录验证通过")
+                _logger.info("账号 %s cookie 登录验证通过", username)
                 return True
 
-            _logger.warning("cookie 已注入但登录状态验证失败，cookie 可能已失效")
+            _logger.warning("账号 %s cookie 已注入但登录状态验证失败，cookie 可能已失效", username)
             CookieManager.delete_cookies(username)
             return False
         except Exception as e:

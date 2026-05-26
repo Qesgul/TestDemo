@@ -112,9 +112,20 @@ class CookieManager:
         cls,
         cookie_data: Dict[str, Any],
         max_age_hours: int = 24,
+        expected_account_identifier: Optional[str] = None,
     ) -> bool:
         if "timestamp" not in cookie_data or "cookies" not in cookie_data:
             return False
+
+        # 账号一致性校验：仅当显式传入 expected 时执行，向后兼容旧调用方
+        if expected_account_identifier is not None:
+            stored = cookie_data.get("account_identifier")
+            if stored and stored != expected_account_identifier:
+                logger.warning(
+                    "Cookie 账号不匹配：文件存储=%s，请求账号=%s，跳过 cookie 登录",
+                    stored, expected_account_identifier,
+                )
+                return False
 
         try:
             timestamp = datetime.fromisoformat(cookie_data["timestamp"])

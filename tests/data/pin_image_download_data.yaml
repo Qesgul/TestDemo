@@ -1,0 +1,18 @@
+# 图钉新品页 - 图片下载测试数据
+# URL: https://pin.znztv.com/pinNewHome/1
+# 注：导航入口 URL 已配置在 pages/methods/pin_image_download_page.py DEFAULT_URL（唯一配置点）
+
+username: "13060613380"
+password: "Qyff2011"
+
+# 重复下载次数（每次使用不同图片，触发接口但不落盘）
+repeat_count: 100
+
+# 安全阀：滚动次数超过此值且仍找不到新图片时主动失败
+max_scroll_attempts: 30
+
+# 断言：期望最少触发的不同图片下载数（允许极少数因 hover 失败被跳过）
+expected_min_distinct_downloads: 100
+
+# 参数化用例（当前无参数化；保留 cases 键符合约定）
+cases: []
