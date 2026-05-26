@@ -132,6 +132,12 @@ class AtmRenderPage(BasePage):
   - `assertion.assert_equal(actual, expected, message="...")`
   - `assertion.expect_to_be_visible(locator, ...)` 等
 - **禁止** `assert` 裸语句和 `playwright.expect(...)` 直调，否则失败时不会落诊断报告。
+- **每个 assertion 必须带 `name=` 参数**，name 取 markdown 用例「预期结果」列对应短句：
+  - `assertion.expect_to_have_text(locator, "登录成功", name="登录成功提示文案")`
+  - `assertion.assert_equal(actual_url, "/home", name="登录后跳转首页 URL")`
+  - 命名规则：≤ 20 字，描述"在校验什么"，不重复期望值本身
+- 一条 markdown 步骤含多个隐式校验时，每个 assertion 独立 `name`，按"主校验 / 次校验"分别命名
+- 用例执行结束时 stdout 会自动打印「关键校验点汇总表」，`name` 显示在表的「校验点」列；未传 `name` 时用方法名兜底（视觉上以 `·` 前缀展示），降低可读性，**必须避免**
 
 ## Marker 映射
 
@@ -262,6 +268,7 @@ pytest --collect-only tests/cases/test_{feature}.py
 ### Step 6. 生成 `tests/cases/test_{feature}.py`
 - 用例方法只编排 Page 方法 + `assertion` 断言；
 - 入口统一 `xxx_page.goto()`，不传 url。
+- 每个 assertion 调用强制带 `name=`，名字来自 markdown「预期结果」列；详见「断言规则」章节
 
 ### Step 7. 验收门禁
 ```bash
