@@ -172,3 +172,44 @@ def load_few_shot_examples(
                 examples.append(f"  # {key}\n  type: css\n  selector: {spec.selector}")
 
     return "\n".join(examples) if examples else ""
+
+
+def find_existing_batch(
+    descs: list[str],
+    elements_yaml_dir: str = "pages/elements",
+) -> dict[str, tuple[LocatorSpec, str | None]]:
+    """
+    批量在 pages/elements/*.yaml 中按规范化名称匹配多个 element_desc。
+
+    一次性扫描所有 yaml 文件，避免对 N 个元素重复加载 yaml。
+
+    Args:
+        descs: 元素描述列表
+        elements_yaml_dir: yaml 目录
+
+    Returns:
+        dict[desc, (LocatorSpec, action)] — 只包含命中的 desc，未命中不出现在 dict 中
+    """
+    if not descs:
+        return {}
+
+    yaml_dir = Path(elements_yaml_dir)
+    if not yaml_dir.exists():
+        return {}
+
+    # 一次性加载所有 yaml key
+    all_entries: list[tuple[str, LocatorSpec, str | None]] = []
+    for yaml_file in sorted(yaml_dir.glob("*.yaml")):
+        all_entries.extend(_load_yaml_keys(yaml_file))
+
+    result: dict[str, tuple[LocatorSpec, str | None]] = {}
+    for desc in descs:
+        norm_target = _normalize(desc)
+        if not norm_target:
+            continue
+        for norm_key, spec, action in all_entries:
+            if norm_key == norm_target or norm_target in norm_key or norm_key in norm_target:
+                result[desc] = (spec, action)
+                _logger.info("yaml 复用批量命中：%r → %s", desc, spec.strategy)
+                break  # 第一个命中
+    return result
