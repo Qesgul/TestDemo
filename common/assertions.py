@@ -568,6 +568,102 @@ class DiagnosticAssertion:
             name,
         )
 
+    # ===== checkpoint 汇总渲染 =====
+
+    _COL_W_IDX = 4
+    _COL_W_NAME = 32
+    _COL_W_EXPECTED = 14
+    _COL_W_ACTUAL = 14
+    _COL_W_DURATION = 8
+
+    def _col_truncate(self, s: str, w: int) -> str:
+        if len(s) <= w:
+            return s + " " * (w - len(s))
+        return s[: w - 3] + "..."
+
+    def _render_lines(self) -> List[tuple]:
+        """返回 [(text, markup_dict), ...] 供渲染。"""
+        cps = self._checkpoints
+        n_pass = sum(1 for c in cps if c.status == "PASS")
+        n_fail = sum(1 for c in cps if c.status == "FAIL")
+
+        title = f" 关键校验点汇总: {self.test_name} [{n_pass} PASS / {n_fail} FAIL] "
+        total_w = (self._COL_W_IDX + self._COL_W_NAME + self._COL_W_EXPECTED +
+                   self._COL_W_ACTUAL + self._COL_W_DURATION + 14)
+        title_line = "┌─" + title + "─" * max(0, total_w - len(title)) + "┐"
+
+        header = "│ {} │ {} │ {} │ {} │ {} │".format(
+            self._col_truncate("#", self._COL_W_IDX),
+            self._col_truncate("校验点", self._COL_W_NAME),
+            self._col_truncate("期望", self._COL_W_EXPECTED),
+            self._col_truncate("实际", self._COL_W_ACTUAL),
+            self._col_truncate("耗时", self._COL_W_DURATION),
+        )
+        sep = ("├" + "─" * (self._COL_W_IDX + 2) + "┼" +
+               "─" * (self._COL_W_NAME + 2) + "┼" +
+               "─" * (self._COL_W_EXPECTED + 2) + "┼" +
+               "─" * (self._COL_W_ACTUAL + 2) + "┼" +
+               "─" * (self._COL_W_DURATION + 2) + "┤")
+
+        lines: List[tuple] = [
+            (title_line, {"bold": True}),
+            (header, {"bold": True}),
+            (sep, {}),
+        ]
+
+        for i, cp in enumerate(cps, start=1):
+            if cp.status == "PASS" and cp.has_explicit_name:
+                prefix = "✓"
+                markup: Dict[str, Any] = {"green": True}
+            elif cp.status == "PASS":
+                prefix = "·"
+                markup = {}   # dim — plain text fallback
+            else:
+                prefix = "✗"
+                markup = {"red": True}
+
+            idx_str = f"{prefix}{i}"
+            row = "│ {} │ {} │ {} │ {} │ {} │".format(
+                self._col_truncate(idx_str, self._COL_W_IDX),
+                self._col_truncate(cp.name, self._COL_W_NAME),
+                self._col_truncate(cp.expected, self._COL_W_EXPECTED),
+                self._col_truncate(cp.actual, self._COL_W_ACTUAL),
+                self._col_truncate(f"{cp.duration_ms}ms", self._COL_W_DURATION),
+            )
+            lines.append((row, markup))
+
+            if cp.status == "FAIL" and cp.error_msg:
+                err_line = "│   └─ " + cp.error_msg
+                pad = max(0, total_w + 4 - len(err_line))
+                err_line = err_line + " " * pad + "│"
+                lines.append((err_line, {"red": True}))
+
+        bottom = "└" + "─" * (total_w + 2) + "┘"
+        lines.append((bottom, {}))
+        return lines
+
+    def print_summary(self, tw=None) -> None:
+        """渲染 checkpoint 汇总到 stdout / TerminalWriter。空列表则静默。
+
+        :param tw: pytest TerminalWriter；None 时退化到 print()
+        """
+        try:
+            if not self._checkpoints:
+                return
+            print()  # 视觉分隔空行
+            lines = self._render_lines()
+            for text, markup in lines:
+                if tw is not None:
+                    try:
+                        tw.line(text, **markup)
+                        continue
+                    except Exception:
+                        pass  # tw 异常则退化到 print
+                print(text)
+        except Exception:
+            # 渲染异常绝不影响测试主流程
+            pass
+
 
 # ===== 全局便捷函数 =====
 

@@ -252,3 +252,71 @@ def test_expect_fail_records_and_reraises(monkeypatch):
     cp = a._checkpoints[0]
     assert cp.status == "FAIL"
     assert cp.error_msg is not None
+
+
+# ===== Task 5: print_summary =====
+
+def test_print_summary_empty_silent(capsys):
+    a = _make_assertion()
+    a.print_summary(tw=None)
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_print_summary_single_pass_with_name(capsys):
+    a = _make_assertion()
+    a.assert_equal(1, 1, name="数量校验")
+    a.print_summary(tw=None)
+    out = capsys.readouterr().out
+    assert "关键校验点汇总" in out
+    assert "数量校验" in out
+    assert "[1 PASS / 0 FAIL]" in out
+    assert "✓" in out
+
+
+def test_print_summary_single_fail_includes_error(capsys):
+    from common.assertions import disable_diagnostics, enable_diagnostics
+    a = _make_assertion()
+    disable_diagnostics()
+    try:
+        try:
+            a.assert_equal(1, 2, name="数量校验")
+        except AssertionError:
+            pass
+    finally:
+        enable_diagnostics()
+    a.print_summary(tw=None)
+    out = capsys.readouterr().out
+    assert "✗" in out
+    assert "[0 PASS / 1 FAIL]" in out
+    assert "期望" in out or "AssertionError" in out
+
+
+def test_print_summary_fallback_name_uses_dim_prefix(capsys):
+    a = _make_assertion()
+    a.assert_equal(1, 1)  # no name
+    a.print_summary(tw=None)
+    out = capsys.readouterr().out
+    assert "·" in out
+
+
+def test_print_summary_swallows_render_error(capsys):
+    a = _make_assertion()
+    a.assert_equal(1, 1, name="x")
+
+    bad_tw = MagicMock()
+    bad_tw.line.side_effect = RuntimeError("tw broken")
+
+    # 不应抛
+    a.print_summary(tw=bad_tw)
+    # 退化 print() 仍输出
+    out = capsys.readouterr().out
+    assert "关键校验点汇总" in out
+
+
+def test_print_summary_uses_tw_when_available():
+    a = _make_assertion()
+    a.assert_equal(1, 1, name="x")
+    tw = MagicMock()
+    a.print_summary(tw=tw)
+    assert tw.line.call_count >= 1
