@@ -1,0 +1,17 @@
+# AI 精准渲染 - 知点消耗验证用例数据
+# 与 tests/cases/test_ai_draw.py 一一对应
+# URL: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=precisionRender
+#
+# 注：导航入口 URL 已配置在 pages/methods/ai_draw_page.py AiDrawPage.DEFAULT_URL（唯一配置点）。
+
+username: "17768100279"
+password: "Qyff2011"
+
+# 知点消耗期望值
+# TC-AIDRAW-001: 家装 + 标准模式下，生成按钮显示的知点消耗
+expected_cost_standard: 6
+# TC-AIDRAW-001: 家装 + 思考模式下，生成按钮显示的知点消耗
+expected_cost_thinking: 16
+
+# 参数化用例（当前无参数化；保留 cases 键符合约定）
+cases: []

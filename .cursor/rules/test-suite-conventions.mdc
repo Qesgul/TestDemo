@@ -83,3 +83,65 @@ class TestLogin:
 
 - 在用例文件中硬编码大量选择器（应下沉到 `pages/elements/*.yaml`）。
 - 在用例中写与 `data_types` 字段不一致的 YAML 结构（会导致 `load_typed_cases_from_yaml` 构造失败）。
+
+---
+
+## 动态列表数据校验策略（规则 2）
+
+对于**列表类**或**多字段强内容**的动态数据（排行榜、模型列表、搜索结果等）：
+
+### 禁止
+
+```python
+# ❌ 裸 len 断言：不能说明数据内容是否正确
+assert len(items) >= 1
+
+# ❌ 固定 max_items 截断：掩盖条数不足的问题
+items = page.get_items_texts(max_items=5)
+```
+
+### 必须使用快照比对三件套
+
+```python
+from common.snapshot_compare import (
+    load_snapshot_from_yaml,
+    compare_and_print,
+    save_snapshot_to_yaml,
+    assert_not_empty,
+)
+
+# 用例开始时加载上次快照
+prev = load_snapshot_from_yaml("tests/data/{feature}_data.yaml")
+
+# 采集数据（max_items=0 全取）
+items = page_obj.get_xxx_items_texts()
+
+# 差量比对（打印新增/减少/不变）
+compare_and_print("key_name", prev.get("key_name", []), items)
+
+# 存在性断言（结合历史快照给出有意义错误信息）
+assert_not_empty("功能名称", items, prev.get("key_name", []), assertion)
+
+# 用例结束统一写回快照
+save_snapshot_to_yaml("tests/data/{feature}_data.yaml", current_data)
+```
+
+### 快照存储约定
+
+- 快照写入**对应的数据 YAML 文件**（`tests/data/{feature}_data.yaml`）的 `snapshots:` 键
+- **不单独创建 JSON 文件**（禁止 `tests/data/snapshots/*.json`）
+- 快照数据保留卡片**所有有效行**，用 ` | ` 拼接（序号 | 名称 | 下载量 | 收益区间），不只取首行
+
+```yaml
+# tests/data/create_inspiration_flow_data.yaml 示例
+snapshots:
+  captured_at: '2026-05-26T09:39:46'
+  rank_3d:
+    - 法式复古客餐厅 | 109216 | 172-222元
+    - 客厅主灯 | 36185 | 120-170元
+```
+
+### 数据采集脚本规范
+
+- 凡需要建立/更新快照基准，需编写独立的 `scripts/collect_{feature}_data.py`
+- 脚本**先采集打印，不立即写文件**；等人工确认数据合理后再写入（配合 `CLAUDE.md` 规则 1）

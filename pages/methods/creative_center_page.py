@@ -34,13 +34,35 @@ class CreativeCenterPage(BasePage):
             ),
         ]
 
-    def _safe_get_texts(self, locator, max_items: int = 5) -> List[str]:
+    # 不参与存储/比对的按钮/固定标签文本（完整匹配）
+    _SKIP_TEXTS: set[str] = {"去创作", "近30天预估收益"}
+
+    def _safe_get_texts(self, locator, max_items: int = 0) -> List[str]:
+        """从 Locator 读取文本列表，将卡片所有有效行用 ' | ' 拼接后返回。
+
+        排行榜卡片的 inner_text 包含多行（序号 + 标题 + 下载数 + 收益区间 + 按钮），
+        过滤掉固定按钮/标签文字后，将剩余行合并为一条可读字符串，例如：
+          "法式复古客餐厅 | 109216 | 172-222元"
+          "1 | 法式复古客餐厅 | 109216 | 172-222元"
+
+        Args:
+            max_items: 最多读取条数；0（默认）表示全部读取，>0 则最多取该数量。
+        Returns:
+            非空文本列表（每条保留全部有效行）。失败返回空列表。
+        """
         try:
-            count = min(locator.count(), max_items)
-            return [
-                locator.nth(i).inner_text(timeout=3000).strip()  # type: ignore[attr-defined]
-                for i in range(count)
-            ]
+            total = locator.count()
+            count = total if max_items == 0 else min(total, max_items)
+            results = []
+            for i in range(count):
+                raw = locator.nth(i).inner_text(timeout=3000)  # type: ignore[attr-defined]
+                lines = [
+                    line.strip()
+                    for line in raw.split("\n")
+                    if line.strip() and line.strip() not in self._SKIP_TEXTS
+                ]
+                results.append(" | ".join(lines) if lines else raw.strip())
+            return results
         except Exception:
             return []
 
@@ -90,7 +112,7 @@ class CreativeCenterPage(BasePage):
                 pass  # 页面可能已关闭或正在导航，忽略等待错误
 
 
-    def get_rank_3d_default_items_texts(self, max_items: int = 5) -> List[str]:
+    def get_rank_3d_default_items_texts(self, max_items: int = 0) -> List[str]:
         """获取 3D爆款榜默认条目文本"""
         try:
             items = self.get_locator("rank_3d_items")
@@ -110,7 +132,7 @@ class CreativeCenterPage(BasePage):
 
         return []
 
-    def get_rank_su_default_items_texts(self, max_items: int = 5) -> List[str]:
+    def get_rank_su_default_items_texts(self, max_items: int = 0) -> List[str]:
         """获取 SU爆款榜默认条目文本"""
         try:
             items = self.get_locator("rank_su_items")
@@ -131,20 +153,48 @@ class CreativeCenterPage(BasePage):
         return []
 
     def click_go_create_from_rank(self) -> None:
-        """点击榜单中的"去创作"，跳转发布作品页（自动处理新标签页）。
+        """点击榜单中的"去创作"，跳转发布作品页。
 
-        "去创作"按钮可能打开新标签页，也可能在当前页导航。
-        使用 switch_to_new_tab 优先处理新标签页，失败则等待当前页导航。
+        兼容三种行为：
+        1. 新 tab 打开 upload 页（最常见）
+        2. 同 tab 跳转到 upload 页
+        3. 新 tab 在 expect_page 等待期间打开但未被捕获（网络慢）
+
         调用后通过 self.page 获取当前活跃页面引用。
         """
         btn = self.get_locator("rank_go_create_button").first
         btn.wait_for(state="visible", timeout=5000)
+
         try:
-            # 优先尝试处理新标签页打开的情况
-            self.switch_to_new_tab(btn, timeout=5000, click_kwargs={"force": True})
+            # ① 优先等待新 tab（超时改为 10s 以兼容慢网络）
+            self.switch_to_new_tab(btn, timeout=10000, click_kwargs={"force": True})
+            return
         except Exception:
-            # 没有新标签页，等待当前页导航
-            self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+            pass
+
+        # ② expect_page 超时后：扫描所有存活 tab 找含 upload 的
+        context = self.page.context
+        upload_tab = next(
+            (
+                p for p in context.pages
+                if "upload" in p.url and not p.is_closed()
+            ),
+            None,
+        )
+        if upload_tab:
+            self.switch_to_page(upload_tab)
+            return
+
+        # ③ 检查当前 tab 是否已同 tab 导航到 upload
+        if "upload" in self.page.url:
+            return
+
+        # ④ 等待当前 tab 导航到 upload（同 tab 跳转但导航略晚于超时）
+        try:
+            self.wait.wait_for_url(r"regex:.*upload.*", timeout=8000)
+        except Exception:
+            # 等待页面稳定（导航到任意页面）
+            self.page.wait_for_load_state("domcontentloaded", timeout=5000)
 
     def click_su_rank_item(self, index: int = 0) -> None:
         """点击 SU榜 第 index 个 item，进入创作灵感页（自动处理新标签页）。

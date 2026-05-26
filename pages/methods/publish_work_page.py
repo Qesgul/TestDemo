@@ -26,6 +26,18 @@ class PublishWorkPage(BasePage):
     def is_on_publish_page(self) -> bool:
         return self.get_current_url().__contains__("creatorCenter/upload")
 
+    def is_cad_category_selected(self) -> bool:
+        """校验上传页「CAD图纸」品类是否被预选（radio checked）。
+
+        从创作灵感 CAD Tab 点击「去创作」跳入时，URL 携带 classifyType=3，
+        页面应自动勾选 CAD图纸 radio。
+        """
+        try:
+            radio = self.get_locator("cad_category_radio")
+            return radio.is_checked(timeout=3000)
+        except Exception:
+            return False
+
 
     def back_to_creative_center(self) -> None:
         """返回创作中心。

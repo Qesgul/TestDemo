@@ -5,8 +5,116 @@ import pytest
 
 from common.browser_manager import BrowserManager
 from common.assertions import create_assertion, enable_diagnostics, disable_diagnostics
+from common.yaml_loader import load_yaml
 
 logger = logging.getLogger(__name__)
+
+
+# ─── Session 级登录态复用：所有用例共享一份 storage_state ─────────────────────
+# 让全套 test 只跑一次完整登录，后续每个 test 用 storage_state 创建已登录 context。
+# 仅业务用例使用；测试登录功能本身的用例继续走 page fixture（原始未登录态）。
+
+@pytest.fixture(scope="session")
+def logged_in_context(browser):
+    """会话级已登录 context：登录与后续 test 共用同一个 context，整个 session 只开一个窗口。
+
+    实现要点：
+    - 不再"临时 context 登录 → 关闭 → 新建持久 context"，避免 headed 模式下窗口闪动；
+    - 登录在该 context 内的一个临时 tab 上完成，登录结束后只关 tab，context 保持存活；
+    - 后续每个 test 在同一 context 上开新 tab（``logged_in_page``）。
+    """
+    # 延迟 import，避免循环依赖
+    from pages.methods.login_page import LoginPage
+
+    login_data = load_yaml("tests/data/login_data.yaml") or {}
+    cases = login_data.get("cases") or []
+    if not cases:
+        raise RuntimeError(
+            "tests/data/login_data.yaml 缺少 cases，无法初始化 session 登录态"
+        )
+    creds = cases[0]
+    username = creds["username"]
+    password = creds["password"]
+
+    context = browser.new_context()
+    context.set_default_timeout(30000)
+
+    # 这个 page 不仅用于登录，还要在 session 期间保持存活——
+    # Chromium headed 模式下，context 内最后一个 page 被关闭时窗口会消失，
+    # 下次 new_page 会重新弹出窗口，视觉上即"浏览器关闭+重开"的闪动。
+    # 留住此 page 即可让窗口贯穿整个 session 稳定存在。
+    # 同时，该 page 后续被 logged_in_page fixture 直接复用为测试 page，
+    # 避免每个 test 开新 tab 导致"先切 tab 再跳转"的视觉问题。
+    anchor_page = context.new_page()
+    anchor_page.set_default_timeout(30000)
+    try:
+        login = LoginPage(anchor_page)
+        login.goto_login_page()
+        login.login_with(username, password)
+        logger.info("session 级登录完成，anchor_page 将作为测试主 tab 复用至 session 结束")
+    except Exception:
+        logger.exception("session 级登录失败")
+        raise
+
+    # 把 anchor_page 暴露给 logged_in_page fixture 使用
+    context._anchor_page = anchor_page  # type: ignore[attr-defined]
+
+    try:
+        yield context
+    finally:
+        # session 结束时统一收尾：先关 anchor_page，再关 context
+        try:
+            if not anchor_page.is_closed():
+                anchor_page.close()
+        except Exception:
+            pass
+        try:
+            context.close()
+        except Exception:
+            pass
+
+
+@pytest.fixture(scope="session")
+def storage_state_path(tmp_path_factory, logged_in_context):
+    """向后兼容：从已登录 context 导出 storage_state.json。
+
+    若现有用例/工具显式依赖该 fixture，仍能拿到正确的 storage_state 文件；
+    主路径已不需要 storage_state（``logged_in_context`` 自身就是登录态）。
+    """
+    state_file = tmp_path_factory.mktemp("auth") / "state.json"
+    logged_in_context.storage_state(path=str(state_file))
+    logger.info("storage_state 已导出: %s", state_file)
+    return str(state_file)
+
+
+@pytest.fixture(scope="function")
+def logged_in_page(logged_in_context):
+    """已登录态 page：直接复用会话级 anchor_page，不开新 tab。
+
+    设计动机：
+    - 此前每次 test 用 ``context.new_page()`` 开新 tab，导致 ``goto(url)`` 时
+      看起来是"先切到新 tab，再发生跳转"——视觉上像多了一步切换。
+    - 现改为直接 yield session 级 anchor_page，整个 session 始终在同一个 tab 内
+      ``goto`` 切换 URL，与手动在浏览器中输入网址的体验一致。
+    - 每个 test 结束后由 ``test_setup_teardown`` 统一清理多余 tab，
+      anchor_page 自身保持存活直到 session 结束。
+    """
+    anchor_page = getattr(logged_in_context, "_anchor_page", None)
+    if anchor_page is None or anchor_page.is_closed():
+        # 兜底：anchor 异常缺失时回退到新建 tab，避免整套 session 崩溃
+        page = logged_in_context.new_page()
+        page.set_default_timeout(30000)
+        try:
+            yield page
+        finally:
+            try:
+                page.close()
+            except Exception:
+                pass
+        return
+
+    yield anchor_page
+    # 不在此处关闭 anchor_page —— 它要存活到 session 结束以保住浏览器窗口
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -23,15 +131,38 @@ def browser_lifecycle():
     BrowserManager.shutdown()
 
 
-@pytest.fixture(scope="function", autouse=True)
-def test_setup_teardown(page):
+def _resolve_active_page(request):
+    """挑出当前测试真正使用的 page。
+
+    - 若 test 显式声明了 ``logged_in_page``，优先用它；
+    - 否则回退到 pytest-playwright 的 ``page``；
+    - 都没有则返回 None（避免主动 getfixturevalue 触发 pytest-playwright
+      额外创建一个空白窗口）。
     """
-    每个测试函数的前后置操作
-    :param page: Playwright page fixture
+    fixture_names = set(getattr(request, "fixturenames", ()))
+    if "logged_in_page" in fixture_names:
+        return request.getfixturevalue("logged_in_page")
+    if "page" in fixture_names:
+        return request.getfixturevalue("page")
+    return None
+
+
+@pytest.fixture(scope="function", autouse=True)
+def test_setup_teardown(request):
+    """每个测试函数的前后置操作。
+
+    不再硬依赖 pytest-playwright 的 ``page``，避免使用 ``logged_in_page``
+    的用例额外开一个未使用的浏览器窗口。
     """
     enable_diagnostics()
 
+    # 在 setup 阶段就解析 page，避免 yield 之后 fixture 已被 teardown 取不到
+    page = _resolve_active_page(request)
+
     yield
+
+    if page is None or page.is_closed():
+        return
 
     # 测试结束后：关闭除主页面之外的所有标签页，防止泄漏到下一个测试
     try:
@@ -55,10 +186,17 @@ def test_setup_teardown(page):
 
 
 @pytest.fixture(scope="function")
-def assertion(page, request):
+def assertion(request):
+    """提供诊断性断言工具的 fixture。
+
+    动态选取当前测试使用的 page（``logged_in_page`` 优先），避免触发
+    pytest-playwright 多创建一个 page。
     """
-    提供诊断性断言工具的 fixture
-    """
+    page = _resolve_active_page(request)
+    if page is None:
+        # 兜底：若 test 既没有 logged_in_page 也没有 page，
+        # 仍走 pytest-playwright 默认 page（保持旧用例兼容）。
+        page = request.getfixturevalue("page")
     test_name = request.node.name
     return create_assertion(page, test_name)
 

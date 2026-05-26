@@ -1,0 +1,24 @@
+# 精准渲染 - 用例数据
+# 与 tests/cases/test_precision_render.py 一一对应
+# URL: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=precisionRender
+
+username: "17768100279"
+password: "Qyff2011"
+
+# 注：导航入口 URL 已配置在 pages/methods/precision_render_page.py PrecisionRenderPage.DEFAULT_URL（唯一配置点）。
+# 如需断言跳转目标 / 外链等，可在此 yaml 中新增 expected_xxx_url 键，但禁止与 Page.DEFAULT_URL 重复。
+
+# 空间类型校验期望值（固定断言，不做参数化）
+# 经 verify_space_texts.py 实际抓取确认：家装（非假装）
+expected_space_types:
+  - "家装"
+  - "工装"
+  - "建筑"
+  - "景观"
+
+# 氛围切换用例（对应 TC-ATM-008，后续可追加 009/010/011）
+cases:
+  - case_name: "click_lighting_from_default"
+    case_id: "TC-ATM-008"
+    target_atmosphere: "氛围光影"
+    initial_atmosphere: "默认"

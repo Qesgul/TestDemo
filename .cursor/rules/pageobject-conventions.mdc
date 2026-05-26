@@ -57,3 +57,47 @@ class ExamplePage(BasePage):
 ## 跨页面
 
 - 单个 Page 类只负责**当前页面**；跳转到其他页面应返回新 Page 或由用例持有下一页的 `Page` 并构造对应 Page 对象。
+
+---
+
+## 方法签名一致性（规则 3）
+
+同类方法（即功能语义相近的方法，如"读取列表文本"系列）的**默认参数必须统一**：
+
+| 参数 | 统一约定 |
+|---|---|
+| `max_items: int` | `0` = 全部读取；正整数 = 最多取 N 条 |
+
+**错误示例**（同类方法默认值不一致）：
+```python
+def get_su_model_items_texts(self, max_items: int = 0): ...   # 全取
+def get_current_tab_items_texts(self, max_items: int = 5): ... # 只取5条 ❌
+```
+
+**正确示例**：
+```python
+def get_su_model_items_texts(self, max_items: int = 0): ...
+def get_current_tab_items_texts(self, max_items: int = 0): ... # 同样默认全取 ✓
+```
+
+新增同类方法时，**必须对齐已有方法的默认参数语义**，不能凭直觉自定义。
+
+---
+
+## 新增方法验证清单（规则 4）
+
+新增或修改 Page 方法后，必须完成以下验证：
+
+1. **列出所有调用方**：在项目中 `grep` 该方法名，确认调用处全部覆盖
+2. **覆盖所有调用上下文**：若方法在多个 Tab / 状态下被调用，每个场景都要验证返回值符合预期（不能只验 SU Tab 正常，不验"为你精选"Tab）
+3. **验证边界值**：
+   - `max_items=0` → 必须真正返回全部条目
+   - 列表为空时 → 方法不应抛异常，应返回 `[]`
+4. **打印验证输出**：每个调用路径至少输出一次 `len(result)` 和首条内容，肉眼确认数据合理
+
+```python
+# 验证示例
+items = page_obj.get_current_tab_items_texts()
+print(f"[验证] Tab 条目数: {len(items)}, 首条: {items[0] if items else '空'}")
+assert len(items) == expected_count, f"期望 {expected_count} 条，实际 {len(items)} 条"
+```

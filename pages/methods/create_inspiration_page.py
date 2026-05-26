@@ -25,18 +25,38 @@ class CreateInspirationPage(BasePage):
             auto_close_popups=auto_close_popups,
         )
 
-    def _safe_get_texts(self, locator, max_items: int = 5) -> List[str]:
-        """从 Locator 读取文本（失败返回空，便于先跑通流程）"""
+    # 不参与存储/比对的按钮/固定标签文本（完整匹配）
+    _SKIP_TEXTS: set[str] = {"去创作", "近30天预估收益"}
+
+    def _safe_get_texts(self, locator, max_items: int = 0) -> List[str]:
+        """从 Locator 读取文本列表，将卡片所有有效行用 ' | ' 拼接后返回。
+
+        模型列表卡片的 inner_text 包含多行（序号 + 标题 + 下载数 + 收益区间 + 按钮），
+        过滤掉固定按钮/标签文字后，将剩余行合并为一条可读字符串，例如：
+          "1 | 法式复古客餐厅 | 109216 | 172-222元"
+
+        Args:
+            max_items: 最多读取条数；0（默认）表示全部读取，>0 则最多取该数量。
+        Returns:
+            非空文本列表（每条保留全部有效行）。失败返回空列表。
+        """
         try:
-            count = min(locator.count(), max_items)
-            return [
-                locator.nth(i).inner_text(timeout=3000).strip()  # type: ignore[attr-defined]
-                for i in range(count)
-            ]
+            total = locator.count()
+            count = total if max_items == 0 else min(total, max_items)
+            results = []
+            for i in range(count):
+                raw = locator.nth(i).inner_text(timeout=3000)  # type: ignore[attr-defined]
+                lines = [
+                    line.strip()
+                    for line in raw.split("\n")
+                    if line.strip() and line.strip() not in self._SKIP_TEXTS
+                ]
+                results.append(" | ".join(lines) if lines else raw.strip())
+            return results
         except Exception:
             return []
 
-    def get_su_model_items_texts(self, max_items: int = 5) -> List[str]:
+    def get_su_model_items_texts(self, max_items: int = 0) -> List[str]:
         """获取 SU 模型列表/默认选中项相关文本"""
         def _try_read() -> List[str]:
             # 1) 读取 YAML 定位器
@@ -134,6 +154,38 @@ class CreateInspirationPage(BasePage):
         return url
 
     def get_active_tab(self) -> str:
+        """返回当前激活 Tab 的文本，自动 strip 空白（避免前后空格/换行导致精确匹配失败）。"""
         active_tab = self.get_locator("active_item")
-        return active_tab.text_content()
+        return (active_tab.text_content() or "").strip()
+
+    def click_cad_go_create_and_switch(self) -> "Page":
+        """点击 CAD Tab 下「去创作」按钮，切换到新 Tab 并返回新 Page 对象。
+
+        目标 URL 为 upload?classifyType=3（CAD图纸品类被预选）。
+        调用方断言完毕后调用 close_current_and_switch_to_original 回到原页面。
+        """
+        self.switch_to_new_tab(
+            self.get_locator("cad_go_create_button").first,
+            timeout=30000,
+            wait_state="domcontentloaded",
+            click_kwargs={"force": True},
+        )
+        self.page.wait_for_timeout(2000)
+        return self.page
+
+    def click_main_tab(self, name: str) -> None:
+        """切换主 Tab（为你精选 / 3D模型 / SU模型 / CAD图纸）。
+
+        使用 get_by_role("tab") 精确匹配，点击后等待 React 重新渲染列表数据。
+        """
+        self.page.get_by_role("tab", name=name, exact=True).click()
+        self.wait.wait_for_timeout(2000)
+
+    def get_current_tab_items_texts(self, max_items: int = 0) -> List[str]:
+        """获取当前激活主 Tab 的模型列表文本。
+
+        各主 Tab（为你精选/3D模型/SU模型/CAD图纸）共享同一 listItem CSS 类，
+        复用 get_su_model_items_texts 即可。max_items=0 表示全部读取。
+        """
+        return self.get_su_model_items_texts(max_items=max_items)
 

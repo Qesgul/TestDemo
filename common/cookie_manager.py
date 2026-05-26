@@ -75,7 +75,24 @@ class CookieManager:
 
         try:
             with open(filename, "r", encoding="utf-8") as f:
-                return json.load(f)
+                content = f.read().strip()
+            if not content:
+                # 空文件：视为无效 cookie，删除后返回 None 触发重新登录
+                logger.warning("Cookie 文件为空，已删除并回退至重新登录: %s", filename)
+                try:
+                    os.remove(filename)
+                except OSError:
+                    pass
+                return None
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            # JSON 损坏：同样删除并回退
+            logger.warning("Cookie 文件 JSON 损坏 (%s)，已删除并回退至重新登录: %s", e, filename)
+            try:
+                os.remove(filename)
+            except OSError:
+                pass
+            return None
         except Exception as e:
             raise RuntimeError(f"Failed to load cookies: {e}") from e
 

@@ -27,7 +27,7 @@ class PopupStrategy:
     def matches(self, page: Page) -> bool:
         try:
             trigger = page.locator(self.trigger_selector).first
-            return trigger.is_visible(timeout=500)
+            return trigger.is_visible(timeout=200)
         except Exception:
             return False
 
@@ -37,7 +37,7 @@ class PopupStrategy:
             trigger_count = triggers.count()
             for index in range(trigger_count):
                 trigger = triggers.nth(index)
-                if not trigger.is_visible(timeout=500):
+                if not trigger.is_visible(timeout=200):
                     continue
                 if self.close_selector:
                     button = trigger.locator(self.close_selector).first
@@ -45,7 +45,7 @@ class PopupStrategy:
                     button = trigger.get_by_text(self.close_text, exact=False).first
                 else:
                     return False
-                if not button.is_visible(timeout=500):
+                if not button.is_visible(timeout=200):
                     continue
                 button.click(force=True)
                 page.wait_for_timeout(self.post_close_wait_ms)
@@ -98,7 +98,7 @@ class BasePage:
         self.wait = WaitUtils(self.page)
 
         if auto_close_popups:
-            self.close_all_popups()
+            self._reload_to_dismiss_popups()
 
     def get_popup_strategies(self) -> List[PopupStrategy]:
         strategies = list(self.DEFAULT_POPUP_STRATEGIES)
@@ -110,7 +110,7 @@ class BasePage:
     def extra_popup_strategies(self) -> List[PopupStrategy]:
         return []
 
-    def close_all_popups(self, max_tries: int = 3, wait_between_tries: float = 0.5) -> int:
+    def close_all_popups(self, max_tries: int = 1, wait_between_tries: float = 0.3) -> int:
         closed = 0
         strategies = self.get_popup_strategies()
         for _ in range(max_tries):
@@ -128,12 +128,48 @@ class BasePage:
             self.page.wait_for_timeout(int(wait_between_tries * 1000))
         return closed
 
+    def _has_blocking_popup(self) -> bool:
+        """快速检测页面是否当前存在阻塞性弹窗（ant-modal 系列）。
+
+        仅做一次 ``is_visible(timeout=200)``，开销极小；
+        给 ``_reload_to_dismiss_popups`` 做条件判定，避免无弹窗页面无谓 reload。
+        """
+        try:
+            return self.page.locator(
+                ".ant-modal-wrap, .ant-modal-mask, .ant-modal"
+            ).first.is_visible(timeout=200)
+        except Exception:
+            return False
+
+    def _reload_to_dismiss_popups(self) -> None:
+        """检测到阻塞弹窗时才 reload，无弹窗页面零开销零闪动。
+
+        无条件 reload 会让用户视觉上感受到"打开 → 关闭 → 重新打开"，
+        这里改为先快速探测，仅当确实存在 modal 时才刷新。
+        """
+        try:
+            if self._has_blocking_popup():
+                self.page.reload(wait_until="domcontentloaded")
+        except Exception:
+            pass
+
     def goto(
         self,
         url: str,
         close_popups_after_load: bool = True,
-        wait_state: str = "networkidle",
+        wait_state: str = "domcontentloaded",
     ) -> None:
+        """打开 URL 并等待加载。
+
+        ``wait_state`` 默认 ``domcontentloaded``（早先为 ``networkidle``）。
+        SPA 类页面通常无法稳定达到 networkidle，networkidle 仅在需要等
+        所有 XHR/资源就绪的场景显式传入。
+
+        ``close_popups_after_load`` 默认 ``True``：加载后调用
+        ``_reload_to_dismiss_popups()`` 通过 ``page.reload()``（≈ Selenium
+        ``driver.refresh()``）关闭可能的弹窗。reload 会有一次"内容重新加载"
+        的视觉过渡，这是浏览器内核的固有行为，不是 bug。
+        """
         self.page.goto(url, wait_until="domcontentloaded")
         try:
             self.wait.wait_for_page_load(wait_state)
@@ -143,12 +179,127 @@ class BasePage:
             else:
                 raise
         if close_popups_after_load:
-            self.close_all_popups()
+            self._reload_to_dismiss_popups()
 
     def get_locator(self, name: str) -> Locator:
+        """从 YAML 解析元素定位器，支持两种格式：
+
+        **格式 1 — 字符串（向后兼容）**：任意 Playwright CSS / 文本 / role 选择器字符串::
+
+            btn: '.ant-btn:has-text("提交")'
+
+        **格式 2 — 结构化对象（推荐）**：明确声明定位方式，框架分发到 Playwright 首选 API::
+
+            btn:
+              type: role          # getByRole
+              role: button
+              name: 提交
+              exact: true         # 默认 false
+
+            btn:
+              type: text          # getByText
+              text: 工装
+              exact: true
+              scope: 'div[class*="Container"]'   # 可选：先 locator(scope) 再 getByText，避免多元素命中
+
+            btn:
+              type: label         # getByLabel（表单元素）
+              label: 用户名
+              exact: false
+
+            btn:
+              type: placeholder   # getByPlaceholder
+              placeholder: 请输入手机号
+
+            btn:
+              type: test_id       # getByTestId（data-testid）
+              test_id: submit-btn
+
+            btn:
+              type: title         # getByTitle
+              title: 关闭
+
+            btn:
+              type: alt_text      # getByAltText（图片）
+              alt_text: 头像
+
+            btn:
+              type: css           # 显式 CSS，等同格式1
+              selector: '.cls:has-text("x")'
+
+        ``scope`` 字段（可选）：任何 type 均可附加，值为父级 CSS 选择器，
+        框架先执行 ``page.locator(scope)``，再在其内部执行对应 getBy* 方法，
+        用于解决 ``getByText`` / ``getByRole`` 命中多个元素的歧义问题。
+
+        定位方式优先级（官方推荐顺序）：
+        role > label > placeholder > text > alt_text > title > test_id > css
+        """
         if name not in self._elements:
             raise KeyError(f"Element key not found in yaml: {name}")
-        return self.page.locator(str(self._elements[name]))
+        value = self._elements[name]
+
+        # ---- 格式 1：字符串（向后兼容） ----
+        if isinstance(value, str):
+            return self.page.locator(value)
+
+        # ---- 格式 2：结构化对象 ----
+        if isinstance(value, dict):
+            loc_type: str = str(value.get("type", "css")).lower()
+            exact: bool = bool(value.get("exact", False))
+
+            # scope：先定位父容器，再在其内执行 getBy*（解决多命中歧义）
+            scope_css: Optional[str] = value.get("scope")
+            root = self.page.locator(scope_css) if scope_css else self.page
+
+            if loc_type == "role":
+                kwargs: dict = {"exact": exact}
+                if "name" in value:
+                    kwargs["name"] = value["name"]
+                if "checked" in value:
+                    kwargs["checked"] = value["checked"]
+                if "disabled" in value:
+                    kwargs["disabled"] = value["disabled"]
+                if "expanded" in value:
+                    kwargs["expanded"] = value["expanded"]
+                if "pressed" in value:
+                    kwargs["pressed"] = value["pressed"]
+                if "selected" in value:
+                    kwargs["selected"] = value["selected"]
+                if "level" in value:
+                    kwargs["level"] = value["level"]
+                return root.get_by_role(value["role"], **kwargs)
+
+            if loc_type == "label":
+                return root.get_by_label(value["label"], exact=exact)
+
+            if loc_type == "placeholder":
+                return root.get_by_placeholder(value["placeholder"], exact=exact)
+
+            if loc_type == "text":
+                return root.get_by_text(value["text"], exact=exact)
+
+            if loc_type == "alt_text":
+                return root.get_by_alt_text(value["alt_text"], exact=exact)
+
+            if loc_type == "title":
+                return root.get_by_title(value["title"], exact=exact)
+
+            if loc_type == "test_id":
+                return root.get_by_test_id(value["test_id"])
+
+            if loc_type == "css":
+                selector = value["selector"]
+                return root.locator(selector) if scope_css else self.page.locator(selector)
+
+            raise ValueError(
+                f"Unknown locator type {loc_type!r} for element '{name}'. "
+                f"Valid types: role, label, placeholder, text, alt_text, title, test_id, css"
+            )
+
+        raise TypeError(
+            f"Unsupported locator value type for '{name}': "
+            f"{type(value).__name__}. Expected str or dict."
+        )
 
     def wait_for_element(self, selector: str, state: str = "visible") -> Locator:
         element = self.page.locator(selector)

@@ -28,3 +28,22 @@ reference_images: '[class*="creativeInspiration__refImgItem"]'
 # 参考区域"更多"按钮（步骤7校验可见 + 步骤9点击跳搜索页）
 # 验证：点击 listItem 后 [class*=creativeInspiration__moreMask] count=2，.first 可见
 reference_more_button: '[class*="creativeInspiration__moreMask"]'
+
+# CAD Tab 下"去创作"按钮（步骤12；列表共 10 个，取 .first）
+# 验证：[class*=creativeInspiration__createBtn] count=10 on CAD tab
+cad_go_create_button: '[class*="creativeInspiration__createBtn"]'
+
+# 主 Tab 导航（步骤10/11：切换"为你精选"/"CAD图纸"后校验数据）
+# 验证：page.get_by_role("tab", name="为你精选", exact=True) count=1
+main_tab_for_you:
+  type: role
+  role: tab
+  name: 为你精选
+  exact: true
+
+# 验证：page.get_by_role("tab", name="CAD图纸", exact=True) count=1
+main_tab_cad:
+  type: role
+  role: tab
+  name: CAD图纸
+  exact: true
