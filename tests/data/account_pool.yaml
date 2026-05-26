@@ -1,0 +1,30 @@
+# 账号池 - authoring-time 工具
+#
+# 本文件仅供 case-to-code / 生成新自动化用例时被模型读取，运行时代码不读此文件。
+# 详细使用约定见 .claude/skills/account-pool/SKILL.md
+# 设计文档：docs/superpowers/specs/2026-05-26-account-pool-design.md
+#
+# 维护规则：
+#   - 新增账号 = 追加一条 entry，不要修改/删除已有账号字段（除非账号永久失效）
+#   - tags 用 snake_case，新增前先 grep 已有标签，复用优先
+#   - tags 分四类：业务能力 / 状态数据 / 角色身份 / 通用兜底
+#   - added_at / added_for 字段可选，纯审计用途
+
+accounts:
+  - username: "13060613380"
+    password: "Qyff2011"
+    tags:
+      - pin_image_downloader
+      - image_download_100x
+    description: "图钉新品页 100 张图片下载用例的固定账号"
+    added_at: "2026-05-26"
+    added_for: "tests/cases/test_pin_image_download.py"
+
+  - username: "17768100279"
+    password: "Qyff2011"
+    tags:
+      - default
+      - generic_user
+    description: "原 login_data.yaml 默认账号，无特殊业务状态，可用于通用已登录态场景"
+    added_at: "2026-05-26"
+    added_for: "session 级默认登录 / 通用已登录用例"
