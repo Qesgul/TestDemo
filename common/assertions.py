@@ -343,11 +343,17 @@ class DiagnosticAssertion:
 
     # ===== 断言方法 =====
 
-    def assert_equal(self, actual: Any, expected: Any, message: str = ""):
+    def assert_equal(self, actual: Any, expected: Any, message: str = "",
+                     name: Optional[str] = None):
         """断言相等"""
+        start = time.perf_counter()
         try:
             assert actual == expected, message or f"期望 {expected}, 实际 {actual}"
+            self._record_checkpoint(name, expected, actual, "PASS", start,
+                                    None, "assert_equal")
         except Exception as e:
+            self._record_checkpoint(name, expected, actual, "FAIL", start,
+                                    str(e), "assert_equal")
             if DiagnosticAssertion.enabled:
                 assertion_info = {
                     "name": "assert_equal",
@@ -359,11 +365,17 @@ class DiagnosticAssertion:
                 self.capture_diagnostics(assertion_info)
             raise
 
-    def assert_true(self, value: Any, message: str = ""):
+    def assert_true(self, value: Any, message: str = "",
+                    name: Optional[str] = None):
         """断言为真"""
+        start = time.perf_counter()
         try:
             assert value, message or f"期望为真, 实际 {value}"
+            self._record_checkpoint(name, "真", value, "PASS", start,
+                                    None, "assert_true")
         except Exception as e:
+            self._record_checkpoint(name, "真", value, "FAIL", start,
+                                    str(e), "assert_true")
             if DiagnosticAssertion.enabled:
                 assertion_info = {
                     "name": "assert_true",
@@ -375,11 +387,17 @@ class DiagnosticAssertion:
                 self.capture_diagnostics(assertion_info)
             raise
 
-    def assert_false(self, value: Any, message: str = ""):
+    def assert_false(self, value: Any, message: str = "",
+                     name: Optional[str] = None):
         """断言为假"""
+        start = time.perf_counter()
         try:
             assert not value, message or f"期望为假, 实际 {value}"
+            self._record_checkpoint(name, "假", value, "PASS", start,
+                                    None, "assert_false")
         except Exception as e:
+            self._record_checkpoint(name, "假", value, "FAIL", start,
+                                    str(e), "assert_false")
             if DiagnosticAssertion.enabled:
                 assertion_info = {
                     "name": "assert_false",
@@ -391,11 +409,18 @@ class DiagnosticAssertion:
                 self.capture_diagnostics(assertion_info)
             raise
 
-    def assert_in(self, member: Any, container: Any, message: str = ""):
+    def assert_in(self, member: Any, container: Any, message: str = "",
+                  name: Optional[str] = None):
         """断言包含"""
+        start = time.perf_counter()
+        expected_str = f"包含 {_safe_repr(member, max_len=40)}"
         try:
             assert member in container, message or f"期望 '{member}' 在 '{container}' 中"
+            self._record_checkpoint(name, expected_str, container, "PASS", start,
+                                    None, "assert_in")
         except Exception as e:
+            self._record_checkpoint(name, expected_str, container, "FAIL", start,
+                                    str(e), "assert_in")
             if DiagnosticAssertion.enabled:
                 assertion_info = {
                     "name": "assert_in",
@@ -407,11 +432,18 @@ class DiagnosticAssertion:
                 self.capture_diagnostics(assertion_info)
             raise
 
-    def assert_not_in(self, member: Any, container: Any, message: str = ""):
+    def assert_not_in(self, member: Any, container: Any, message: str = "",
+                      name: Optional[str] = None):
         """断言不包含"""
+        start = time.perf_counter()
+        expected_str = f"不包含 {_safe_repr(member, max_len=40)}"
         try:
             assert member not in container, message or f"期望 '{member}' 不在 '{container}' 中"
+            self._record_checkpoint(name, expected_str, container, "PASS", start,
+                                    None, "assert_not_in")
         except Exception as e:
+            self._record_checkpoint(name, expected_str, container, "FAIL", start,
+                                    str(e), "assert_not_in")
             if DiagnosticAssertion.enabled:
                 assertion_info = {
                     "name": "assert_not_in",

@@ -133,3 +133,67 @@ def test_record_checkpoint_swallows_internal_errors():
     )
     # 仍应记录一条
     assert len(a._checkpoints) == 1
+
+
+# ===== Task 3: assert_* methods =====
+
+import pytest
+
+
+def test_assert_equal_records_pass_with_explicit_name():
+    a = _make_assertion()
+    a.assert_equal(1, 1, name="数量校验")
+    assert len(a._checkpoints) == 1
+    cp = a._checkpoints[0]
+    assert cp.name == "数量校验"
+    assert cp.status == "PASS"
+    assert cp.has_explicit_name is True
+
+
+def test_assert_equal_records_fail_and_reraises():
+    a = _make_assertion()
+    from common.assertions import disable_diagnostics, enable_diagnostics
+    disable_diagnostics()
+    try:
+        with pytest.raises(AssertionError):
+            a.assert_equal(1, 2, name="数量校验")
+    finally:
+        enable_diagnostics()
+    assert len(a._checkpoints) == 1
+    assert a._checkpoints[0].status == "FAIL"
+    assert a._checkpoints[0].error_msg is not None
+
+
+def test_assert_equal_fallback_name_when_no_name_passed():
+    a = _make_assertion()
+    a.assert_equal(1, 1)
+    cp = a._checkpoints[0]
+    assert cp.has_explicit_name is False
+    assert "assert_equal" in cp.name
+
+
+def test_assert_true_records():
+    a = _make_assertion()
+    a.assert_true(True, name="登录成功")
+    assert a._checkpoints[0].status == "PASS"
+    assert a._checkpoints[0].name == "登录成功"
+
+
+def test_assert_false_records():
+    a = _make_assertion()
+    a.assert_false(False, name="未报错")
+    assert a._checkpoints[0].status == "PASS"
+
+
+def test_assert_in_records_with_expected_format():
+    a = _make_assertion()
+    a.assert_in("a", "abc", name="包含 a")
+    cp = a._checkpoints[0]
+    assert cp.status == "PASS"
+    assert "包含" in cp.expected
+
+
+def test_assert_not_in_records():
+    a = _make_assertion()
+    a.assert_not_in("z", "abc", name="不含 z")
+    assert a._checkpoints[0].status == "PASS"
