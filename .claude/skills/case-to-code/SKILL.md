@@ -120,6 +120,7 @@ class AtmRenderPage(BasePage):
 ## 数据规则
 
 - 账号、文案期望、参数化数据等放 `tests/data/{feature}_data.yaml` **根级**键。
+- **账号字段（username / password）必须经由账号池解析**（见 Step 4.5 + `.claude/skills/account-pool/SKILL.md`），禁止直接硬写一个从未在池子里登记的账号；如池子无匹配，先补池子再继续。
 - **导航入口 URL 不放 yaml**（见上节「页面入口规则」）；断言用的期望 URL / 跳转 URL 等非重复配置可放 yaml。
 - 参数化用例放 `cases` 列表，字段与 `data_types/{feature}_data_types.py` 中 dataclass 一一对应。
 - 期望值不在测试方法里写死，统一从 `_DATA[...]` 或 `case_data.xxx` 取。
@@ -225,6 +226,33 @@ pytest --collect-only tests/cases/test_{feature}.py
 - 一条 markdown 步骤 ≈ 一个 Page 方法；
 - 方法体只调 `self.get_locator(yaml_key)` + 动作；
 - 找不到 selector 的步骤 → 方法骨架 + `# TODO[locate]:` 注释。
+
+### Step 4.5. 账号解析（2026-05-26）
+
+判断用例是否需要登录账号：
+
+- **不需要登录** → 跳过本步骤，data yaml 不写 username/password
+- **需要登录** → 走以下路径：
+
+  1. **判断"是否明确指定账号需求"**：
+     - Markdown 前置条件只写通用表述（如"已登录"、"已进入系统"、"账号已登录"）→ **走特殊默认路径**：
+       直接使用 `tests/data/account_pool.yaml` 中 `tags` 包含 `default` 和 `generic_user` 的账号，不打断用户
+     - Markdown 前置条件含具体角色/状态/能力描述（如"VIP 用户"、"已有订单"、"能下载图钉图片"）→ 进 step 2
+
+  2. **提取需求关键词，映射到 snake_case 标签**（遵守 `.claude/skills/account-pool/SKILL.md` 命名约定）：
+     ```
+     "VIP 已登录用户"          → [vip]
+     "有历史订单的用户"         → [has_orders]
+     "能下载图钉图片的账号"     → [pin_image_downloader]
+     ```
+
+  3. **按账号池匹配算法处理**（严格 AND + 最小超集 + top 3 + 0/1/2~3 决策分支），
+     详见 `.claude/skills/account-pool/SKILL.md` 的「匹配算法」段落。
+
+  4. **拿到选中账号** → 把 `username` 和 `password` 写入 `tests/data/{feature}_data.yaml` 根级。
+
+- **0 候选场景** → 不要继续 Step 5，停下让用户补账号入池后再继续；
+  详见 `.claude/skills/account-pool/SKILL.md` 的「新增账号工作流」。
 
 ### Step 5. 生成 dataclass + 数据 yaml（仅参数化用例需要）
 - `data_types/{feature}_data_types.py` + `tests/data/{feature}_data.yaml`；
