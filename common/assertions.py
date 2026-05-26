@@ -5,6 +5,8 @@
 import os
 import json
 import logging
+import time
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional, Dict, List
 from pathlib import Path
@@ -12,6 +14,29 @@ from pathlib import Path
 from playwright.sync_api import expect, Page, Locator
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Checkpoint:
+    """单条关键校验点记录，用于 print_summary 渲染。"""
+    name: str
+    expected: str
+    actual: str
+    status: str                       # "PASS" / "FAIL"
+    duration_ms: int
+    error_msg: Optional[str] = None
+    has_explicit_name: bool = False
+
+
+def _safe_repr(value: Any, max_len: int = 80) -> str:
+    """安全 repr：捕获 __repr__ 异常，超长截断 + 省略号。"""
+    try:
+        s = repr(value)
+    except Exception:
+        s = f"<{type(value).__name__} repr failed>"
+    if len(s) > max_len:
+        s = s[: max_len - 3] + "..."
+    return s
 
 
 class DiagnosticAssertion:
