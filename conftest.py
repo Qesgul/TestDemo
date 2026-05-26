@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import pytest
@@ -15,26 +16,45 @@ logger = logging.getLogger(__name__)
 # 仅业务用例使用；测试登录功能本身的用例继续走 page fixture（原始未登录态）。
 
 @pytest.fixture(scope="session")
-def logged_in_context(browser):
+def logged_in_context(browser, request):
     """会话级已登录 context：登录与后续 test 共用同一个 context，整个 session 只开一个窗口。
 
     实现要点：
     - 不再"临时 context 登录 → 关闭 → 新建持久 context"，避免 headed 模式下窗口闪动；
     - 登录在该 context 内的一个临时 tab 上完成，登录结束后只关 tab，context 保持存活；
     - 后续每个 test 在同一 context 上开新 tab（``logged_in_page``）。
+
+    账号优先级（从高到低）：
+    1. pytest CLI 参数 ``--login-username`` / ``--login-password``
+    2. 环境变量 ``TEST_LOGIN_USERNAME`` / ``TEST_LOGIN_PASSWORD``
+    3. tests/data/login_data.yaml 默认账号（向后兼容）
     """
     # 延迟 import，避免循环依赖
     from pages.methods.login_page import LoginPage
 
-    login_data = load_yaml("tests/data/login_data.yaml") or {}
-    cases = login_data.get("cases") or []
-    if not cases:
-        raise RuntimeError(
-            "tests/data/login_data.yaml 缺少 cases，无法初始化 session 登录态"
-        )
-    creds = cases[0]
-    username = creds["username"]
-    password = creds["password"]
+    # 多源账号解析
+    cli_user = request.config.getoption("--login-username", default=None)
+    cli_pwd  = request.config.getoption("--login-password", default=None)
+    env_user = os.getenv("TEST_LOGIN_USERNAME")
+    env_pwd  = os.getenv("TEST_LOGIN_PASSWORD")
+
+    if cli_user and cli_pwd:
+        username, password = cli_user, cli_pwd
+        logger.info("使用 CLI 参数账号登录: %s", username)
+    elif env_user and env_pwd:
+        username, password = env_user, env_pwd
+        logger.info("使用环境变量账号登录: %s", username)
+    else:
+        login_data = load_yaml("tests/data/login_data.yaml") or {}
+        cases = login_data.get("cases") or []
+        if not cases:
+            raise RuntimeError(
+                "tests/data/login_data.yaml 缺少 cases，无法初始化 session 登录态"
+            )
+        creds = cases[0]
+        username = creds["username"]
+        password = creds["password"]
+        logger.info("使用 login_data.yaml 默认账号登录: %s", username)
 
     context = browser.new_context()
     context.set_default_timeout(30000)
@@ -191,6 +211,8 @@ def assertion(request):
 
     动态选取当前测试使用的 page（``logged_in_page`` 优先），避免触发
     pytest-playwright 多创建一个 page。
+
+    yield 之后通过 pytest TerminalWriter 把关键校验点汇总打印到 stdout。
     """
     page = _resolve_active_page(request)
     if page is None:
@@ -198,7 +220,20 @@ def assertion(request):
         # 仍走 pytest-playwright 默认 page（保持旧用例兼容）。
         page = request.getfixturevalue("page")
     test_name = request.node.name
-    return create_assertion(page, test_name)
+    inst = create_assertion(page, test_name)
+
+    yield inst
+
+    # finalizer: 打印 checkpoint 汇总
+    try:
+        terminalreporter = request.config.pluginmanager.get_plugin("terminalreporter")
+        tw = getattr(terminalreporter, "_tw", None) if terminalreporter else None
+        inst.print_summary(tw=tw)
+    except Exception:
+        try:
+            inst.print_summary(tw=None)
+        except Exception:
+            pass
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -248,6 +283,18 @@ def pytest_addoption(parser):
         type=int,
         default=2,
         help="最大重试次数（默认: 2）"
+    )
+    parser.addoption(
+        "--login-username",
+        action="store",
+        default=None,
+        help="覆盖 login_data.yaml 的默认登录账号（手机号）",
+    )
+    parser.addoption(
+        "--login-password",
+        action="store",
+        default=None,
+        help="配合 --login-username 使用的密码",
     )
 
 
