@@ -61,6 +61,7 @@ class TestAiDraw:
             cost_standard,
             expected_standard,
             message=f"家装标准模式知点消耗应为 {expected_standard}，实际为 {cost_standard}",
+            name="标准模式知点消耗",
         )
 
         # Step 4: 切换思考模式（点击「标准模式」标签 → 切换为思考模式）
@@ -73,6 +74,7 @@ class TestAiDraw:
             cost_thinking,
             expected_thinking,
             message=f"家装思考模式知点消耗应为 {expected_thinking}，实际为 {cost_thinking}",
+            name="思考模式知点消耗",
         )
 
         print("TC-AIDRAW-001 通过")
