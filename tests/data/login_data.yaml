@@ -1,4 +1,12 @@
 # 登录相关用例数据（与 tests/cases/test_login.py 等同 feature 对应）
+#
+# ⚠️ 账号管理位置变更（2026-05-26）：
+#   测试账号现已集中维护在 tests/data/account_pool.yaml（账号池），
+#   新增/复用账号请走那边 + .claude/skills/account-pool/SKILL.md 流程。
+#
+#   本文件保留是为了 conftest.py 的 session 级默认登录兼容
+#   （logged_in_context fixture 当 CLI/env 未指定账号时读 cases[0]）。
+#   原则上不再向 cases 追加新账号 —— 业务用例自有 data yaml 从池子写入。
 cases:
   - case_name: "valid_login"
     username: "17768100279"
