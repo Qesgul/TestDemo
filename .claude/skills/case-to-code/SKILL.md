@@ -125,6 +125,56 @@ class AtmRenderPage(BasePage):
 - 参数化用例放 `cases` 列表，字段与 `data_types/{feature}_data_types.py` 中 dataclass 一一对应。
 - 期望值不在测试方法里写死，统一从 `_DATA[...]` 或 `case_data.xxx` 取。
 
+## Checkpoint Name 自动补全（2026-05-27）
+
+生成 `assertion.assert_*` 时，**必须**通过 composer 推断 `name=`，禁止手写无意义名称。
+
+### 调用方式（Step 6 生成测试文件时，对每个步骤+预期对执行）
+
+```bash
+python -c "
+import sys, json
+sys.path.insert(0, '.')
+from common.checkpoint_name.composer import compose
+from common.checkpoint_name.parser import parse_step, parse_expect
+step = parse_step(<idx>, '<步骤原文>')
+expect = parse_expect(<idx>, '<预期原文>')
+result = compose(step, expect)
+print(json.dumps({'name': result.name, 'tier': result.tier, 'todo': result.todo}, ensure_ascii=False))
+"
+```
+
+### 结果处理规则
+
+| tier | 含义 | 处理方式 |
+|------|------|---------|
+| 1 | 作者显式指定 `[name: xxx]` | 直接用 `name` 字段值 |
+| 2 | step.object + expect.field 组合 | 直接用 `name` 字段值 |
+| 3 | 仅 step.object | 直接用 `name` 字段值 |
+| 4 | 仅 expect.field（含字典 miss）| 直接用 `name`；若 `todo` 非空，在断言行**上方**加 `todo` 注释 |
+| 5 | 兜底（步骤前 8 字）| **Claude 先判断**：能给更精炼业务名则替换；否则保留并加 `# TODO[checkpoint_name]: <todo内容>` |
+
+### Tier 5 示例
+
+composer 返回 `{"name": "等待页面响应", "tier": 5, "todo": "..."}`，Claude 判断无业务语义 → 保留兜底：
+
+```python
+# TODO[checkpoint_name]: step: '等待页面响应' | expect: '无报错' — 自动命名兜底，建议手动改名或补充字典
+assertion.assert_true(cond, name="等待页面响应", message="...")
+```
+
+composer 返回 `{"name": "验证用户标签下拉", "tier": 5, "todo": "..."}`，Claude 能给更好名字 → 替换（不加注释）：
+
+```python
+assertion.assert_true(cond, name="设计师标签选项存在", message="...")
+```
+
+### 扩充字典
+
+遇到 tier=4 且 todo 含 `checkpoint_dict` 时，在 `common/checkpoint_name_dict.yaml` 的 `fields:` 区追加新字段映射，并在 CONVERSION-REPORT.md 的「字典扩充」一节记录。
+
+---
+
 ## 断言规则
 
 - 必须使用 `assertion` fixture：
