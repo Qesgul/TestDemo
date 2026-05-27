@@ -1,0 +1,48 @@
+# common/checkpoint_name_dict.yaml
+# Checkpoint name 自动补全字段字典
+# 由 common/checkpoint_name/composer.py 加载（进程内缓存）
+# 新增字段：直接追加到 fields 区；保留已有 key 不动
+
+# ── 通用断言类型 → 默认谓语 ──────────────────────────────────
+__defaults__:
+  visibility: 可见
+  count: 数量
+  navigation: 跳转
+  value: 值
+  text: 文案
+  boolean: 成立
+
+# ── 具体字段名 → 中文短语 ────────────────────────────────────
+# 命中规则：完全匹配（fields[field]）> 兜底用 __defaults__
+fields:
+  # 业务领域字段
+  cost_standard: 标准模式知点消耗
+  cost_fast: 快速模式知点消耗
+  cost_premium: 高级模式知点消耗
+  btn_text: 按钮文案
+  title_text: 标题文案
+  selected_tab: 当前激活Tab
+  result_list: 结果列表
+  vip_button: VIP按钮
+  price: 商品价格
+  cards: 卡片数量
+  downloads: 下载次数
+  search_results: 搜索结果数
+  redirect: 重定向
+  url: 页面跳转
+
+# ── 主语后缀压缩 ─────────────────────────────────────────────
+# 主语末字在此列表中 → 删去该末字（如 '搜索框' → '搜索'）
+trim_suffixes:
+  - 框
+  - 按钮
+  - 入口
+
+# ── 数值阈值修饰（count 类断言用）────────────────────────────
+# {n} 会被替换为 expect.value
+count_modifiers:
+  ">=": "达到 {n}"
+  ">": "超过 {n}"
+  "==": "等于 {n}"
+  "<=": "不超过 {n}"
+  "<": "少于 {n}"
