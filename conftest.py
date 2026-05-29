@@ -250,6 +250,38 @@ def assertion(request):
             pass
 
 
+@pytest.fixture(scope="function")
+def gio_tracking(request):
+    """GIO 埋点捕获器：用例开始即挂 route，整用例累积事件。
+
+    - 自动选取当前 active page（logged_in_page 优先，否则 page）；
+    - 若用例同时声明了 assertion，则注入，失败落诊断 + 进 checkpoint summary；
+    - teardown 时 detach route 并打印埋点校验汇总。
+    """
+    from common.tracking.capture import GioTrackingCapture
+
+    page = _resolve_active_page(request)
+    if page is None:
+        page = request.getfixturevalue("page")
+
+    capture = GioTrackingCapture()
+    if "assertion" in set(getattr(request, "fixturenames", ())):
+        capture.bind_assertion(request.getfixturevalue("assertion"))
+    capture.attach(page)
+
+    yield capture
+
+    try:
+        capture.detach(page)
+    finally:
+        try:
+            terminalreporter = request.config.pluginmanager.get_plugin("terminalreporter")
+            tw = getattr(terminalreporter, "_tw", None) if terminalreporter else None
+            capture.print_summary(tw=tw)
+        except Exception:
+            capture.print_summary(tw=None)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
