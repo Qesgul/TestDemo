@@ -125,6 +125,24 @@ class ModelDetailPage(BasePage):
         except Exception as e:
             _logger.debug("关闭挽留弹窗失败（可能未出现）: %s", e)
 
+    def select_package(self, index: int = 0) -> bool:
+        """选中充值弹窗内第 index 个套餐卡片（触发 sc_coinrecharge_click 埋点）。
+
+        复用 get_recharge_packages 同款 package_card 选择器。
+
+        :param index: 套餐卡片下标（默认第 0 个）
+        :return: 是否成功点击
+        """
+        try:
+            cards = self.get_locator("package_card")
+            cards.first.wait_for(state="visible", timeout=5000)
+            cards.nth(index).click(force=True)
+            self.wait.wait_for_timeout(1500)
+            return True
+        except Exception as e:
+            _logger.warning("选中套餐[%d]失败: %s", index, e)
+            return False
+
     # ══════════════════════════════════════════════════════════
     # 充值套餐数据抓取
     # ══════════════════════════════════════════════════════════
