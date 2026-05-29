@@ -1,137 +1,126 @@
-"""
-充值弹窗测试用例 - 实现充值弹窗信息获取流程
+"""充值弹窗信息获取流程测试用例。
 
-流程：
-1. Cookie登录
-2. 跳转至指定URL
-3. 依次点击充值按钮和下载充值按钮
-4. 拦截接口并mock data字段为1-14
-5. 获取并记录对应充值弹窗信息
+测试范围：
+- 14 个 data_value 参数化（对应 userPayIdentityV2 接口不同身份场景）
+- 每个 data_value：mock 接口 → 点击充值按钮 → 校验弹窗 → 抓套餐 → 关闭
+
+测试约定：
+- 入口 URL：ModelDetailPage.DEFAULT_URL（唯一配置点）
+- 接口 mock：ModelDetailPage.mock_user_pay_identity(data_value)
+- 断言：统一走 assertion fixture，全部带 name= 接入 checkpoint summary
 """
+import logging
+
 import pytest
 
-from data_types.test_data_types import LoginCaseData
+from data_types.recharge_data_types import RechargeCaseData
 from pages.methods.login_page import LoginPage
 from pages.methods.model_detail_page import ModelDetailPage
-from tests.steps.test_base import load_typed_cases_from_yaml, case_ids
+from tests.steps.test_base import case_ids, load_typed_cases_from_yaml
 
+_logger = logging.getLogger(__name__)
 
-LOGIN_CASES = load_typed_cases_from_yaml("tests/data/recharge_flow_data.yaml", LoginCaseData)
-LOGIN_CASE_IDS = case_ids(LOGIN_CASES)
+_DATA_PATH = "tests/data/recharge_flow_data.yaml"
+_CASES = load_typed_cases_from_yaml(_DATA_PATH, RechargeCaseData)
+_CASE_IDS = case_ids(_CASES)
 
-if not LOGIN_CASES:
-    pytest.skip("未匹配到可执行数据，请检查 settings.yaml 中 execution.tags 过滤条件", allow_module_level=True)
+if not _CASES:
+    pytest.skip(
+        "未匹配到可执行的 RechargeCaseData，请检查 settings.yaml 中 execution.tags 过滤条件",
+        allow_module_level=True,
+    )
 
 
 class TestRechargeFlow:
-    """充值弹窗测试类"""
+    """充值弹窗信息获取流程。"""
 
-    TARGET_URL = "https://3d.znzmo.com/3dmoxing/1198790555.html?requestId=22a843f6-3354-4146-a7b2-23f5c56a2d3d"
-    API_URL = "https://api.znzmo.com/payCenter/pay/userPayIdentityV2"
-
-    @pytest.mark.parametrize("case_data", LOGIN_CASES, ids=LOGIN_CASE_IDS)
+    @pytest.mark.parametrize("case_data", _CASES, ids=_CASE_IDS)
     @pytest.mark.core
     @pytest.mark.ui
     @pytest.mark.popup
-    def test_recharge_modal_info_with_mock(self, case_data, page):
-        """
-        充值弹窗信息获取测试用例 - 带接口mock
+    def test_recharge_modal_with_mocked_identity(
+        self, case_data: RechargeCaseData, page, assertion,
+    ):
+        """对 data_value=N 场景：mock 接口 → 触发弹窗 → 校验套餐 → 关闭。
 
-        执行流程：
-        1. 使用Cookie登录（无Cookie则走正常登录）
-        2. 跳转至指定3D模型详情页
-        3. 对data=1-14依次进行测试
-        4. 对每个data值：
-           a. mock接口返回值
-           b. 点击充值按钮
-           c. 获取并记录充值弹窗信息
-           d. 关闭弹窗
-           e. 点击下载充值按钮
-           f. 获取并记录充值弹窗信息
-           g. 关闭弹窗
+        步骤：
+          1. Cookie 登录（无 cookie 走密码登录）
+          2. 进入 3D 模型详情页
+          3. mock userPayIdentityV2 返回 data=N
+          4. 点击充值按钮，等待弹窗
+          5. 抓取套餐列表
+          6. 关闭弹窗
         """
-        print(f"=== 测试用例: {case_data.case_name} ===")
-        # 步骤1: 登录
+        _logger.info("=== 用例 %s | data_value=%d ===",
+                     case_data.case_name, case_data.data_value)
+
+        # ── 步骤 1：登录 ──────────────────────────────────────
         login_page = LoginPage(page)
         login_page.goto_login_page()
         login_page.login_with(case_data.username, case_data.password)
-        # 等待登录完成
-        login_page.wait.wait_for_timeout(3000)
+        page.wait_for_timeout(3000)
 
-        print(f"✅ 登录完成，当前URL: {login_page.get_current_url()}")
-        # 步骤2: 直接跳转至目标3D模型详情页
-        print(f"📄 正在跳转至目标页面: {self.TARGET_URL}")
-        page.goto(self.TARGET_URL, wait_until="domcontentloaded")
-        page.wait_for_timeout(5000)
-        print(f"✅ 已到达目标页面: {page.url}")
+        assertion.assert_true(
+            "login" not in page.url.lower(),
+            name="登录跳转成功",
+            message=f"登录后仍在登录页：{page.url}",
+        )
 
-
-        # 创建model_page实例用于点击按钮
+        # ── 步骤 2：进入 3D 模型详情页 ─────────────────────
         model_page = ModelDetailPage(page)
+        model_page.goto()
 
-        # 先测试单个data值验证流程
-        print(f"\n{'='*70}")
-        print(f"先测试单个data值验证流程")
-        print(f"{'='*70}")
+        assertion.assert_in(
+            "3dmoxing",
+            page.url,
+            name="详情页加载完成",
+            message=f"未进入预期详情页：{page.url}",
+        )
 
-        test_data_values = [1]
+        # ── 步骤 3：mock 接口（必须在点击充值按钮之前）──
+        model_page.mock_user_pay_identity(case_data.data_value)
 
-        for data_value in test_data_values:
-            print(f"\n{'='*70}")
-            print(f"测试 data = {data_value}")
-            print(f"{'='*70}")
+        # ── 步骤 4：点击充值按钮 → 验证弹窗显示 ──────────
+        model_page.click_recharge_button()
 
-            # 测试充值按钮
-            print(f"\n--- 测试充值按钮 ---")
-            # 先检查页面状态
-            print(f"页面URL: {page.url}")
-            print(f"点击充值按钮前，检查按钮是否可见...")
+        assertion.assert_true(
+            model_page.is_recharge_modal_visible(),
+            name="充值弹窗显示",
+            message=f"data={case_data.data_value} 充值弹窗未显示",
+        )
 
-            # 点击充值按钮
-            model_page.click_recharge_button()
+        # ── 步骤 5：抓取套餐列表 → 验证非空 ───────────────
+        packages = model_page.get_recharge_packages()
 
-            # 等待弹窗出现（增加等待时间）
-            page.wait_for_timeout(3000)
+        assertion.assert_true(
+            len(packages) >= 1,
+            name="套餐数量达到 1",
+            message=f"data={case_data.data_value} 套餐数量为 0",
+        )
 
-            # 检查弹窗是否可见
-            modal_visible = model_page.is_recharge_modal_visible()
-            print(f"充值弹窗可见性: {modal_visible}")
-            assert modal_visible, "充值弹窗未显示"
+        # 记录套餐信息到日志（debug 级，不污染默认输出）
+        for i, pkg in enumerate(packages, 1):
+            _logger.debug("套餐 [%d]: %s", i, pkg)
 
-            packages = model_page.get_recharge_packages()
-            assert packages is not None, "未获取到充值套餐数据"
-            #
-            # # 关闭弹窗
-            # model_page.close_recharge_modal()
-            #
-            # # 等待一下确保弹窗完全关闭
-            # if not page.is_closed():
-            #     page.wait_for_timeout(1000)
-            #
-            # # 测试下载充值按钮
-            # print(f"\n--- 测试下载充值按钮 ---")
-            # model_page.click_download_button()
-            #
-            # # 等待弹窗出现
-            # page.wait_for_timeout(3000)
-            #
-            # # 检查弹窗是否可见
-            # modal_visible = model_page.is_recharge_modal_visible()
-            # print(f"下载充值弹窗可见性: {modal_visible}")
-            #
-            # download_result = model_page.get_recharge_packages()
-            # all_results[f"data_{data_value}_download"] = download_result
+        # ── 步骤 6：关闭弹窗 ──────────────────────────────────
+        model_page.close_recharge_modal()
+        page.wait_for_timeout(500)
 
-            # 关闭弹窗
-            model_page.close_recharge_modal()
+        assertion.assert_false(
+            model_page.is_recharge_modal_visible(),
+            name="充值弹窗关闭",
+            message="关闭操作后弹窗仍可见",
+        )
 
-            # 等待一下再继续下一个测试
-            if not page.is_closed():
-                page.wait_for_timeout(1000)
-
-        # 保存所有结果到文件
-        print(f"\n{'='*70}")
-        print(f"✅ 测试完成")
-        print(f"{'='*70}")
+        # ── 清理 mock（避免影响下一个参数化用例）─────────
+        model_page.unmock_user_pay_identity()
 
 
+if __name__ == "__main__":
+    import subprocess
+    import sys
+
+    sys.exit(subprocess.call([
+        sys.executable, "-m", "pytest", __file__,
+        "-v", "--headed", "-s",
+    ]))

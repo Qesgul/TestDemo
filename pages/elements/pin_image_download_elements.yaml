@@ -1,9 +1,22 @@
+# Pin图钉新品页 - 瀑布流图片下载元素
+# URL: https://pin.znztv.com/pinNewHome/1
+# 认证: common/cookies_dev_13060613380.json (账号: 13060613380)
+# 验证方式: 直接 Playwright 探针（verify_locator.py 的 1.5s 等待不够 ReactVirtualized 渲染）
+
+# 瀑布流卡片列表：ReactVirtualized Masonry，#masonry 容器内渲染约 25-31 个 <li>
+# 使用 get_locator(key).count() 获取数量，.nth(i) 取单张卡片
 step1_瀑布流图片卡片列表:
   type: css
-  selector: '#masonry li:has(img)'
+  selector: '#masonry li'
+
+# 单张卡片：与 step1 同选择器，通过 .nth(index) 定位到具体卡片
 step2_单张图片卡片:
   type: css
-  selector: '#masonry li:has(img)'
+  selector: '#masonry li'
+
+# 下载按钮：hover-only 元素，仅在鼠标悬停后出现
+# 实际使用方式：card.locator('[class*="downloadBtn"]').first（相对于已悬停的 li）
+# 静态 DOM 下 count=0 属正常，验证工具报 count=0 不代表选择器错误
 step3_图片卡片下载按钮:
   type: css
-  selector: '[class*=''downloadBtn'']'
+  selector: '[class*="downloadBtn"]'

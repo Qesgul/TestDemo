@@ -78,12 +78,12 @@ class TestPinImageDownload:
         _logger.info("=== TC-PIN-001: 目标触发 %d 张不同图片下载 ===", repeat_count)
 
         while len(downloaded_srcs) < repeat_count:
-            total_cards = pin_page.get_card_count()
+            # 批量获取全部卡片 src（1 次 RPC，替代原来每张 1-2 次的逐张查询）
+            all_srcs = pin_page.get_all_card_srcs()
 
             # 扫描当前 DOM 可见的全部卡片，找第一张未处理的
             found_new = False
-            for i in range(total_cards):
-                src = pin_page.get_card_src_by_index(i)
+            for i, src in enumerate(all_srcs):
                 if src in downloaded_srcs:
                     continue  # 已处理，跳过
 

@@ -1,25 +1,17 @@
-# 创作中心页元素定位器
-# 验证环境：https://www.znzmo.com/creatorCenter（需 4s 以上等待 React 渲染）
-
-# 侧边栏"首页"导航 -> 点击后进入创作中心（步骤3）
-# 验证：menuitem[name=首页] count=1（creatorCenter + creativeInspiration 页侧边栏唯一）
 home_to_creative_center:
   type: role
   role: menuitem
   name: 首页
   exact: true
-
-# 3D爆款榜列表条目（步骤3校验）
-# 验证：[class*=leftBox] [class*=listItem__] count=10 on creatorCenter
-rank_3d_items: '[class*="creatorCenter__leftBox"] [class*="RankingListNew__listItem"]'
-
-# SU爆款榜列表条目（步骤3校验 + 步骤5b点击入口）
-# 验证：[class*=rightBox] [class*=listItem__] count=10 on creatorCenter
-rank_su_items: '[class*="creatorCenter__rightBox"] [class*="RankingListNew__listItem"]'
-
-# 去创作按钮（步骤4；代码使用 .first，匹配 20 个之一可接受）
-# 验证：btn 去创作 count=20；.first 为 3D榜第一条目的按钮
-rank_go_create_button: '[class*="RankingListNew__createBtn"]'
-
-# SU榜可点击条目（步骤5b；同 rank_su_items）
-rank_su_items_clickable: '[class*="creatorCenter__rightBox"] [class*="RankingListNew__listItem"]'
+rank_3d_items:
+  type: css
+  selector: '[class*="creatorCenter__leftBox"] [class*="RankingListNew__listItem"]'
+rank_su_items:
+  type: css
+  selector: '[class*="creatorCenter__rightBox"] [class*="RankingListNew__listItem"]'
+rank_go_create_button:
+  type: css
+  selector: '[class*="RankingListNew__createBtn"]'
+rank_su_items_clickable:
+  type: css
+  selector: '[class*="creatorCenter__rightBox"] [class*="RankingListNew__listItem"]'

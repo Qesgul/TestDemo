@@ -1,8 +1,22 @@
+import io
 import logging
 import os
+import sys
 from pathlib import Path
 
 import pytest
+
+# ─── Windows UTF-8 输出修复 ──────────────────────────────────────────────────
+# Windows 默认终端编码为 GBK/cp936，会导致中文 print 输出乱码。
+# 在 pytest 加载 conftest 时强制将 stdout/stderr 切换为 UTF-8，
+# 同时设置 PYTHONUTF8=1 让子进程也继承 UTF-8 模式。
+if sys.platform == "win32":
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    if hasattr(sys.stdout, "buffer") and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "buffer") and sys.stderr.encoding.lower() not in ("utf-8", "utf8"):
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 from common.browser_manager import BrowserManager
 from common.assertions import create_assertion, enable_diagnostics, disable_diagnostics

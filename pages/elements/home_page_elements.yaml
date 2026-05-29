@@ -1,27 +1,96 @@
-# 知末网首页元素定位器
+# 首页元素定义
+# URL: https://www.znzmo.com/?from=personalCenter
+# 认证: common/cookies_dev_17768100279.json
+# 验证日期: 2026-05-27
 
-# 创作上传(悬停) -> 创作灵感(点击)
-# 验证：creatorCenterBox count=1 on homepage; text=创作灵感 count=1 after hover
-nav_create_upload: '[class^="creatorCenterBox"]'
-nav_create_inspiration: 'text=创作灵感'
+# ─── 导航菜单（创作灵感流程 + pin下载流程共用）────────────────────────────────
+# 创建上传菜单按钮（hover 展开二级菜单）
+nav_create_upload:
+  type: css
+  selector: '[class*="creatorCenterBox"]'
 
-# 导航栏
-nav_bar: '.nav-wrap'
-nav_logo: '.logo-wrap'
+# 创作灵感二级菜单入口（hover upload 后出现）
+nav_create_inspiration:
+  type: text
+  text: 创作灵感
+  exact: true
 
-# 搜索框
-search_input: 'input[placeholder*="搜索"]'
-search_button: '.search-btn'
+# ─── 首页结构元素（test_homepage.py 使用）─────────────────────────────────────
+# 左侧菜单容器（包含"首页"、"素材库"等导航项）
+# verified: unique=true, visible=true
+nav_bar:
+  type: css
+  selector: .allSiteLayoutMenuContainerWrapper
 
-# 内容区域
-content_list: '.list-wrap'
-card_items: '.card-item'
+# Logo 链接（跳转到首页的 logo 元素）
+# verified: unique=true, visible=true
+nav_logo:
+  type: css
+  selector: .showCollectTips
 
-# 筛选框相关
-filter_container: '.filter-wrap'
-filter_tab_all: 'text=全部'
-filter_tab_free: 'text=免费'
-filter_tab_vip: 'text=VIP专享'
-filter_type_3dmodel: 'text=3D模型'
-filter_type_texture: 'text=贴图'
-filter_type_script: 'text=脚本'
+# 频道分类 Tab 容器（包含"全部 3D模型 SU模型 ..."等分类 tab）
+# verified: unique=true, visible=true
+filter_container:
+  type: css
+  selector: .channelTabBox
+
+# "全部"分类 Tab（默认激活状态）
+# verified: unique=true, visible=true
+filter_tab_all:
+  type: css
+  selector: '.channelTab .channelTabItem:first-child'
+
+# "免费"筛选 Tab — 当前页面中该 Tab 不作为独立筛选 Tab 展示
+# is_all_filter_tabs_visible() 返回 false 属预期行为，test_homepage.py 不硬断言
+filter_tab_free:
+  type: text
+  text: 免费
+  exact: true
+
+# VIP 按钮（页面右上角 vipButtonBox）
+# verified: unique=true, visible=true
+filter_tab_vip:
+  type: css
+  selector: '[class*="vipButtonBox"]'
+
+# "3D模型"分类 Tab（channelTabItem 第 2 项）
+# verified: unique=true, visible=true
+filter_type_3dmodel:
+  type: css
+  selector: '.channelTab .channelTabItem:nth-child(2)'
+
+# "贴图"分类 Tab（channelTabItem 第 6 项，对应贴图/纹理素材）
+# verified: unique=true, visible=true
+filter_type_texture:
+  type: css
+  selector: '.channelTab .channelTabItem:nth-child(6)'
+
+# "文本"分类 Tab（channelTabItem 第 8 项，对应文本类素材）
+# verified: unique=true, visible=true
+filter_type_script:
+  type: css
+  selector: '.channelTab .channelTabItem:nth-child(8)'
+
+# 搜索输入框（在 SearchInput__headerSearch 容器内的 input）
+# verified: unique=true, visible=true
+search_input:
+  type: css
+  selector: '[class*="SearchInput__headerSearch"] input'
+
+# 搜索按钮（SearchInput__topOptsArea 内的搜索触发按钮）
+# verified: unique=true, visible=true（使用直接子选择器 > 避免匹配内部文本 span）
+search_button:
+  type: css
+  selector: '[class*="SearchInput__topOptsArea"] > [class*="topOptsSearch"]'
+
+# 内容列表滚动容器（infinite-scroll-component）
+# verified: unique=true, visible=true
+content_list:
+  type: css
+  selector: .infinite-scroll-component
+
+# 内容卡片列表（BuguizeFloor__item，多元素匹配属预期，约 30+ 张卡片）
+# 调用方使用 .count() 或 .nth(i) 获取具体卡片
+card_items:
+  type: css
+  selector: '[class*="BuguizeFloor__item"]'

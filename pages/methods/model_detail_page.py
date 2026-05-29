@@ -1,181 +1,207 @@
+"""3D 模型详情页 - 充值弹窗信息获取流程的 Page Object。
+
+约定：
+- DEFAULT_URL 唯一 URL 配置点；用例层一律 `model_page.goto()` 无参调用
+- 接口 mock：`mock_user_pay_identity(data_value)` 拦截 userPayIdentityV2 接口
+- 套餐信息：`get_recharge_packages()` 返回 List[RechargePackageInfo]（来自 data_types），
+  不再 print 噪声，统一走 logger
+- 元素 selector 由 pages/elements/model_detail_elements.yaml 提供
 """
-3D模型详情页 - 提供模型详情页相关操作和充值弹窗处理
-"""
-from typing import List, Dict
-from playwright.sync_api import Locator, Page
+from __future__ import annotations
+import json
+import logging
+from typing import List, Optional
+
+from playwright.sync_api import Page, Route
 
 from pages.base_page import BasePage
+from data_types.recharge_data_types import RechargePackageInfo, RechargeBonusItem
 
-
-class RechargePackageInfo:
-    """
-    充值套餐信息数据类
-    """
-    def __init__(self):
-        self.package_name: str = ""
-        self.price: str = ""
-        self.discount: str = ""
-        self.bonus_items: List[str] = []
-        self.remark: str = ""
-        self.actual_pay_price: str = ""
-        self.actual_discount_amount: str = ""
-
-    def __str__(self):
-        return (f"套餐名称: {self.package_name}\n"
-                f"价格: {self.price}\n"
-                f"优惠: {self.discount}\n"
-                f"加购福利: {', '.join(self.bonus_items)}\n"
-                f"备注: {self.remark}\n"
-                f"实际支付: {self.actual_pay_price}\n"
-                f"优惠金额: {self.actual_discount_amount}")
+_logger = logging.getLogger(__name__)
 
 
 class ModelDetailPage(BasePage):
-    """3D模型详情页类 - 知末网3D模型详情页"""
-    def __init__(
-        self,
-        page: Page,
-        auto_close_popups: bool = False
-    ) -> None:
-        """
-        ModelDetailPage 初始化
-        :param page: Playwright Page 对象，可选
-        :param auto_close_popups: 初始化时是否自动关闭弹框，默认 False
-        """
-        super().__init__(page, "pages/elements/model_detail_elements.yaml", auto_close_popups)
+    """3D 模型详情页 - 知末网 3D 模型详情页。"""
 
-    # ===== 页面操作方法 =====
-    def goto_model_detail_page(self, url: str = "https://3d.znzmo.com/3dmoxing/1198790555.html?requestId=22a843f6-3354-4146-a7b2-23f5c56a2d3d") -> None:
-        """访问3D模型详情页"""
-        self.goto(url, close_popups_after_load=True, wait_state="networkidle")
+    # ── 唯一 URL 配置点 ────────────────────────────────────
+    DEFAULT_URL = (
+        "https://3d.znzmo.com/3dmoxing/1198790555.html"
+        "?requestId=22a843f6-3354-4146-a7b2-23f5c56a2d3d"
+    )
+
+    # ── 接口路径（用于 mock）─────────────────────────────
+    PAY_IDENTITY_API = "**/payCenter/pay/userPayIdentityV2"
+
+    def __init__(self, page: Page, auto_close_popups: bool = False) -> None:
+        super().__init__(
+            page=page,
+            elements_yaml_path="pages/elements/model_detail_elements.yaml",
+            auto_close_popups=auto_close_popups,
+        )
+
+    # ══════════════════════════════════════════════════════════
+    # 导航入口
+    # ══════════════════════════════════════════════════════════
+
+    def goto(self, url: Optional[str] = None, **kwargs) -> None:
+        """进入 3D 模型详情页（无参时使用 DEFAULT_URL）。"""
+        super().goto(url or self.DEFAULT_URL, **kwargs)
+        self.page.wait_for_timeout(5000)
+
+    # ══════════════════════════════════════════════════════════
+    # 接口 mock
+    # ══════════════════════════════════════════════════════════
+
+    def mock_user_pay_identity(self, data_value: int) -> None:
+        """拦截 userPayIdentityV2 接口，让 `data` 字段返回指定值。
+
+        必须在触发会调该接口的操作（点击充值/下载按钮）**之前**调用。
+
+        :param data_value: 1-14，对应不同用户身份场景
+        """
+        def _handler(route: Route) -> None:
+            try:
+                route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps({
+                        "error": {"errorCode": "0", "errorMsg": "ok"},
+                        "data": data_value,
+                    }),
+                )
+            except Exception as e:
+                _logger.warning("mock fulfill 失败 data=%s: %s", data_value, e)
+                route.continue_()
+
+        self.page.route(self.PAY_IDENTITY_API, _handler)
+        _logger.info("已 mock userPayIdentityV2 接口返回 data=%d", data_value)
+
+    def unmock_user_pay_identity(self) -> None:
+        """解除接口 mock（用于下一轮 data_value 切换前清理）。"""
+        try:
+            self.page.unroute(self.PAY_IDENTITY_API)
+        except Exception as e:
+            _logger.debug("unroute 失败（可能未注册）: %s", e)
+
+    # ══════════════════════════════════════════════════════════
+    # 充值/下载按钮交互
+    # ══════════════════════════════════════════════════════════
 
     def click_recharge_button(self) -> None:
-        """点击充值按钮"""
+        """点击充值按钮，触发充值弹窗。"""
         self.get_locator("recharge_button").first.click(force=True)
-        # 等待弹窗出现
         self.wait.wait_for_timeout(2000)
 
     def click_download_button(self) -> None:
-        """点击充值按钮"""
+        """点击下载按钮，触发下载充值弹窗。"""
         self.get_locator("download_btn").first.click(force=True)
-        # 等待弹窗出现
         self.wait.wait_for_timeout(2000)
 
     def is_recharge_modal_visible(self) -> bool:
-        """检查充值弹窗是否可见"""
+        """充值弹窗是否可见。"""
         try:
             return self.get_locator("recharge_modal").is_visible()
         except Exception:
             return False
 
-    def get_recharge_packages(self) -> List[RechargePackageInfo]:
-        """
-        获取所有充值套餐信息
+    def close_recharge_modal(self) -> None:
+        """关闭充值弹窗（若可见）。
 
-        :return: 套餐信息列表
+        点击充值弹窗关闭按钮后，页面可能弹出挽留弹窗，需一并关闭。
         """
-        packages = []
-
-        if not self.is_recharge_modal_visible():
-            print("充值弹窗未显示")
-            return packages
+        try:
+            close_btn = self.get_locator("modal_close")
+            if close_btn.is_visible():
+                close_btn.click(force=True)
+                self.wait.wait_for_timeout(1500)
+        except Exception as e:
+            _logger.debug("关闭充值弹窗失败: %s", e)
 
         try:
-            # 等待套餐卡片加载
+            retain_btn = self.get_locator("retention_modal_close")
+            if retain_btn.is_visible():
+                retain_btn.click(force=True)
+                self.wait.wait_for_timeout(1000)
+        except Exception as e:
+            _logger.debug("关闭挽留弹窗失败（可能未出现）: %s", e)
+
+    # ══════════════════════════════════════════════════════════
+    # 充值套餐数据抓取
+    # ══════════════════════════════════════════════════════════
+
+    def get_recharge_packages(self) -> List[RechargePackageInfo]:
+        """从充值弹窗抓取所有套餐信息。
+
+        逐个点击套餐卡片，再读取卡片本身和弹窗底部的"实际支付/优惠"数值。
+
+        :return: 套餐信息列表；弹窗未显示或解析失败时返回空列表
+        """
+        if not self.is_recharge_modal_visible():
+            _logger.warning("充值弹窗未显示，无法抓取套餐信息")
+            return []
+
+        packages: List[RechargePackageInfo] = []
+        try:
             self.get_locator("package_card").first.wait_for(state="visible", timeout=5000)
-            package_cards = self.get_locator("package_card").all()
+            cards = self.get_locator("package_card").all()
+            _logger.info("找到 %d 个套餐卡片", len(cards))
 
-            print(f"找到了 {len(package_cards)} 个套餐卡片")
-
-            for card in package_cards:
-                package_info = RechargePackageInfo()
+            for card in cards:
                 card.click()
                 self.wait.wait_for_timeout(1000)
-                # 先从卡片本身获取套餐名称和价格
+
+                name = self._safe_inner_text(card, "package_name")
+                price = self._safe_inner_text(card, "package_price")
+                discount = self._safe_inner_text(card, "package_discount")
+
+                bonus_items: List[RechargeBonusItem] = []
                 try:
-                    name_selector = self._elements.get("package_name", ".package-name")
-                    name = card.locator(name_selector).inner_text(timeout=2000)
-                    package_info.package_name = name.strip() if name else ""
+                    for item in self.get_locator("bonus_item").all():
+                        text = item.inner_text(timeout=1000).strip()
+                        if text:
+                            bonus_items.append(RechargeBonusItem(title=text))
                 except Exception as e:
-                    print(f"获取套餐名称失败: {e}")
+                    _logger.debug("加购福利读取失败: %s", e)
 
-                try:
-                    price_selector = self._elements.get("package_price", ".package-price")
-                    price = card.locator(price_selector).inner_text(timeout=2000)
-                    package_info.price = price.strip() if price else ""
-                except Exception as e:
-                    print(f"获取价格失败: {e}")
+                remark = self._safe_page_text("package_remark")
+                actual_pay = self._safe_page_text("actual_pay_price")
+                actual_discount = self._safe_page_text("actual_discount_amount")
 
-                # 优惠信息（相对于 card 获取）
-                try:
-                    discount_selector = self._elements.get("package_discount", ".package-discount")
-                    discount = card.locator(discount_selector).inner_text(timeout=2000)
-                    package_info.discount = discount.strip() if discount else ""
-                except Exception as e:
-                    print(f"获取优惠信息失败: {e}")
-
-                # 加购福利（从整个页面获取，点击后显示）
-                try:
-                    bonus_items = self.get_locator("bonus_item").all()
-                    package_info.bonus_items = []
-                    for item in bonus_items:
-                        item_text = item.inner_text(timeout=1000).strip()
-                        if item_text:
-                            package_info.bonus_items.append(item_text)
-                except Exception as e:
-                    print(f"获取加购福利失败: {e}")
-
-                # 套餐备注（从整个页面获取，点击后显示）
-                try:
-                    remark = self.get_locator("package_remark").first.inner_text(timeout=2000)
-                    package_info.remark = remark.strip() if remark else ""
-                except Exception as e:
-                    print(f"获取套餐备注失败: {e}")
-
-                # 获取弹窗的实际支付和优惠信息
-                try:
-                    actual_pay_price = self.get_locator("actual_pay_price").first.inner_text(timeout=2000)
-                    actual_discount_amount = self.get_locator("actual_discount_amount").first.inner_text(timeout=2000)
-                    package_info.actual_pay_price = actual_pay_price.strip() if actual_pay_price else ""
-                    package_info.actual_discount_amount = actual_discount_amount.strip() if actual_discount_amount else ""
-                except Exception as e:
-                    print(f"获取套餐实际支付信息失败: {e}")
-
-                packages.append(package_info)
-
+                packages.append(RechargePackageInfo(
+                    package_name=name,
+                    price=price,
+                    package_discount=discount,
+                    bonus_items=bonus_items,
+                    package_remark=remark or None,
+                    actual_pay_price=actual_pay or None,
+                    actual_discount_amount=actual_discount or None,
+                ))
         except Exception as e:
-            print(f"获取套餐信息失败: {e}")
+            _logger.warning("套餐信息抓取失败: %s", e)
 
         return packages
 
-    def print_package_info(self, packages: List[RechargePackageInfo]) -> None:
-        """
-        打印套餐信息
-        """
-        print(f"\n=== 共找到 {len(packages)} 个充值套餐 ===")
-        for i, package in enumerate(packages, 1):
-            print(f"\n--- 套餐 {i}: ---")
-            print(package)
+    # ══════════════════════════════════════════════════════════
+    # 内部工具
+    # ══════════════════════════════════════════════════════════
 
-    def close_recharge_modal(self) -> None:
-        """关闭充值弹窗"""
-        close_btn = self.get_locator("modal_close")
-        if close_btn.is_visible():
-            close_btn.click(force=True)
-            self.wait.wait_for_timeout(1000)
+    def _safe_inner_text(self, parent, yaml_key: str) -> str:
+        """从父 locator 内部按 YAML key 取文本，失败返回空字符串。"""
+        try:
+            selector = self._elements.get(yaml_key, "")
+            if isinstance(selector, dict):
+                selector = selector.get("selector", "")
+            text = parent.locator(selector).inner_text(timeout=2000)
+            return text.strip() if text else ""
+        except Exception as e:
+            _logger.debug("inner_text 失败 key=%s: %s", yaml_key, e)
+            return ""
 
-    # ===== 页面元素定位方法（从 YAML 读取） =====
-    def recharge_button(self) -> Locator:
-        return self.get_locator("recharge_button")
-
-    def recharge_modal(self) -> Locator:
-        return self.get_locator("recharge_modal")
-
-    def modal_title(self) -> Locator:
-        return self.get_locator("modal_title")
-
-    def package_cards(self) -> Locator:
-        return self.get_locator("package_card")
-
-    def modal_close(self) -> Locator:
-        return self.get_locator("modal_close")
+    def _safe_page_text(self, yaml_key: str) -> str:
+        """从整个页面按 YAML key 取首个匹配元素的文本，失败返回空字符串。"""
+        try:
+            text = self.get_locator(yaml_key).first.inner_text(timeout=2000)
+            return text.strip() if text else ""
+        except Exception as e:
+            _logger.debug("page text 失败 key=%s: %s", yaml_key, e)
+            return ""

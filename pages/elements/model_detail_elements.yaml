@@ -1,7 +1,7 @@
 
 # 3D模型详情页 - 元素定位器
 recharge_button: ".topUpItemBox"
-recharge_modal: ".ant-modal-content"
+recharge_modal: '[class*="RechargeModalNew__styleGroup"]'
 modal_title: ".ant-modal-title"
 download_btn: '[class^="detail__vipFreeDownloadBtn__"]'
 # 套餐卡片相关
@@ -18,3 +18,5 @@ actual_pay_price: '[class^="RechargeModalNew__payPrice__"]'
 actual_discount_amount: '[class^="RechargeModalNew__youhuiPrice__"]'
 # 关闭按钮
 modal_close: '[class^="RechargeModalNew__closeIcon__"]'
+# 关闭后的挽留弹窗关闭按钮
+retention_modal_close: '[class*="NewZhibiPayRetainModal__closeIcon"]'

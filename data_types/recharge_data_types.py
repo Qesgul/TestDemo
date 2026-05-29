@@ -2,6 +2,15 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 
+@dataclass(frozen=True)
+class RechargeCaseData:
+    """充值弹窗用例参数化数据（与 tests/data/recharge_flow_data.yaml 的 cases 项对应）。"""
+    case_name: str
+    username: str
+    password: str
+    data_value: int   # userPayIdentityV2 mock 返回的 data 字段（1-14）
+
+
 @dataclass
 class RechargeBonusItem:
     """

@@ -1,7 +1,68 @@
-# 充值流程用例数据（与 tests/cases/test_recharge_flow.py 对应；含登录参数化 cases）
+# 充值弹窗信息获取流程测试数据
+# 对应：tests/cases/test_recharge_flow.py
+# 导航 URL 在 pages/methods/model_detail_page.py 的 DEFAULT_URL 配置
+# API mock 路径在 ModelDetailPage.PAY_IDENTITY_API 配置
+
+# ── 登录账号（账号池 default + generic_user 默认账号）──
+username: "17768100279"
+password: "Qyff2011"
+
+# ── 参数化用例：14 个 data_value 对应不同用户身份场景 ──
+# data_value 含义来自 userPayIdentityV2 接口返回字段（1-14）
 cases:
-  - case_name: "valid_login"
+  - case_name: "data_01_normal_user"
     username: "17768100279"
     password: "Qyff2011"
-    expected_message: "登录成功"
-
+    data_value: 1
+  - case_name: "data_02"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 2
+  - case_name: "data_03"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 3
+  - case_name: "data_04"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 4
+  - case_name: "data_05"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 5
+  - case_name: "data_06"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 6
+  - case_name: "data_07"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 7
+  - case_name: "data_08"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 8
+  - case_name: "data_09"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 9
+  - case_name: "data_10"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 10
+  - case_name: "data_11"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 11
+  - case_name: "data_12"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 12
+  - case_name: "data_13"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 13
+  - case_name: "data_14"
+    username: "17768100279"
+    password: "Qyff2011"
+    data_value: 14

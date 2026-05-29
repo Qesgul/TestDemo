@@ -1,19 +1,8 @@
-# 发布作品页元素定位器
-# 注：is_on_publish_page() 和 back_to_creative_center() 均不使用 locator，
-# 这些 key 为兼容性保留，不参与当前测试流程断言。
-
-# 发布页标题（最小校验，tablist 中 "发布作品" tab 文本）
-publish_title: 'text=发布作品'
-
-# 上传品类"CAD图纸"单选按钮（步骤12校验从创作灵感 CAD Tab 跳入时预选状态）
-# 验证：get_by_role("radio", name="CAD图纸", exact=True) count=1, checked=True
 cad_category_radio:
   type: role
   role: radio
   name: CAD图纸
   exact: true
-
-# 侧边栏"首页"导航 -> 返回创作中心（备用，实际由 back_to_creative_center 逻辑处理）
 back_to_creative_center_button:
   type: role
   role: menuitem
