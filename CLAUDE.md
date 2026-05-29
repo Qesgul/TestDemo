@@ -109,3 +109,18 @@
 | 测试用例编写规范 | `.cursor/rules/test-suite-conventions.mdc` |
 | 数据文件格式 | `.cursor/rules/test-data-conventions.mdc` |
 | 会话复盘 / 清理机制 | `.claude/skills/session-recap/SKILL.md` |
+
+---
+
+## Skill 触发映射（优先级最高）
+
+识别到以下任意触发词，**必须在执行任何操作前**先调用对应 `Skill`：
+
+| 触发词（任意匹配一个即触发） | 必须先调用 |
+|---|---|
+| 总结改动 / 会话复盘 / session recap / 汇总今日改动 / 汇总改动 / 生成复盘报告 / 清理临时文件 / 清理废弃脚本 / clean artifacts / 这段时间的问题 / 改动总结 | `Skill("session-recap")` |
+| 清理无用文件 / 清理项目 / clean-artifacts | `Skill("clean-artifacts")` |
+| 把这份用例转成自动化 / 生成用例代码 / 根据 markdown 生成 / convert test cases / 转成自动化代码 | `Skill("case-to-code")` |
+| 用AI获取selector / 帮我找元素的selector / fill TODO_SELECTOR / 自动生成定位器 / ai-selector / selector_finder / 生成元素定位 | `Skill("ai-selector")` |
+
+规则：**识别到触发词 → 立即 `Skill(name)` → 再做其他任何事。即使只是想先问问题或采集信息也不例外。**

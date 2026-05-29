@@ -1,3 +1,12 @@
+---
+name: session-recap
+description: >
+  会话复盘、改动汇总、临时文件清理 skill。
+  触发词：总结改动、会话复盘、session recap、汇总今日改动、汇总改动、
+  生成复盘报告、清理临时文件、清理废弃脚本、clean artifacts、
+  这段时间的问题、改动总结。
+---
+
 # Session Recap — 会话复盘 & 清理
 
 ## 触发词
