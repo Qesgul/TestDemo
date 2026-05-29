@@ -265,6 +265,7 @@ def gio_tracking(request):
         page = request.getfixturevalue("page")
 
     capture = GioTrackingCapture()
+    capture.test_name = request.node.name
     if "assertion" in set(getattr(request, "fixturenames", ())):
         capture.bind_assertion(request.getfixturevalue("assertion"))
     capture.attach(page)
