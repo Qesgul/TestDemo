@@ -66,3 +66,24 @@ cases:
     username: "17768100279"
     password: "Qyff2011"
     data_value: 14
+
+# ── GIO 埋点期望（充值测试需求，已上线）──
+tracking:
+  requirement: "充值测试埋点（已上线）"
+  events:
+    - identifier: sc_coinrecharge_show
+      name: 全局_知币充值窗口_曝光
+      trigger: 点充值按钮后弹窗显示
+      expect_vars: {}
+    - identifier: sc_coinrecharge_click
+      name: 全局_充值窗口_知币充值套餐_选中
+      trigger: 选中套餐
+      expect_vars: {}
+    - identifier: Rechargetest_2
+      name: 充值测试登录变量_2
+      groups: [实验组, 对照组]
+      expect_vars: {}
+    - identifier: sc_coinrecharge_pay
+      name: 全局_知币充值窗口_支付成功
+      trigger: 支付成功
+      status: pending
