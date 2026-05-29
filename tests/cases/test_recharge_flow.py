@@ -17,6 +17,7 @@ from data_types.recharge_data_types import RechargeCaseData
 from pages.methods.login_page import LoginPage
 from pages.methods.model_detail_page import ModelDetailPage
 from tests.steps.test_base import case_ids, load_typed_cases_from_yaml
+from common.tracking.expectations import load_gio_expectations
 
 _logger = logging.getLogger(__name__)
 
@@ -113,6 +114,49 @@ class TestRechargeFlow:
         )
 
         # ── 清理 mock（避免影响下一个参数化用例）─────────
+        model_page.unmock_user_pay_identity()
+
+    @pytest.mark.core
+    @pytest.mark.ui
+    def test_recharge_gio_tracking(self, page, assertion, gio_tracking):
+        """充值需求 GIO 埋点捕获校验（复用现有页面方法）。
+
+        标识符必校；var 可选；pending 状态埋点（支付成功）本期跳过。
+        """
+        expects = load_gio_expectations(_DATA_PATH)
+        first = _CASES[0]
+
+        # ── 登录（被动捕获 Rechargetest_2）──
+        login_page = LoginPage(page)
+        login_page.goto_login_page()
+        login_page.login_with(first.username, first.password)
+        page.wait_for_timeout(3000)
+
+        # ── 进入详情页 + mock 身份（保证弹窗有套餐）──
+        model_page = ModelDetailPage(page)
+        model_page.goto()
+        model_page.mock_user_pay_identity(first.data_value)
+
+        # ── 点充值按钮 → 弹窗曝光 ──
+        model_page.click_recharge_button()
+        assertion.assert_true(
+            model_page.is_recharge_modal_visible(),
+            name="充值弹窗显示", message="充值弹窗未显示，无法验证曝光埋点",
+        )
+        gio_tracking.assert_event("sc_coinrecharge_show")
+
+        # ── 选中套餐 → 选中埋点 ──
+        model_page.select_package(0)
+        gio_tracking.assert_event("sc_coinrecharge_click")
+
+        # ── 登录实验/对照组变量埋点（流程被动捕获）──
+        gio_tracking.assert_event("Rechargetest_2")
+
+        # ── pending 埋点（如支付成功）本期跳过 ──
+        for exp in expects:
+            if exp.is_pending:
+                _logger.info("埋点 %s 标记 pending，本期跳过校验", exp.identifier)
+
         model_page.unmock_user_pay_identity()
 
 
