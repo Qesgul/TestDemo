@@ -69,3 +69,6 @@ docs/superpowers/
 utils/perf_test_give_voucher.py
 utils/一键修改_任意切量分组.py
 utils/埋点测试优化版本1.py
+
+# Claude Code 本地权限配置（个人本地设置，不入库）
+.claude/settings.local.json
