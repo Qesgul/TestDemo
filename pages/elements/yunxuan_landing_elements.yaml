@@ -1,0 +1,280 @@
+# 知末云渲染落地页 - 元素定位
+# URL: https://www.znzmo.com/yunxuanLanding.html?fromwhere=0
+# 需求: 3D云渲染落地页优化PRD | 用例: 07_automation_test_cases.md
+# 所有 selector 均由 ai-selector 探针实抓 + verify 唯一性验证，使用稳定的 yl* 类名。
+
+# ─────────────────────────────────────────────────────────
+# 模块二：顶部栏（TC-AT-003~004）
+# ─────────────────────────────────────────────────────────
+top_nav:
+  type: css
+  selector: 'nav.ylNav'
+
+nav_logo:
+  type: css
+  selector: '.ylNavLogoMark'
+
+nav_download_btn:
+  type: css
+  selector: '.ylNavCta'
+
+# ─────────────────────────────────────────────────────────
+# 模块三：底部 banner（TC-AT-005~008）
+# ─────────────────────────────────────────────────────────
+# 吸底 banner：position:fixed，靠 transform translateY + class ylStickyBar--visible 切换显隐
+bottom_banner:
+  type: css
+  selector: '.ylStickyBar'
+
+# banner 内"立即下载·领免费福利"按钮（区别于三屏/四屏的 .ylBtnPrimary）
+bottom_banner_cta:
+  type: css
+  selector: '.ylStickyBarBtn'
+
+# ─────────────────────────────────────────────────────────
+# 模块四：首屏（TC-AT-009~016）
+# ─────────────────────────────────────────────────────────
+first_screen:
+  type: css
+  selector: '#yl-hero'
+
+screen1_heading:
+  type: css
+  selector: 'h1.ylHeroH1'
+
+# 首屏 CTA：文案含特殊字符，用 class 定位更稳定
+screen1_cta_btn:
+  type: css
+  selector: '.ylHeroCta'
+
+# 首屏 CTA 点击后弹出的 Ant Popover 内版本选择项（render_download_click 在此触发）
+download_version_popover_item:
+  type: css
+  selector: '.downloadVersionPopoverItem'
+
+carousel_prev:
+  type: css
+  selector: '.ylHeroBtn--prev'
+
+carousel_next:
+  type: css
+  selector: '.ylHeroBtn--next'
+
+# 轮播圆点指示器（共 5 个，用 .ylHeroDot 取 count/nth）
+carousel_dots:
+  type: css
+  selector: '.ylHeroDot'
+
+# 当前激活的圆点（class--active）
+carousel_dot_active:
+  type: css
+  selector: '.ylHeroDot--active'
+
+# 当前激活的轮播图幻灯片
+carousel_slide_active:
+  type: css
+  selector: '.ylHeroSlide--active'
+
+# ─────────────────────────────────────────────────────────
+# 模块五：第二屏（TC-AT-017~024）
+# ─────────────────────────────────────────────────────────
+# 三张数据卡片容器
+s2_cards_container:
+  type: css
+  selector: '.ylCards3'
+
+# 单张卡片（用 count 验数量，nth 取具体卡片）
+s2_card:
+  type: css
+  selector: '.ylCard'
+
+# 卡片 hover 区（含 hover 动效）
+s2_card_hover:
+  type: css
+  selector: '.ylCardHover'
+
+# 看渲染流程锚点链接
+s2_link_workflow:
+  type: css
+  selector: 'a.ylCardLink[href*="yl-workflow"]'
+
+# 看真实评价锚点链接
+s2_link_reviews:
+  type: css
+  selector: 'a.ylCardLink[href*="yl-reviews"]'
+
+# 看渲染效果锚点链接
+s2_link_cases:
+  type: css
+  selector: 'a.ylCardLink[href*="yl-cases"]'
+
+# 立即领取福利按钮
+s2_welfare_btn:
+  type: css
+  selector: '.ylBtnClaim'
+
+# 福利展开后的选项（领取30天免费渲 / 领免费VIP）
+# 注：展开前 DOM 可能不存在，用 page.evaluate 触发后再定位
+s2_welfare_options:
+  type: css
+  selector: 'TODO_SELECTOR'   # 需触发展开后抓取（see TC-AT-022）
+
+# ─────────────────────────────────────────────────────────
+# 模块六：第三屏（TC-AT-025~026）
+# ─────────────────────────────────────────────────────────
+screen3:
+  type: css
+  selector: '#yl-workflow'
+
+# 流程步骤卡片（共 5 个）
+s3_step_card:
+  type: css
+  selector: '.ylWorkflowStep'
+
+# 第三屏下载按钮（class 与三屏独有 ylBtnWorkflow 区分）
+s3_download_btn:
+  type: css
+  selector: '.ylBtnWorkflow'
+
+# ─────────────────────────────────────────────────────────
+# 模块七：第四屏（TC-AT-027~029）
+# ─────────────────────────────────────────────────────────
+screen4:
+  type: css
+  selector: '#yl-cases'
+
+# 分类标签（共 5 个，用 count 验数量）
+s4_category_tab:
+  type: css
+  selector: '.ylCaseTab'
+
+# 当前激活分类标签
+s4_category_tab_active:
+  type: css
+  selector: '.ylCaseTab--active'
+
+# 案例图片（按分类切换后重新 count）
+s4_case_img:
+  type: css
+  selector: '.ylCaseCardImg'
+
+# 案例卡片容器
+s4_case_card:
+  type: css
+  selector: '.ylCaseCard'
+
+# 第四屏下载按钮（.ylBtnPrimary 内，第四屏区域内）
+s4_download_btn:
+  type: css
+  selector: '#yl-cases .ylBtnPrimary'
+
+# ─────────────────────────────────────────────────────────
+# 模块八：第五屏（TC-AT-030~034）
+# ─────────────────────────────────────────────────────────
+screen5:
+  type: css
+  selector: '#yl-ai'
+
+# AI 对比滑块输入（range input，操作 value 属性切换）
+s5_slider_input:
+  type: css
+  selector: '.ylAiSliderInput'
+
+# "试用概念图 →" 链接
+s5_trial_link:
+  type: css
+  selector: 'a.ylAiCaseBtn[href*="menuKey=extension"]:not(.ylAiCaseBtn--solid)'
+
+# "减少返工 →" 链接（同 href，取第二个）
+s5_rework_link:
+  type: css
+  selector: 'TODO_SELECTOR'   # 两个 ylAiCaseBtn 指向同一 href，需 nth 区分
+
+# "联系商务 →" 按钮（solid 变体）
+s5_contact_btn:
+  type: css
+  selector: '.ylAiCaseBtn--solid'
+
+# AI 案例区块容器（含比对图）
+s5_ai_case:
+  type: css
+  selector: '.ylAiCase'
+
+# ─────────────────────────────────────────────────────────
+# 模块九：第六屏（TC-AT-035~042）
+# ─────────────────────────────────────────────────────────
+screen6:
+  type: css
+  selector: '#yl-reviews'
+
+# "近7天已帮助 xxx 设计师" 动态数字文案段落
+s6_dynamic_subtitle:
+  type: css
+  selector: '#yl-reviews .ylSubtitle'
+
+# 数据统计区（万张/注册设计师等）
+s6_stat_grid:
+  type: css
+  selector: '.ylStatGrid'
+
+# 单条数据统计项
+s6_stat_item:
+  type: css
+  selector: '.ylStatItem'
+
+# 评论区轨道容器（用于测 transform 方向）
+s6_review_track:
+  type: css
+  selector: '.ylReviewTrack'
+
+# 评论视窗（可见区域）
+s6_review_viewport:
+  type: css
+  selector: '.ylReviewViewport'
+
+# 单张评论卡片
+s6_review_card:
+  type: css
+  selector: '.ylReviewCard'
+
+# 上一条评论按钮
+s6_prev_btn:
+  type: css
+  selector: '.ylReviewNav--prev'
+
+# 下一条评论按钮
+s6_next_btn:
+  type: css
+  selector: '.ylReviewNav--next'
+
+# ─────────────────────────────────────────────────────────
+# 模块十：第七屏（TC-AT-043~045）
+# ─────────────────────────────────────────────────────────
+# 第七屏容器（ylDownload 区域）
+screen7:
+  type: css
+  selector: '.ylDownload'
+
+screen7_heading:
+  type: css
+  selector: '.ylDownloadH2'
+
+# 下载云渲染客户端按钮（.ylBtnPrimary，在 ylDownload 区域内）
+s7_dl_client_btn:
+  type: css
+  selector: '.ylDownload .ylBtnPrimary'
+
+# 下载 AI 生图插件按钮
+s7_dl_ai_btn:
+  type: css
+  selector: '.ylBtnNeutral'
+
+# 信任标签容器
+s7_trust_tags:
+  type: css
+  selector: '.ylDownloadTags'
+
+# 单个信任标签
+s7_trust_tag:
+  type: css
+  selector: '.ylDownloadTag'
