@@ -84,6 +84,25 @@ def get_current_tab_items_texts(self, max_items: int = 0): ... # 同样默认全
 
 ---
 
+## 元素与时序实战教训（规则 7）
+
+1. **文档 selector ≠ 可用 selector**：PRD / 用例里的按钮名、文案不能直接当 selector 落 YAML，
+   必须浏览器实抓并验证唯一命中后再写入（详见 case-to-code 抓元素指引 → 步骤优先级 ①→④）。
+
+2. **transform / fixed 元素查 class，不用 `is_visible()`**：通过 CSS `transform` 或 `fixed`
+   控制显隐的元素（如 `.ylStickyBar`），`is_visible()` 恒返回 `True`；判断显隐状态应改用
+   `element.evaluate("el => el.classList.contains('xxx--visible')")` 或读取 computed style。
+
+3. **弹窗 / 展开选项先展开再确认元素类型**：Popover / Modal 内的目标元素，必须先触发展开、
+   等其出现再断言或点击，不可假设"点入口 = 目标就绪"
+   （例：下载埋点需 CTA → Popover 版本项两步，才能触发 `render_download_click`）。
+
+4. **含 `reload` 的 `goto()` 会重置计时器**：`BasePage.goto()` 默认调用
+   `_reload_to_dismiss_popups()` 触发 `page.reload()`，重置页面计时器与 SDK 初始化；
+   时序类断言（曝光、倒计时、动态数字）须把 reload 的影响纳入等待预算。
+
+---
+
 ## 新增方法验证清单（规则 4）
 
 新增或修改 Page 方法后，必须完成以下验证：

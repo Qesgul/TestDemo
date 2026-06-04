@@ -17,6 +17,10 @@ description: Use when the user provides a Markdown test case document (table for
 >
 > 冲突时**以这些既有规则为准**，本 skill 只做"转换 / 生成 / 占位 / 报告"层的额外约束。
 
+> **埋点用例特别约定**：当待转换用例涉及 GIO 埋点（gio / growingio / `render_*` 事件 / 上报校验 / tracking）时，
+> **必须额外先 `Read` `docs/gio埋点自动化生成指南.md`**，并按其「5 步标准流程 + 5 条避坑清单」生成——
+> 复用 `gio_tracking` fixture 与 `decode_gio_body`，先探针后断言，不伪造无法触发的事件。
+
 ## 触发场景
 
 用户提供 Markdown 测试用例文档（路径或贴入正文），要求生成可在本项目运行的自动化代码。
@@ -81,14 +85,23 @@ description: Use when the user provides a Markdown test case document (table for
 
 ## 登录前置统一规则
 
-任何"已登录"类前置条件统一翻译为：
+> **优先用 `logged_in_page` fixture**：前置是"已登录"且不测登录本身的用例，fixture 直接用
+> `logged_in_page`（会话级 cookie 登录，复用 context），用例内不再写 `goto_login`/`login_with`，
+> 也不因"需登录"就 skip（详见 `test-suite-conventions` 「登录态用例」规则 4）。
+> 下方 `login_with` 写法仅用于**显式测试登录流程本身**的用例。
 
 ```python
-from pages.methods.login_page import LoginPage
+# ✅ 需登录态的业务用例（埋点、福利、个人中心…）
+def test_xxx(self, logged_in_page, assertion):
+    landing = XxxPage(logged_in_page)
+    landing.goto()
+    ...
 
-login_page = LoginPage(page)
-login_page.goto_login_page()
-login_page.login_with(_DATA["username"], _DATA["password"])
+# ✅ 测登录流程本身的用例（仍用 page）
+def test_login_success(self, page, assertion):
+    login_page = LoginPage(page)
+    login_page.goto_login_page()
+    login_page.login_with(_DATA["username"], _DATA["password"])
 ```
 
 - `login_with` 已实现 cookie 优先 + 密码兜底（见 `pages/methods/login_page.py:151`），**不要**在新 Page 类里重复实现登录或 cookie 操作。
@@ -181,6 +194,8 @@ assertion.assert_true(cond, name="设计师标签选项存在", message="...")
   - `assertion.assert_true(cond, message="...")`
   - `assertion.assert_equal(actual, expected, message="...")`
   - `assertion.expect_to_be_visible(locator, ...)` 等
+- ⚠️ **`assert_equal` 签名陷阱**：第 3 位置参数是 `message` 非 `name`；比对断言必须用关键字
+  `name=`，否则校验点汇总表丢名（详见 `test-suite-conventions.mdc` 断言教训第 1 条）。
 - **禁止** `assert` 裸语句和 `playwright.expect(...)` 直调，否则失败时不会落诊断报告。
 - **每个 assertion 必须带 `name=` 参数**，name 取 markdown 用例「预期结果」列对应短句：
   - `assertion.expect_to_have_text(locator, "登录成功", name="登录成功提示文案")`
@@ -224,6 +239,7 @@ assertion.assert_true(cond, name="设计师标签选项存在", message="...")
 | `# TODO[selector_class]: ...` | 选中态/激活态 class 子串待确认 |
 | `# TODO[manual]: ...` | manual 用例的人工说明 |
 | `pytest.skip("TODO: ...")` | 整条用例尚不可执行时显式跳过 |
+| `# TODO[待考虑]: <原因>` + `pytest.skip("【待考虑】...")` | 需时钟 mock（跨日 `page.clock`）或接口 mock（`route` 返回特定数据）才能自动化；当前暂 skip，留待后续实现；`【待考虑】` 前缀一眼可识别，可 `grep "待考虑"` 批量追踪 |
 
 ## 必须产出的转换报告
 
@@ -250,6 +266,25 @@ pytest --collect-only tests/cases/test_{feature}.py
 ```
 
 `pytest --collect-only` 必须 0 报错；运行时失败（找不到元素、URL 错）允许，但需在 TODO 清单中显式列出。
+
+## 多版本 / 多变体覆盖（参数化优先）
+
+一个操作有多个版本或变体时（如下载含 Win10/Win7、套餐多档、分类多类），**不只测默认项**，参数化覆盖全部：
+
+- **数据 yaml** 列全各变体期望值（`download_btn_data2: {hero_win10: "...", hero_win7: "..."}`）
+- **用例** 用 `@pytest.mark.parametrize` 遍历变体，而非为每个变体写一个方法
+- **Page 方法** 用 `keyword` 参数区分变体（如 `click_hero_download_version(keyword="Win7")`），禁止为每变体写单独方法
+
+```python
+# ✅ 参数化覆盖多版本
+@pytest.mark.parametrize("keyword,expected_data2", [
+    ("Win10", _DATA["tracking_meta"]["download_btn_data2"]["hero_win10"]),
+    ("Win7",  _DATA["tracking_meta"]["download_btn_data2"]["hero_win7"]),
+])
+def test_download_click_event(self, page, assertion, gio_tracking, keyword, expected_data2):
+    landing.click_hero_download_version(keyword=keyword)
+    gio_tracking.assert_event("render_download_click", vars={"data2": expected_data2})
+```
 
 ## 不做的事（明确边界）
 

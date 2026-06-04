@@ -109,6 +109,7 @@
 | 测试用例编写规范 | `.cursor/rules/test-suite-conventions.mdc` |
 | 数据文件格式 | `.cursor/rules/test-data-conventions.mdc` |
 | 会话复盘 / 清理机制 | `.claude/skills/session-recap/SKILL.md` |
+| GIO 埋点用例生成规范 | `docs/gio埋点自动化生成指南.md` |
 
 ---
 
@@ -124,3 +125,20 @@
 | 用AI获取selector / 帮我找元素的selector / fill TODO_SELECTOR / 自动生成定位器 / ai-selector / selector_finder / 生成元素定位 | `Skill("ai-selector")` |
 
 规则：**识别到触发词 → 立即 `Skill(name)` → 再做其他任何事。即使只是想先问问题或采集信息也不例外。**
+
+---
+
+## 埋点用例生成：强制参考指南
+
+识别到以下任意触发词，**在动手生成/修改任何埋点相关代码之前，必须先 `Read` `docs/gio埋点自动化生成指南.md`**，并严格按其「5 步标准流程」+「5 条避坑清单」执行：
+
+| 触发词（任意匹配一个即触发） |
+|---|
+| 生成埋点用例 / 编写埋点用例 / 埋点自动化 / gio 埋点 / growingio / render_* 事件 / tracking 用例 / 上报校验 / 曝光埋点 / 点击埋点 |
+
+**核心红线（指南详述，此处强调最易踩的 3 条）**：
+1. **先探针后下结论**：判断"是否走 gio / 某事件是否存在"前，必须用 `decode_gio_body` 解码实况请求，禁止凭 body 明文搜索或 URL 域名臆断。
+2. **复用现成框架**：直接用 `gio_tracking` fixture + `assert_event`，禁止自己挂 route 重造轮子。
+3. **不伪造断言**：事件无法触发时区分"需登录/接口桩"（pending）与"页面未埋 handler"（研发缺陷），绝不编造假断言。
+
+规则：**识别到触发词 → 先 `Read` 指南 → 再按指南动手。即使任务看起来简单明确也不例外。**

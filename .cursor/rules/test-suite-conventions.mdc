@@ -145,3 +145,54 @@ snapshots:
 
 - 凡需要建立/更新快照基准，需编写独立的 `scripts/collect_{feature}_data.py`
 - 脚本**先采集打印，不立即写文件**；等人工确认数据合理后再写入（配合 `CLAUDE.md` 规则 1）
+
+---
+
+## 登录态用例统一走 logged_in_page（规则 4）
+
+任何需登录态的用例（埋点、福利领取、下单、个人中心、登录才显示的元素等），
+fixture 用 `logged_in_page` 替代 `page`，不在用例内临时登录，也不因"需登录"就 skip：
+
+```python
+def test_xxx(self, logged_in_page, assertion):   # ✅ 而非 page
+```
+
+- **会话级**：底层 `login_with(use_cookie=True)`，cookie 优先 + 密码兜底，整个 session 只登一次、复用同一 context，无需自己 `add_cookies` / 塞 `storage_state`。
+- **自动接线**：`assertion` / `gio_tracking` 等 fixture 走 `_resolve_active_page`，`logged_in_page` 优先自动选中，无需额外接线。
+- **区分两类"需登录"**，别一律 skip：
+  - 仅需登录态 → `logged_in_page` 直接实装；
+  - 还需接口返回特定结果（成功/失败分支）→ 标 pending + `page.route()` 打桩。
+- **副作用提醒**：登录态触发"领取/下单/扣费/删除"会对真账号产生真实副作用，docstring 注明，优先接口桩而非真实操作。
+
+---
+
+## 断言与可自动化实战教训（规则 3）
+
+### 1. `assertion` 必带 `name=` 且先确认签名
+
+`assert_equal` 完整签名：`assert_equal(actual, expected, message="", name=None)`。
+**第 3 个位置参数是 `message` 而非 `name`**——写成 `assert_equal(a, b, "校验名")` 会被吞进
+`message`，校验点汇总表中该行丢失名称。比对断言**必须用关键字**：
+
+```python
+# ❌ 错误：第三位置参数被当 message，name 丢失
+assertion.assert_equal(actual, expected, "首屏文案")
+
+# ✅ 正确：显式关键字传 name
+assertion.assert_equal(actual, expected, name="首屏文案")
+```
+
+同理，`assert_true(value, message="", name=None)` 的第 2 位是 `message`；两个方法写 `name` 时
+**一律用关键字参数**，不依赖位置。
+
+### 2. headless 不支持 `:hover`，视觉类留 headed
+
+headless Chromium 不触发 CSS `:hover` 伪类，hover 放大 / 高亮 / 动画类断言在 CI 中不可靠。
+此类用例标 `manual` 或在注释注明 `# headed-only`，不伪造通过。
+典型如卡片 hover 放大 / 橙色高亮，归 manual skip，**禁止写 `assert_true(True)` 假通过**。
+
+### 3. 真实动态数据用软校验
+
+依赖后端实时返回的动态数据（区间数字、排行榜、评论条数等），冷启动或 headless 模式可能返回 0
+或极小值。应使用区间 / `>=` / 存在性软校验，数据缺失时 `pytest.skip`，禁止写死等值断言。
+写法：文案格式（如 `"近7天已帮助…位设计师"`）用硬断言；其中的动态数值用区间软校验，数值缺失则 skip。
