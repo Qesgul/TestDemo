@@ -370,3 +370,4 @@ pytest --collect-only tests/cases/test_{feature}.py -q
 - 元素定位错 → 改 yaml（**不改 test**）
 - 行为/时序错 → 改 Page 方法（**不改 test**）
 - 用例编排错 → 才改 test
+- 发现疑似**功能缺陷**（非脚本定位/时序问题）→ 立即按 `CLAUDE.md 缺陷反馈与阻断机制（规则 8）` 反馈；严重缺陷停止生成、等用户指示，不默默 skip
