@@ -48,6 +48,9 @@ core/cookies*.json
 **/cookies*.json
 recharge_test_results.json
 
+# 本地真实数据库/Redis 凭据（明文，禁止提交；覆盖 settings.yaml 占位）
+config/settings.local.yaml
+
 # AI Selector — 分析过程中产生的临时快照（a11y.yaml / screenshot.png）
 # 这些文件是 capture_snapshot.py 的工作输出，仅用于当次 AI 分析，不归档
 .planning/snapshot/

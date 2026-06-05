@@ -71,10 +71,41 @@ class AllureConfig:
         self.report_title: str = str(config.get("report_title", "自动化测试报告"))
 
 
+class ApiConfig:
+    def __init__(self, config: Dict[str, Any]):
+        self.base_url: str = os.environ.get("TEST_API_BASE_URL") or str(config.get("base_url", ""))
+        self.timeout_ms: int = int(os.environ.get("TEST_API_TIMEOUT_MS") or config.get("timeout_ms", 15000))
+        dh = config.get("default_headers", {}) or {}
+        self.default_headers: Dict[str, str] = {str(k): str(v) for k, v in dh.items()}
+
+
+class DatabaseConfig:
+    def __init__(self, config: Dict[str, Any]):
+        self.host: str = os.environ.get("TEST_DB_HOST") or str(config.get("host", ""))
+        self.port: int = int(os.environ.get("TEST_DB_PORT") or config.get("port", 3306))
+        self.user: str = os.environ.get("TEST_DB_USER") or str(config.get("user", ""))
+        self.password: str = os.environ.get("TEST_DB_PASSWORD") or str(config.get("password", ""))
+        self.database: str = os.environ.get("TEST_DB_NAME") or str(config.get("db", ""))
+        self.charset: str = str(config.get("charset", "utf8mb4"))
+        self.connect_timeout: int = int(config.get("connect_timeout", 5))
+
+
+class RedisConfig:
+    def __init__(self, config: Dict[str, Any]):
+        self.host: str = os.environ.get("TEST_REDIS_HOST") or str(config.get("host", ""))
+        self.port: int = int(os.environ.get("TEST_REDIS_PORT") or config.get("port", 6379))
+        pwd = os.environ.get("TEST_REDIS_PASSWORD") or str(config.get("password", ""))
+        self.password = pwd or None
+        self.db: int = int(config.get("db", 0))
+
+
 class Config:
     CONFIG_PATHS = [
         "config/settings.yaml",
         "test_suite.yaml",
+        # 本地凭据覆盖文件（gitignore，不提交）：置于末尾，深合并后真实值盖过 settings.yaml 占位。
+        # 环境变量 TEST_* 仍是最高优先级（见 DatabaseConfig/RedisConfig）。
+        "config/settings.local.yaml",
     ]
 
     _instance: Optional["Config"] = None
@@ -104,6 +135,9 @@ class Config:
         self._load_path_config()
         self._execution = ExecutionConfig(self._config.get("execution", {}))
         self._allure = AllureConfig(self._config.get("allure", {}))
+        self.api = ApiConfig(self._config.get("api", {}))
+        self.database = DatabaseConfig(self._config.get("database", {}))
+        self.redis = RedisConfig(self._config.get("redis", {}))
         self._apply_cli_overrides()
         self._parse_env_vars()
         self._validate_config()

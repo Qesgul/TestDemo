@@ -40,6 +40,11 @@ def test_example(page, assertion):
 
 - **`page`**：当前用例的 Playwright `Page`，不要自行 `sync_playwright()` 除非封装在 `common/` 且可复用。
 - **`assertion`**：诊断断言对象，常用：`assertion.assert_true(cond, message)`、`assertion.assert_equal(a, b, message)` 等。
+- **`logged_in_page`**：已登录态 page（需登录用例统一用它，见规则 4）。
+- **`mysql_db` / `redis_db`**：数据库 / Redis 薄客户端（查库核对、造数清理、缓存清除，见规则 5）。
+- **`api_client`**：独立 API 客户端，按需带 cookie 登录态，**不启动浏览器**（纯接口测试，见规则 5）。
+- **`logged_in_api_client`**：复用浏览器登录 session 的 API 客户端（UI+API 混合用例，见规则 5）。
+- **`api_assert`**：API 响应诊断断言（`status_ok` / `json_path` 等，失败落同一套诊断报告，见规则 5）。
 - 会话级浏览器回收见 **`conftest.py`** 中 `browser_lifecycle`（`BrowserManager.shutdown()`）。
 
 ## 参数化用例模板
@@ -196,3 +201,71 @@ headless Chromium 不触发 CSS `:hover` 伪类，hover 放大 / 高亮 / 动画
 依赖后端实时返回的动态数据（区间数字、排行榜、评论条数等），冷启动或 headless 模式可能返回 0
 或极小值。应使用区间 / `>=` / 存在性软校验，数据缺失时 `pytest.skip`，禁止写死等值断言。
 写法：文案格式（如 `"近7天已帮助…位设计师"`）用硬断言；其中的动态数值用区间软校验，数值缺失则 skip。
+
+---
+
+## 数据库 / Redis / API 能力使用约定（规则 5）
+
+UI 之外，用例可直接访问**数据库、Redis、HTTP 接口**做核对 / 造数 / 接口测试。能力全部以
+fixture 注入，配置统一走 `config/settings.yaml` + 环境变量覆盖，**禁止在用例 / Page 里硬编码连接串或 base_url**。
+
+### ① 数据库查改（`mysql_db`）
+
+后端状态核对（"列表新增一条"、"状态变更为已支付"等）用查库代替纯 UI 猜测；造数 / 清理用写库。
+
+```python
+# 查询：参数化 %s 占位防注入；默认 DictCursor，行即 dict
+with mysql_db.connection() as conn:
+    with conn.cursor() as cur:
+        cur.execute("SELECT radio FROM user_group_common WHERE group_name=%s", ["xxx"])
+        row = cur.fetchone()
+assertion.assert_equal(row["radio"], "0.5", name="切量值落库正确")
+
+# 写入：必须显式 commit=True 才落库（默认不提交，防误写生产）
+with mysql_db.connection(commit=True) as conn:
+    with conn.cursor() as cur:
+        cur.execute("UPDATE user_group_common SET radio=%s WHERE group_name=%s", [r, g])
+```
+
+- **参数化查询**：一律 `%s` + 参数列表，**禁止** f-string 拼 SQL。
+- **写库副作用**：操作的是真实库，写库用例 docstring 注明，必要时 teardown 复原。
+
+### ② Redis（`redis_db`）
+
+```python
+with redis_db.client() as r:
+    r.delete("znzmo:group:all")          # 清缓存
+    assert r.exists("some:key") == 1     # 命中校验
+```
+
+### ③ API 接口测试（`api_client` / `api_assert`）
+
+接口断言走 `api_assert`（**非裸 `assert`**），失败与 UI 用例落**同一套关键校验点汇总 + 诊断报告**。
+
+```python
+def test_group_list(self, api_client, api_assert):       # 纯接口用例：不声明 page，不启动浏览器
+    resp = api_client.get("/api/group/list", params={"type": "all"})
+    api_assert.status_ok(resp, name="分组列表接口可用")        # 断 2xx
+    api_assert.json_path(resp, "code", 0, name="业务码为0")    # 点路径取值断言
+    api_assert.json_path(resp, "data.0.group_name", "默认分组", name="首个分组名")
+```
+
+- `api_client` 方法：`get/post/put/delete(path, params=..., json=..., headers=...)`，返回 `ApiResponse`
+  （`.status` / `.ok` / `.json()` / `.text` / `.elapsed_ms`）；`path` 自动拼 base_url，写绝对 URL 也支持。
+- `api_assert` 方法：`status_ok` / `status_is(code)` / `json_path(path, expected)` / `json_contains(path, member)`，
+  **每个都带 `name=`**（同 UI 断言规范）。
+- **写接口**（POST/PUT/DELETE 改后端）有真实副作用，示例 / 未确认接口默认 `pytest.skip`，不擅自打生产。
+
+### ④ 两类 API session（按场景选 fixture）
+
+| fixture | 登录态来源 | 是否开浏览器 | 适用 |
+|---|---|---|---|
+| `api_client` | cookie 文件载入 storage_state（有则带，无则匿名） | **否**（最快） | 纯接口测试 / 造数 |
+| `logged_in_api_client` | 复用 `logged_in_context`（浏览器登录 session） | 是 | UI+API 混合用例 / 无 cookie 冷启动兜底 |
+
+### 红线
+
+- **不硬编码凭据 / 连接串 / base_url**：全部 `config/settings.yaml` + 环境变量（`TEST_DB_*` / `TEST_REDIS_*` / `TEST_API_BASE_URL`）。
+- **API 断言用 `api_assert`**，不用裸 `assert` / `playwright.expect`（否则失败不落诊断）。
+- **纯接口用例不声明 `page` / `logged_in_page`**，避免无谓拉起浏览器。
+- **写库 / 写接口**区分真实副作用，参照规则 4 副作用提醒，docstring 注明。

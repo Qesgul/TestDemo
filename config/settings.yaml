@@ -55,3 +55,27 @@ environments:
       channel: ""
       slow_mo_ms: 0
       launch_args: []
+
+# 数据库 / Redis 连接：此处仅占位，禁止写入真实明文凭据。
+# 真实连接值放 config/settings.local.yaml（已 gitignore，不提交），或用环境变量覆盖。
+# 生效优先级：环境变量 TEST_DB_*/TEST_REDIS_* > settings.local.yaml > 本文件占位。
+database:
+  host: ""        # TEST_DB_HOST / settings.local.yaml
+  port: 3306
+  user: ""        # TEST_DB_USER / settings.local.yaml
+  password: ""    # TEST_DB_PASSWORD / settings.local.yaml
+  db: ""          # TEST_DB_NAME / settings.local.yaml
+  charset: "utf8mb4"
+  connect_timeout: 5
+
+redis:
+  host: ""        # TEST_REDIS_HOST / settings.local.yaml
+  port: 6379
+  password: ""    # TEST_REDIS_PASSWORD / settings.local.yaml
+  db: 0
+
+api:
+  base_url: ""            # 留空则回退当前环境 base_url 的 origin
+  timeout_ms: 15000
+  default_headers:
+    Accept: "application/json"

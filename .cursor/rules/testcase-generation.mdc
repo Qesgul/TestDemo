@@ -18,7 +18,7 @@ alwaysApply: true
 | [pageobject-conventions.mdc](pageobject-conventions.mdc) | Page + elements YAML、`BasePage`、分层与等待 |
 | [data-model-conventions.mdc](data-model-conventions.mdc) | `data_types` dataclass 与 YAML 字段对齐 |
 | [test-data-conventions.mdc](test-data-conventions.mdc) | 每功能 `tests/data/{feature}_data.yaml`（执行 + 断言数据合一） |
-| [test-suite-conventions.mdc](test-suite-conventions.mdc) | `tests/cases`、`page`/`assertion`、参数化模板 |
+| [test-suite-conventions.mdc](test-suite-conventions.mdc) | `tests/cases`、`page`/`assertion`、参数化模板、**DB/Redis/API 能力（规则 5）** |
 | [test-steps-conventions.mdc](test-steps-conventions.mdc) | 可选 `tests/plans` 步骤 YAML（设计/对照用） |
 
 ## 强制顺序（新功能）

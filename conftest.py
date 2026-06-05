@@ -31,22 +31,19 @@ logger = logging.getLogger(__name__)
 # 仅业务用例使用；测试登录功能本身的用例继续走 page fixture（原始未登录态）。
 
 @pytest.fixture(scope="session")
-def logged_in_context(browser, request):
+def logged_in_context(browser, request, playwright):
     """会话级已登录 context：登录与后续 test 共用同一个 context，整个 session 只开一个窗口。
 
-    实现要点：
-    - 不再"临时 context 登录 → 关闭 → 新建持久 context"，避免 headed 模式下窗口闪动；
-    - 登录在该 context 内的一个临时 tab 上完成，登录结束后只关 tab，context 保持存活；
-    - 后续每个 test 在同一 context 上开新 tab（``logged_in_page``）。
+    登录策略（优先级从高到低）：
+    1. CookieManager 缓存有效 → 直接注入，无需网络请求（最快，~200ms）
+    2. CAS API 登录（TGT → ST → 浏览器 callback）→ 跳过 UI 表单，~2-3s
+    3. LoginPage UI 登录兜底 → 完整表单交互，~5-10s
 
-    账号优先级（从高到低）：
+    账号来源优先级（从高到低）：
     1. pytest CLI 参数 ``--login-username`` / ``--login-password``
     2. 环境变量 ``TEST_LOGIN_USERNAME`` / ``TEST_LOGIN_PASSWORD``
     3. tests/data/login_data.yaml 默认账号（向后兼容）
     """
-    # 延迟 import，避免循环依赖
-    from pages.methods.login_page import LoginPage
-
     # 多源账号解析
     cli_user = request.config.getoption("--login-username", default=None)
     cli_pwd  = request.config.getoption("--login-password", default=None)
@@ -81,19 +78,24 @@ def logged_in_context(browser, request):
     # Chromium headed 模式下，context 内最后一个 page 被关闭时窗口会消失，
     # 下次 new_page 会重新弹出窗口，视觉上即"浏览器关闭+重开"的闪动。
     # 留住此 page 即可让窗口贯穿整个 session 稳定存在。
-    # 同时，该 page 后续被 logged_in_page fixture 直接复用为测试 page，
-    # 避免每个 test 开新 tab 导致"先切 tab 再跳转"的视觉问题。
     anchor_page = context.new_page()
     anchor_page.set_default_timeout(DEFAULT_TIMEOUT_MS)
     anchor_page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
     try:
-        login = LoginPage(anchor_page)
-        login.goto_login_page()
-        login.login_with(username, password)
-        logger.info("session 级登录完成，anchor_page 将作为测试主 tab 复用至 session 结束")
-    except Exception:
-        logger.exception("session 级登录失败")
-        raise
+        from common.api.auth import cas_login
+        cas_login(playwright, context, anchor_page, username, password)
+        logger.info("session 级登录完成（CAS API），anchor_page 将作为测试主 tab 复用至 session 结束")
+    except Exception as api_err:
+        logger.warning("CAS API 登录失败（%s），回退至 UI 登录", api_err)
+        try:
+            from pages.methods.login_page import LoginPage
+            login = LoginPage(anchor_page)
+            login.goto_login_page()
+            login.login_with(username, password)
+            logger.info("session 级登录完成（UI 兜底），anchor_page 将作为测试主 tab 复用至 session 结束")
+        except Exception:
+            logger.exception("session 级登录失败（CAS API + UI 均失败）")
+            raise
 
     # 把 anchor_page 暴露给 logged_in_page fixture 使用
     context._anchor_page = anchor_page  # type: ignore[attr-defined]
@@ -311,6 +313,93 @@ def gio_tracking(request):
             capture.print_summary(tw=tw)
         except Exception:
             capture.print_summary(tw=None)
+
+
+@pytest.fixture(scope="session")
+def mysql_db():
+    """会话级 MySQL 薄客户端（懒连接：拿到 client 不会立即开连接）。
+
+    用法：
+        def test_xxx(self, logged_in_page, mysql_db):
+            with mysql_db.connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT ...")
+    """
+    from common.db import MySQLClient
+    return MySQLClient()
+
+
+@pytest.fixture(scope="session")
+def redis_db():
+    """会话级 Redis 薄客户端（懒连接）。
+
+    用法：
+        def test_xxx(self, redis_db):
+            with redis_db.client() as r:
+                r.delete("znzmo:group:all")
+    """
+    from common.db import RedisClient
+    return RedisClient()
+
+
+@pytest.fixture(scope="function")
+def api_client(playwright):
+    """独立 API 客户端：按需带 cookie 登录态，不启动浏览器。
+
+    有效 cookie 存在时自动带登录态（storage_state 注入）；无 cookie 则匿名。
+    用法：
+        def test_xxx(self, api_client, api_assert):
+            resp = api_client.get("/api/something")
+            api_assert.status_ok(resp, name="接口可用")
+    """
+    from common.api import ApiClient
+    from common.api.auth import load_storage_state
+
+    storage = load_storage_state()
+    ctx = playwright.request.new_context(storage_state=storage)
+    try:
+        yield ApiClient(ctx)
+    finally:
+        try:
+            ctx.dispose()
+        except Exception:
+            pass
+
+
+@pytest.fixture(scope="function")
+def logged_in_api_client(logged_in_context):
+    """复用已登录浏览器 context 的 API 客户端（UI+API 混合 / 冷启动兜底）。
+
+    保证有效登录态（浏览器已登录、cookie 新鲜）。
+    适合同一用例内既操作 UI 又调接口的混合场景，或本地无 cookie 文件时兜底。
+    """
+    from common.api import ApiClient
+    yield ApiClient(logged_in_context.request)
+
+
+@pytest.fixture(scope="function")
+def api_assert(request):
+    """API 响应诊断断言；teardown 打印关键校验点汇总（同 assertion fixture）。
+
+    用法：
+        def test_xxx(self, api_client, api_assert):
+            resp = api_client.get("/api/something")
+            api_assert.status_ok(resp, name="接口可用")
+            api_assert.json_path(resp, "code", 0, name="业务码为0")
+    """
+    from common.api import ApiAssertion
+
+    inst = ApiAssertion(request.node.name)
+    yield inst
+    try:
+        terminalreporter = request.config.pluginmanager.get_plugin("terminalreporter")
+        tw = getattr(terminalreporter, "_tw", None) if terminalreporter else None
+        inst.print_summary(tw=tw)
+    except Exception:
+        try:
+            inst.print_summary(tw=None)
+        except Exception:
+            pass
 
 
 @pytest.hookimpl(hookwrapper=True)

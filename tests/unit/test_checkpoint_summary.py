@@ -320,3 +320,19 @@ def test_print_summary_uses_tw_when_available():
     tw = MagicMock()
     a.print_summary(tw=tw)
     assert tw.line.call_count >= 1
+
+
+# ===== CheckpointReporter 抽取回归 =====
+def test_checkpoint_reporter_standalone():
+    import time
+    from common.assertions import CheckpointReporter
+    r = CheckpointReporter(test_name="standalone")
+    r._record_checkpoint(name="x", expected=1, actual=1, status="PASS",
+                         start_perf=time.perf_counter(), error_msg=None, fallback_name="t")
+    assert len(r._checkpoints) == 1
+    assert r.test_name == "standalone"
+
+
+def test_diagnostic_assertion_is_checkpoint_reporter():
+    from common.assertions import CheckpointReporter, DiagnosticAssertion
+    assert issubclass(DiagnosticAssertion, CheckpointReporter)

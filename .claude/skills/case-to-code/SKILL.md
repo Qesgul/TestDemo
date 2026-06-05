@@ -68,6 +68,21 @@ description: Use when the user provides a Markdown test case document (table for
 - 使用 `expect(...)` 直接断言，统一改用 `assertion` fixture
 - **不允许**直接把 `text=xxx` 当成"已确认 selector"写入 yaml；必须经过浏览器实抓 / codegen 验证唯一命中后才能落 yaml，否则一律走 `'TODO_SELECTOR'` 占位
 
+### 后端校验 / 接口类步骤翻译（非 UI 步骤）
+
+并非所有步骤都翻译成 Page 方法。涉及后端状态 / 接口 / 缓存的步骤，直接用对应 fixture
+（细则见 `.cursor/rules/test-suite-conventions.mdc` 规则 5）：
+
+| 步骤特征（Markdown 原文语义） | 翻译为 |
+|------|------|
+| "数据库中应有…记录"、"…字段更新为…"、"后端状态变为…" | `mysql_db.connection()` 查库核对（写库造数用 `commit=True`） |
+| "调用…接口"、"接口返回…"、"响应码/业务码为…" | `api_client.get/post(path)` + `api_assert.status_ok` / `json_path` |
+| "缓存清除"、"缓存命中"、"Redis 中…" | `redis_db.client()` |
+
+- API 断言一律走 `api_assert`（带 `name=`），**不写裸 `assert`**。
+- 纯接口用例**不声明 `page` / `logged_in_page`**（不拉起浏览器）；UI+API 混合用例用 `logged_in_api_client`。
+- DB/Redis/API 的连接信息**不进用例**，全在 `config/settings.yaml` + 环境变量。
+
 ## 现场抓元素操作指引（替代"猜 selector"）
 
 按下面的优先级补 selector，命中即停：
@@ -223,13 +238,14 @@ assertion.assert_true(cond, name="设计师标签选项存在", message="...")
 | 分级 | 触发条件 | 处理方式 |
 |------|------|------|
 | `auto` | 纯 UI 操作 + UI 可断言（可见、文案、选中态） | 直接生成可执行代码 |
-| `network` | 涉及"调用工作流 ID"、"接口失败"、"白屏"、"loading"、"调用记录" | 生成代码 + `page.route()` 拦截 / 校验骨架 |
+| `network` | 涉及"调用工作流 ID"、"接口失败"、"白屏"、"loading"、"调用记录" | 优先 `api_client` 直接调接口 + `api_assert` 断言；需模拟异常响应时才用 `page.route()` 拦截打桩 |
 | `env` | 涉及"网络中断"、"弱网"、"CDN"、"离线" | 生成代码 + `context.set_offline()` / 限速骨架 |
 | `待考虑` | web 端可自动化但暂缺 mock / clock 等工具（如 `page.clock` 跨日、接口桩未就绪） | 生成 `pytest.skip("【待考虑】...")` 骨架，留待实装 |
 | `manual` | "目视判断"、"对比基准截图"、"大模型识别"、"两端对比"、"【待澄清】" 等 **web 端可达但需人工目视** 的部分 | 生成 `pytest.skip("manual: ...")` 骨架，仅保留步骤注释 |
 | `非web` | 依赖**桌面客户端 / 渲染后端 / 真机跨平台 / 真实跨日** 等浏览器无法构造的能力（详见 CLAUDE.md 规则 9） | **不纳入自动化、不生成任何代码（含 skip 骨架）**，仅在 CONVERSION-REPORT.md「非自动化范围 / 转人工」登记 AUTO-* 编号 + 原因 |
 
 - `manual` / `待考虑` 用例**不要**伪造断言；保留步骤注释 + skip 标记，等待人工接管 / 工具就绪。
+- **后端数据核对归 `auto`**：用例需"查库确认后端状态"时用 `mysql_db` 查库断言即可达成，**不再因"要查库"标 `manual`**；纯接口测试同样归 `auto`（`api_client` + `api_assert`）。
 - `非web` 用例（**最高优先级判定**）：依据 **CLAUDE.md 规则 9**，只要触发条件命中即**直接排除**，连 skip 骨架都不生成，避免套件被无法运行的占位塞满；维护既有套件时，此类 skip 用例应一并移出。
 
 ## TODO 占位规范（统一格式，便于 grep）
