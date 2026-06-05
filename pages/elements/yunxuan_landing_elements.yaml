@@ -114,10 +114,10 @@ s2_welfare_btn:
   selector: '.ylBtnClaim'
 
 # 福利展开后的选项（领取30天免费渲 / 领免费VIP）
-# 注：展开前 DOM 可能不存在，用 page.evaluate 触发后再定位
+# Ant Design Popover 内条目，展开后出现在 DOM；用 filter(has_text=...) 取具体选项
 s2_welfare_options:
   type: css
-  selector: 'TODO_SELECTOR'   # 需触发展开后抓取（see TC-AT-022）
+  selector: '.ylClaimPopoverItem'
 
 # ─────────────────────────────────────────────────────────
 # 模块六：第三屏（TC-AT-025~026）
@@ -185,10 +185,10 @@ s5_trial_link:
   type: css
   selector: 'a.ylAiCaseBtn[href*="menuKey=extension"]:not(.ylAiCaseBtn--solid)'
 
-# "减少返工 →" 链接（同 href，取第二个）
+# "减少返工 →" 链接（与"试用概念图"同 href 同 class，PO 方法中用 .nth(1) 区分）
 s5_rework_link:
   type: css
-  selector: 'TODO_SELECTOR'   # 两个 ylAiCaseBtn 指向同一 href，需 nth 区分
+  selector: 'a.ylAiCaseBtn:not(.ylAiCaseBtn--solid)'
 
 # "联系商务 →" 按钮（solid 变体）
 s5_contact_btn:

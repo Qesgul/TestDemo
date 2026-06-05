@@ -4,8 +4,8 @@ execution:
   default_suite: "core"
   parallel:
     enabled: true
-    workers: 2
-    dist_mode: "file"
+    workers: 3
+    dist_mode: "function"
   retry:
     enabled: true
     max_reruns: 2
@@ -32,7 +32,11 @@ environments:
       name: "chromium"
       channel: "chrome"
       slow_mo_ms: 0
-      launch_args: []
+      launch_args:
+        - "--disable-dev-shm-usage"
+        - "--disable-background-timer-throttling"
+        - "--disable-renderer-backgrounding"
+        - "--disable-backgrounding-occluded-windows"
   test:
     base_url: "https://example.com"
     headless: false

@@ -114,8 +114,11 @@ tracking:
 # ── 埋点辅助数据 ──────────────────────────────────────────────
 tracking_meta:
   # fromwhere 参数 → data 字段映射（实测确认）
+  # 探针日期 2026-06-04：fw=0→Banner, fw=1→全局弹窗, fw=2→直接访问
+  # 「推送」渠道对应 fromwhere 值未知，相关用例标 pending
   channel_map:
     "0": "Banner"
+    "1": "全局弹窗"
     "2": "直接访问"
 
   # render_screen_show 各屏 data2 期望值（实测确认，顺序对应第1~7屏）
@@ -132,4 +135,23 @@ tracking_meta:
   # （点击 Popover 版本项时上报，需两步交互：点 CTA → 选版本）
   download_btn_data2:
     hero_win10: "首屏CTA-Win10"
-    hero_win7: "首屏CTA-Win7"    # TODO: 补充 test_download_click_win7 用例后消费此值
+    hero_win7: "首屏CTA-Win7"
+    # 以下各屏按钮 data2 值待探针确认（AUTO-TRACK-006）
+    # banner_cta: "TODO"   # 底部 banner CTA
+    # s3_btn: "TODO"       # 第三屏下载按钮
+    # s4_btn: "TODO"       # 第四屏下载按钮
+    # s7_btn: "TODO"       # 第七屏下载客户端按钮
+
+# ── 模块五：第五屏 AI 插件期望（AUTO-SE-002/003/AUTO-SG-004）──
+ai_plugin:
+  url: "https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=extension"
+  url_keyword: "AIDrawPage"
+
+# ── 模块十一：福利领取期望（AUTO-BONUS-003~011/AUTO-RIGHT-020/021）──
+bonus:
+  success_text: "恭喜领取成功"
+  failure_text: "当前账户已领取，不可重复领取哦"
+  # TODO[url]: 福利领取接口真实路径需开发确认；当前用 **welfare** 或 **yuanxuan** 模糊匹配占位
+  welfare_api_pattern: "**/welfare**"
+  # TODO[url]: 一期/二期领取接口路径待确认（可能是同一接口，通过参数区分）
+  vip_api_pattern: "**/vip**"

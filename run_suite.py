@@ -16,6 +16,12 @@ from typing import Any, List, Optional
 
 from common.yaml_loader import load_yaml
 
+# dist_mode（settings.yaml）→ pytest --dist 参数的映射表
+#   function → loadgroup（用例级分发，单文件内 test 函数被打散到多 worker，默认）
+#   class    → loadscope（类级分发，同 class 不拆散）
+#   file     → loadfile （文件级分发，同文件不拆散到不同 worker）
+_DIST_MAP = {"function": "loadgroup", "class": "loadscope", "file": "loadfile"}
+
 
 @dataclass
 class SuiteDefinition:
@@ -208,6 +214,10 @@ class SuiteRunner:
         parallel_enabled = (not serial) and self.app_config.execution.parallel_enabled and effective_workers > 1
         if parallel_enabled:
             command.extend(["-n", str(effective_workers)])
+            dist_strategy = _DIST_MAP.get(
+                self.app_config.execution.parallel_dist_mode, "loadgroup"
+            )
+            command.extend(["--dist", dist_strategy])
 
         retry_enabled = self.app_config.execution.retry_enabled and not no_reruns
         effective_reruns = reruns if reruns is not None else self.app_config.execution.retry_max_reruns

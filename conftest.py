@@ -21,6 +21,7 @@ if sys.platform == "win32":
 from common.browser_manager import BrowserManager
 from common.assertions import create_assertion, enable_diagnostics, disable_diagnostics
 from common.yaml_loader import load_yaml
+from config.settings import DEFAULT_TIMEOUT_MS, get_config
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,10 @@ def logged_in_context(browser, request):
         logger.info("使用 login_data.yaml 默认账号登录: %s", username)
 
     context = browser.new_context()
-    context.set_default_timeout(30000)
+    context.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    # 导航超时兜底：防止 CDP 底层 hang 导致 goto 无限等待
+    # （set_default_timeout 只覆盖元素操作，导航需单独设置）
+    context.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
 
     # 这个 page 不仅用于登录，还要在 session 期间保持存活——
     # Chromium headed 模式下，context 内最后一个 page 被关闭时窗口会消失，
@@ -80,7 +84,8 @@ def logged_in_context(browser, request):
     # 同时，该 page 后续被 logged_in_page fixture 直接复用为测试 page，
     # 避免每个 test 开新 tab 导致"先切 tab 再跳转"的视觉问题。
     anchor_page = context.new_page()
-    anchor_page.set_default_timeout(30000)
+    anchor_page.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    anchor_page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
     try:
         login = LoginPage(anchor_page)
         login.goto_login_page()
@@ -121,34 +126,56 @@ def storage_state_path(tmp_path_factory, logged_in_context):
     return str(state_file)
 
 
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    """注入浏览器稳定性启动参数，读取自 config/settings.yaml（单一来源）。
+
+    参数在 settings.yaml → environments.<env>.browser.launch_args 中配置，
+    与 BrowserManager 共享同一份配置，避免双重维护。
+    """
+    extra_args = [str(a) for a in get_config().current_env.browser.launch_args]
+    return {
+        **browser_type_launch_args,
+        "args": browser_type_launch_args.get("args", []) + extra_args,
+    }
+
+
 @pytest.fixture(scope="function")
 def logged_in_page(logged_in_context):
-    """已登录态 page：直接复用会话级 anchor_page，不开新 tab。
+    """已登录态 page（方案 A：首个用例复用 anchor_page，后续用例独立 new_page）。
 
     设计动机：
-    - 此前每次 test 用 ``context.new_page()`` 开新 tab，导致 ``goto(url)`` 时
-      看起来是"先切到新 tab，再发生跳转"——视觉上像多了一步切换。
-    - 现改为直接 yield session 级 anchor_page，整个 session 始终在同一个 tab 内
-      ``goto`` 切换 URL，与手动在浏览器中输入网址的体验一致。
-    - 每个 test 结束后由 ``test_setup_teardown`` 统一清理多余 tab，
-      anchor_page 自身保持存活直到 session 结束。
+    - 消除"登录 tab 闲置 + 另起操作 tab"的双 tab 现象——单 test 执行时全程单 tab；
+    - 首个用例直接复用 session 级登录页 anchor_page（已登录、已在窗口里），不另起 tab；
+    - 后续用例 new_page()、用完即关，沿用 A2 的 renderer 内存隔离，防止长批量累积崩溃；
+    - anchor_page 永不在用例 teardown 关闭，作为 headed 模式窗口保活页存活至 session 结束。
     """
     anchor_page = getattr(logged_in_context, "_anchor_page", None)
-    if anchor_page is None or anchor_page.is_closed():
-        # 兜底：anchor 异常缺失时回退到新建 tab，避免整套 session 崩溃
+    consumed = getattr(logged_in_context, "_anchor_consumed", False)
+
+    reuse_anchor = (
+        anchor_page is not None
+        and not anchor_page.is_closed()
+        and not consumed
+    )
+
+    if reuse_anchor:
+        logged_in_context._anchor_consumed = True  # type: ignore[attr-defined]
+        page = anchor_page
+    else:
         page = logged_in_context.new_page()
-        page.set_default_timeout(30000)
-        try:
-            yield page
-        finally:
+
+    page.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
+    try:
+        yield page
+    finally:
+        # anchor_page 作为窗口保活页永不关闭；仅关闭后续用例新建的独立 page
+        if not reuse_anchor:
             try:
                 page.close()
             except Exception:
                 pass
-        return
-
-    yield anchor_page
-    # 不在此处关闭 anchor_page —— 它要存活到 session 结束以保住浏览器窗口
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -198,15 +225,18 @@ def test_setup_teardown(request):
     if page is None or page.is_closed():
         return
 
-    # 测试结束后：关闭除主页面之外的所有标签页，防止泄漏到下一个测试
+    # 测试结束后：关闭除主页面和 anchor_page 之外的所有标签页，防止泄漏到下一个测试
+    # anchor_page 是 logged_in_context 的保活页，不得关闭（否则 headed 窗口会消失）
     try:
         context = page.context
+        anchor_page = getattr(context, "_anchor_page", None)
         alive_pages = [p for p in context.pages if not p.is_closed()]
-        if len(alive_pages) > 1:
-            logger.info("测试结束，开始清理 %s 个多余标签页", len(alive_pages) - 1)
+        extra = [p for p in alive_pages if p is not page and p is not anchor_page]
+        if extra:
+            logger.info("测试结束，开始清理 %s 个多余标签页", len(extra))
             closed = 0
-            for p in alive_pages:
-                if p is not page and not p.is_closed():
+            for p in extra:
+                if not p.is_closed():
                     try:
                         p.close()
                         closed += 1
@@ -304,8 +334,10 @@ def pytest_configure(config):
     # 检查 pytest-xdist 兼容性
     if config.pluginmanager.hasplugin("xdist"):
         # 仅在用户未显式指定 --dist 时才设置默认值，避免覆盖命令行参数
+        # loadgroup = 用例级分发（单文件内 test 函数被打散到多 worker）；
+        # 若需顺序依赖，可在用例上加 @pytest.mark.xdist_group("name") 强制同 worker。
         if getattr(config.option, "dist", "no") in ("no", None, ""):
-            config.option.dist = "loadfile"
+            config.option.dist = "loadgroup"
 
 
 def pytest_addoption(parser):

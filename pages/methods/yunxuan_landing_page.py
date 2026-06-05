@@ -385,7 +385,11 @@ class YunxuanLandingPage(BasePage):
         return self.page.get_by_text(text, exact=True).count()
 
     def click_and_capture_navigation(self, locator: Locator) -> Optional[str]:
-        """点击元素并捕获新页面/导航 URL（处理 target=_blank 和同页跳转）。"""
+        """点击元素并捕获新页面/导航 URL（处理 target=_blank 和同页跳转）。
+
+        新开的 tab 取完 URL 后立即关闭，避免多次调用 tab 堆积导致内存累积。
+        """
+        new_page = None
         try:
             with self.page.context.expect_page(timeout=5000) as new_page_info:
                 locator.click()
@@ -396,6 +400,12 @@ class YunxuanLandingPage(BasePage):
             # 同页锚点跳转
             self.page.wait_for_timeout(800)
             return None
+        finally:
+            if new_page is not None and not new_page.is_closed():
+                try:
+                    new_page.close()
+                except Exception:
+                    pass
 
     def get_current_url(self) -> str:
         return self.page.url
@@ -420,6 +430,30 @@ class YunxuanLandingPage(BasePage):
         )
         item.first.click(timeout=3000, no_wait_after=True)
         self.page.wait_for_timeout(1200)
+
+    def s5_rework_link(self) -> Locator:
+        """第五屏"减少返工"链接（与"试用概念图"共享 class/href，取 nth(1)）。"""
+        return self.get_locator("s5_rework_link").nth(1)
+
+    def s2_welfare_options(self) -> Locator:
+        """福利展开后的 Ant Design Popover 选项列表。"""
+        return self.get_locator("s2_welfare_options")
+
+    def get_welfare_option(self, text_pattern: str) -> Locator:
+        """取指定文案的福利选项（如'30天'/'VIP'）。"""
+        return self.s2_welfare_options().filter(has_text=text_pattern)
+
+    def click_welfare_option(self, text_pattern: str) -> None:
+        """展开福利选项卡后点击指定选项。"""
+        self.click_s2_welfare_btn()
+        self.page.wait_for_timeout(400)
+        self.get_welfare_option(text_pattern).first.click()
+        self.page.wait_for_timeout(800)
+
+    def goto_with_channel(self, fromwhere: str) -> None:
+        """以指定 fromwhere 参数打开落地页（用于渠道 data 校验）。"""
+        url = self.DEFAULT_URL.replace("fromwhere=0", f"fromwhere={fromwhere}")
+        self.goto(url=url)
 
     def scroll_through_all_screens(self) -> None:
         """依次滚过全部 7 屏，触发各屏 render_screen_show 曝光事件。
