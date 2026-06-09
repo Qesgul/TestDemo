@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """下载确认弹窗 AB 实验 - 自动化测试套件
 
-覆盖范围（49 条可自动化 + 10 条 manual skip 骨架）：
+覆盖范围（48 条可自动化方法 + 10 条 manual skip 骨架；参数化展开后 collect 数更多）：
   SPLIT   6 auto/network + 4 manual  = 10 条
-  EXP    25 auto                     = 25 条
-  CTRL    5 auto + 1 manual          = 6  条
-  TRACK   5 auto/network + 4 manual  = 9  条
+  EXP    24 auto                     = 24 条（原 EXP-024 与 EXP-022 重复已合并删除）
+  CTRL    5 auto + 1 manual          = 6  条（CTRL-002~004 合并为 1 个参数化方法）
+  TRACK   5 auto/network + 4 manual  = 9  条（TRACK-003 拆为四组参数化）
   FLOW    8 auto/env + 1 manual      = 9  条
-  合计   49 auto/network/env + 10 manual
+  合计   48 auto/network/env + 10 manual（方法数；参数化用例 collect 时按组展开）
 
 ⚠️ 切量依赖说明：
   - EXP/CTRL/TRACK/FLOW 用例均依赖切量控制；
@@ -62,6 +62,104 @@ def _set_group(ab: DownloadAbPage, group_label: str, mysql_db, redis_db) -> None
         pytest.skip(_SKIP_SPLIT)
 
 
+def _open_download_dialog(ab: DownloadAbPage) -> None:
+    """统一的"进入详情页 → 点下载 → 等弹窗"三步动作（全模块共用）。"""
+    ab.goto()
+    ab.click_download_button()
+    ab.wait_for_download_dialog()
+
+
+def _require_account(request, account_key: str) -> None:
+    """校验当前 --login-username 与用例所需账号一致，不一致则 skip。
+
+    account_key: "vip" / "nonvip"，对应 download_ab_data.yaml accounts.<key>.username。
+    未通过 --login-username 指定账号时不拦截（兼容环境变量/默认账号场景）。
+    """
+    expected = str(_DATA["accounts"][account_key]["username"])
+    cli_user = request.config.getoption("--login-username", default=None)
+    if cli_user and str(cli_user) != expected:
+        pytest.skip(
+            f"当前登录账号 {cli_user} 与用例所需 {account_key} 账号 {expected} 不匹配，"
+            f"请用 --login-username={expected} 运行"
+        )
+
+
+def _assert_unlogged_no_record(page, assertion, mysql_db, assert_name: str) -> None:
+    """未登录用户访问后切量记录数不增加（SPLIT-006 / TRACK-007 共用）。
+
+    使用裸 page（不走 logged_in_page），以记录数变化为断言依据。
+    待澄清#11：未登录处理逻辑确认后更新断言。
+    """
+    ab = DownloadAbPage(page)
+    account_id = _DATA["accounts"]["nonvip"]["account_id"]
+    today_str = datetime.date.today().strftime("%Y-%m-%d")
+    before = ab.count_split_records_today(account_id, today_str, mysql_db)
+    if before is None:
+        pytest.skip(_SKIP_RECORD_TABLE)
+    ab.goto()
+    ab.wait.wait_for_timeout(2000)
+    after = ab.count_split_records_today(account_id, today_str, mysql_db)
+    assertion.assert_equal(
+        before,
+        after,
+        name=assert_name,
+        message=f"未登录用户访问后切量记录数应不变（before={before}, after={after}）",
+    )
+
+
+_SPLIT_CFG = _DATA.get("split_control", {}) or {}
+_IDENT_RE = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+def _split_table() -> str:
+    """切量表名（校验合法标识符，防拼接注入，与 DownloadAbPage._ident 同口径）。"""
+    table = str(_SPLIT_CFG.get("table", "user_group_common"))
+    if not _IDENT_RE.match(table):
+        raise ValueError(f"非法切量表名: {table!r}")
+    return table
+
+
+def _split_group_name() -> str:
+    """切量名（未配置或 TODO 视为未就绪）。"""
+    name = str(_SPLIT_CFG.get("group_name", ""))
+    return "" if (not name or name.startswith("TODO")) else name
+
+
+@pytest.fixture
+def _restore_split_group(mysql_db, redis_db):
+    """autouse：测试前记下切量 radio 原值，测试后还原，避免组间污染。
+
+    切量名未配置（TODO）时 group_name 为空，读/写均跳过（无副作用）。
+    不实例化 DownloadAbPage（BasePage 禁止 page=None），直接用切量配置走 SQL。
+    """
+    group_name = _split_group_name()
+    original = None
+    if group_name:
+        table = _split_table()
+        with mysql_db.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT radio FROM {table} WHERE group_name=%s", [group_name]
+                )
+                row = cur.fetchone()
+        original = str(row[0]) if row else None
+    yield
+    if group_name and original is not None:
+        table = _split_table()
+        with mysql_db.connection(commit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {table} SET radio=%s WHERE group_name=%s",
+                    [original, group_name],
+                )
+        redis_key = _SPLIT_CFG.get("redis_key", "znzmo:group:all")
+        try:
+            with redis_db.client() as r:
+                r.delete(redis_key)
+        except Exception:
+            pass
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 模块一：用户分组与切量（SPLIT）
 # ══════════════════════════════════════════════════════════════════════════════
@@ -69,6 +167,11 @@ def _set_group(ab: DownloadAbPage, group_label: str, mysql_db, redis_db) -> None
 @pytest.mark.xdist_group("download_ab_split")
 class TestSplitBucketing:
     """AUTO-SPLIT 用户分组与切量验证（10 条：6 auto/network + 4 manual）"""
+
+    @pytest.fixture(autouse=True)
+    def _auto_restore(self, _restore_split_group):
+        """每条用例后自动还原切量 radio，避免组间污染。"""
+        yield
 
     @pytest.mark.smoke
     @pytest.mark.main
@@ -161,23 +264,10 @@ class TestSplitBucketing:
         """AUTO-SPLIT-006 (P1/auto): 未登录用户不参与实验分桶
 
         使用裸 page（不走 logged_in_page），以记录数变化为断言依据。
+        与 TRACK-007 共用 _assert_unlogged_no_record 辅助。
         待澄清#11：未登录处理逻辑确认后更新断言。
         """
-        ab = DownloadAbPage(page)
-        account_id = _DATA["accounts"]["nonvip"]["account_id"]
-        today_str = datetime.date.today().strftime("%Y-%m-%d")
-        before = ab.count_split_records_today(account_id, today_str, mysql_db)
-        if before is None:
-            pytest.skip(_SKIP_RECORD_TABLE)
-        ab.goto()
-        ab.wait.wait_for_timeout(2000)
-        after = ab.count_split_records_today(account_id, today_str, mysql_db)
-        assertion.assert_equal(
-            before,
-            after,
-            name="未登录切量记录不增加",
-            message=f"未登录用户访问后切量记录数应不变（before={before}, after={after}）",
-        )
+        _assert_unlogged_no_record(page, assertion, mysql_db, "未登录切量记录不增加")
 
     @pytest.mark.core
     @pytest.mark.main
@@ -225,11 +315,11 @@ class TestSplitBucketing:
         """
         ab = DownloadAbPage(logged_in_page)
         # TODO[locate]: 分桶接口 URL 路径（待澄清#10 后回填，例：**/api/experiment/bucket**）
-        # ab._page.route("**/api/experiment/bucket**", lambda r: r.abort("timedout"))
+        # ab.page.route("**/api/experiment/bucket**", lambda r: r.abort("timedout"))
         ab.goto()
         ab.wait.wait_for_timeout(1500)
         assertion.assert_true(
-            "su.znzmo.com" in ab._page.url,
+            "su.znzmo.com" in ab.page.url,
             name="分桶异常详情页可访问",
             message="分桶服务异常时详情页应仍可访问，不跳转错误页（TODO：补充降级策略断言）",
         )
@@ -250,13 +340,12 @@ class TestSplitBucketing:
 
 @pytest.mark.xdist_group("download_ab_split")
 class TestExpModal:
-    """AUTO-EXP 实验组弹窗策略验证（25 条全 auto）"""
+    """AUTO-EXP 实验组弹窗策略验证（24 条全 auto）"""
 
-    @staticmethod
-    def _open_dialog(ab: DownloadAbPage) -> None:
-        ab.goto()
-        ab.click_download_button()
-        ab.wait_for_download_dialog()
+    @pytest.fixture(autouse=True)
+    def _auto_restore(self, _restore_split_group):
+        """每条用例后自动还原切量 radio，避免组间污染。"""
+        yield
 
     # ── EXP-001: 详情页到手价 ──────────────────────────────────────────────
 
@@ -285,13 +374,14 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_002_vip_no_virtual_discount_on_detail(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-002 (P1/auto): 实验组取消VIP专享价中的减5知币虚拟优惠
 
         账号：VIP（--login-username=17768100279）。
         待澄清#4：详情页虚拟优惠移除 vs 弹窗VIP立减保留，确认后补反向断言。
         """
+        _require_account(request, "vip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
         ab.goto()
@@ -325,7 +415,7 @@ class TestExpModal:
             )
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        ab._page.goto(scenario.material_url, wait_until="domcontentloaded")
+        ab.page.goto(scenario.material_url, wait_until="domcontentloaded")
         ab.wait.wait_for_timeout(1500)
         take_price_text = ab.get_detail_take_price_text()
         ab.click_download_button()
@@ -348,15 +438,16 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_004_vip_shows_vip_discount_selected(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-004 (P1/auto): 实验组VIP用户展示VIP立减且默认选中
 
         账号：VIP（--login-username=17768100279）。
         """
+        _require_account(request, "vip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_true(
             ab.is_vip_discount_visible(),
             name="VIP立减行可见",
@@ -366,15 +457,16 @@ class TestExpModal:
     @pytest.mark.smoke
     @pytest.mark.main
     def test_auto_exp_005_nonvip_no_vip_discount_row(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-005 (P0/auto): 实验组非VIP用户不展示VIP立减字段
 
         账号：nonvip（13140725123）。
         """
+        _require_account(request, "nonvip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.is_vip_discount_visible(),
             name="非VIP无VIP立减行",
@@ -384,12 +476,16 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_006_nonvip_no_vip_pending_tag(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
-        """AUTO-EXP-006 (P1/auto): 实验组非VIP不出现VIP立减待激活诱导态（与对照组图2区分）"""
+        """AUTO-EXP-006 (P1/auto): 实验组非VIP不出现VIP立减待激活诱导态（与对照组图2区分）
+
+        账号：nonvip（13140725123）。
+        """
+        _require_account(request, "nonvip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.is_vip_pending_tag_visible(),
             name="实验组无待激活标签",
@@ -401,7 +497,7 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_007_vip_with_coupon_shows_coupon(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-007 (P1/auto): 实验组VIP有券展示并保留膨胀规则
 
@@ -409,9 +505,10 @@ class TestExpModal:
         账号：VIP（--login-username=17768100279）。
         待澄清#8：膨胀规则细节确认后补断言。
         """
+        _require_account(request, "vip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_true(
             ab.is_coupon_section_visible(),
             name="VIP有券展示抵扣券区",
@@ -421,16 +518,17 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_008_vip_no_coupon_hides_coupon_section(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-008 (P1/auto): 实验组VIP无券不展示该字段，无"不使用"占位
 
         前置：VIP账号无可用抵扣券（清空 goldcoin_voucher）。
         账号：VIP（--login-username=17768100279）。
         """
+        _require_account(request, "vip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.is_coupon_section_visible(),
             name="VIP无券隐藏抵扣券区",
@@ -445,15 +543,16 @@ class TestExpModal:
     @pytest.mark.core
     @pytest.mark.main
     def test_auto_exp_009_nonvip_with_coupon_shows_and_selected(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-009 (P1/auto): 实验组非VIP有券展示并选中
 
         前置：账号 13140725123 goldcoin_voucher 有有效抵扣券。
         """
+        _require_account(request, "nonvip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_true(
             ab.is_coupon_section_visible(),
             name="非VIP有券展示抵扣券区",
@@ -463,15 +562,16 @@ class TestExpModal:
     @pytest.mark.smoke
     @pytest.mark.main
     def test_auto_exp_010_nonvip_no_coupon_hides_coupon_section(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-010 (P0/auto): 实验组非VIP无券不展示该字段
 
         前置：账号 13140725123 清空可用抵扣券。
         """
+        _require_account(request, "nonvip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.is_coupon_section_visible(),
             name="非VIP无券隐藏抵扣券区",
@@ -485,7 +585,7 @@ class TestExpModal:
         """AUTO-EXP-011 (P2/auto): 无券时不出现"不使用"残留行（修正图4现象）"""
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.is_coupon_unused_row_visible(),
             name="无券无不使用残留行",
@@ -497,15 +597,16 @@ class TestExpModal:
     @pytest.mark.smoke
     @pytest.mark.main
     def test_auto_exp_012_vip_no_promo_bundle(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, request, logged_in_page, assertion, mysql_db, redis_db
     ):
         """AUTO-EXP-012 (P0/auto): 实验组VIP用户弹窗无省钱礼包搭售区
 
         账号：VIP（--login-username=17768100279）。
         """
+        _require_account(request, "vip")
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.has_promo_bundle(),
             name="实验组VIP无搭售区",
@@ -520,7 +621,7 @@ class TestExpModal:
         """AUTO-EXP-013 (P0/auto): 实验组非VIP用户弹窗无省钱礼包搭售区（与对照组图1/2区分）"""
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.has_promo_bundle(),
             name="实验组非VIP无搭售区",
@@ -537,7 +638,7 @@ class TestExpModal:
         """AUTO-EXP-014 (P0/auto): 实验组主按钮为立即下载且无支付并下载变体"""
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         btn_text = ab.get_main_button_text()
         assertion.assert_true(
             "立即下载" in btn_text,
@@ -558,7 +659,7 @@ class TestExpModal:
         """AUTO-EXP-015 (P1/auto): 实验组底部条不展示加X元搭售现金金额"""
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.has_bottom_cash(),
             name="底部无+X元现金项",
@@ -576,7 +677,7 @@ class TestExpModal:
         """
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_false(
             ab.has_promo_bundle(),
             name="存量已购无搭售残留",
@@ -593,7 +694,7 @@ class TestExpModal:
         ids=[c.case_id for c in _CASES],
     )
     def test_auto_exp_017_020_modal_form_combinations(
-        self, logged_in_page, assertion, mysql_db, redis_db, case: ExpModalForm
+        self, request, logged_in_page, assertion, mysql_db, redis_db, case: ExpModalForm
     ):
         """AUTO-EXP-017~020 (P0~P1/auto): VIP×券四种弹窗形态组合参数化验证
 
@@ -603,10 +704,12 @@ class TestExpModal:
         EXP-020: 非VIP无券最简形态（需 nonvip 账号 + 清券）
 
         注意：VIP用例需 --login-username=17768100279；非VIP用例需 --login-username=13140725123。
+        按 case.account_key 自动校验当前登录账号，不匹配则 skip。
         """
+        _require_account(request, case.account_key)
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
 
         # VIP立减行校验
         if case.expect_vip_row:
@@ -663,7 +766,7 @@ class TestExpModal:
         """
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         assertion.assert_true(
             ab.is_field_visible("download_dialog"),
             name="弹窗容器可见",
@@ -677,10 +780,15 @@ class TestExpModal:
     def test_auto_exp_022_total_amount_calculation_correct(
         self, logged_in_page, assertion, mysql_db, redis_db
     ):
-        """AUTO-EXP-022 (P1/auto): 总计金额按字段抵扣计算正确（复用 parse_zhibi）"""
+        """AUTO-EXP-022 (P1/auto): 总计金额按字段抵扣计算正确（复用 parse_zhibi）
+
+        注：已合并原 EXP-024（活动立减为0时总计非负）。当时 EXP-024 与本用例
+        的"总计≥0"断言完全重复，活动立减为0属于本用例覆盖的子场景，故删除 EXP-024，
+        其语义由本用例的"总计金额非负"断言覆盖。
+        """
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         total_val = ab.parse_zhibi(ab.get_total_amount_text())
         discount_val = ab.parse_zhibi(ab.get_discount_amount_text())
         assertion.assert_true(
@@ -709,7 +817,7 @@ class TestExpModal:
 
         # 切实验组1
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         btn_g1 = ab.get_main_button_text()
         promo_g1 = ab.has_promo_bundle()
         ab.close_download_dialog()
@@ -735,23 +843,6 @@ class TestExpModal:
             message="两组搭售区展示状态应一致（待澄清#2）",
         )
 
-    # ── EXP-024: 活动立减为0时展示 ───────────────────────────────────────
-
-    @pytest.mark.ui
-    def test_auto_exp_024_zero_activity_discount(
-        self, logged_in_page, assertion, mysql_db, redis_db
-    ):
-        """AUTO-EXP-024 (P2/auto): 活动立减缺省或为0时弹窗展示与总计无负数"""
-        ab = DownloadAbPage(logged_in_page)
-        _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
-        total_val = ab.parse_zhibi(ab.get_total_amount_text())
-        assertion.assert_true(
-            total_val >= 0,
-            name="零活动立减总计非负",
-            message=f"活动立减缺省/为0时总计应≥0，实际: {total_val}",
-        )
-
     # ── EXP-025: 素材信息块完整（需求补全）──────────────────────────────
 
     @pytest.mark.ui
@@ -765,7 +856,7 @@ class TestExpModal:
         """
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        self._open_dialog(ab)
+        _open_download_dialog(ab)
         info = ab.get_material_info()
         for field_name, visible in info.items():
             assertion.assert_true(
@@ -783,11 +874,10 @@ class TestExpModal:
 class TestCtrlModal:
     """AUTO-CTRL 对照组弹窗策略验证（6 条：5 auto + 1 manual）"""
 
-    @staticmethod
-    def _open_ctrl_dialog(ab: DownloadAbPage) -> None:
-        ab.goto()
-        ab.click_download_button()
-        ab.wait_for_download_dialog()
+    @pytest.fixture(autouse=True)
+    def _auto_restore(self, _restore_split_group):
+        """每条用例后自动还原切量 radio，避免组间污染。"""
+        yield
 
     # ── CTRL-001: manual ──────────────────────────────────────────────────
 
@@ -798,71 +888,54 @@ class TestCtrlModal:
         """
         pytest.skip("manual: 需与上线前线上版本UI快照逐字段目视比对，转人工")
 
-    # ── CTRL-002~004: 参数化形态（直接独立方法，账号分开运行）──────────
+    # ── CTRL-002~004: 三种对照组弹窗形态参数化（映射 _CTRL_CASES / 图1~3）──
 
     @pytest.mark.core
     @pytest.mark.main
-    def test_auto_ctrl_002_nonvip_no_coupon_shows_promo_bundle(
-        self, logged_in_page, assertion, mysql_db, redis_db
+    @pytest.mark.parametrize(
+        "case",
+        _CTRL_CASES,
+        ids=[c.case_id for c in _CTRL_CASES],
+    )
+    def test_auto_ctrl_002_004_modal_form_combinations(
+        self, request, logged_in_page, assertion, mysql_db, redis_db, case: CtrlModalForm
     ):
-        """AUTO-CTRL-002 (P1/auto): 对照组非VIP无券展示搭售礼包（图1）
+        """AUTO-CTRL-002~004 (P1/auto): 对照组三种弹窗形态参数化验证
 
-        账号：nonvip（13140725123）；无券前置。
+        CTRL-002: 非VIP无券展示搭售礼包（图1，需 nonvip 账号 + 无券）
+        CTRL-003: 非VIP有券展示搭售并保留待激活态（图2，需 nonvip 账号 + 券造数）
+        CTRL-004: VIP有券展示搭售礼包且VIP立减正常选中（图3，需 VIP 账号 + 券造数）
+
+        按 case.account_key 自动校验当前登录账号，不匹配则 skip。
+        三组对照组恒展示搭售区（expect_promo=True）；待激活标签 / VIP立减按形态分别断言。
         """
+        _require_account(request, case.account_key)
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "对照组1", mysql_db, redis_db)
-        self._open_ctrl_dialog(ab)
+        _open_download_dialog(ab)
+
+        # 搭售区（对照组三形态恒展示）
         assertion.assert_true(
             ab.has_promo_bundle(),
-            name="对照组非VIP无券有搭售区",
-            message="对照组非VIP无券弹窗应展示搭售礼包区（省钱礼包/知币套餐等）",
+            name=f"{case.case_id}-有搭售区",
+            message=f"{case.scenario_name}: 对照组弹窗应展示搭售礼包区",
         )
 
-    @pytest.mark.core
-    @pytest.mark.main
-    def test_auto_ctrl_003_nonvip_with_coupon_shows_promo_and_pending(
-        self, logged_in_page, assertion, mysql_db, redis_db
-    ):
-        """AUTO-CTRL-003 (P1/auto): 对照组非VIP有券展示搭售并保留待激活态（图2）
+        # 待激活标签（仅图2 非VIP有券形态期望）
+        if case.expect_vip_pending:
+            assertion.assert_true(
+                ab.is_vip_pending_tag_visible(),
+                name=f"{case.case_id}-保留待激活标签",
+                message=f"{case.scenario_name}: 应保留'VIP立减 待激活 -5知币'标签",
+            )
 
-        账号：nonvip（13140725123）；券造数（goldcoin_voucher）。
-        """
-        ab = DownloadAbPage(logged_in_page)
-        _set_group(ab, "对照组1", mysql_db, redis_db)
-        self._open_ctrl_dialog(ab)
-        assertion.assert_true(
-            ab.is_vip_pending_tag_visible(),
-            name="对照组保留待激活标签",
-            message="对照组非VIP有券弹窗应保留'VIP立减 待激活 -5知币'标签",
-        )
-        assertion.assert_true(
-            ab.has_promo_bundle(),
-            name="对照组非VIP有券有搭售区",
-            message="对照组非VIP有券弹窗应展示'开通VIP畅享'搭售区",
-        )
-
-    @pytest.mark.core
-    @pytest.mark.main
-    def test_auto_ctrl_004_vip_with_coupon_shows_promo_and_vip_discount(
-        self, logged_in_page, assertion, mysql_db, redis_db
-    ):
-        """AUTO-CTRL-004 (P1/auto): 对照组VIP有券展示搭售礼包且VIP立减正常选中（图3）
-
-        账号：VIP（--login-username=17768100279）；有券前置。
-        """
-        ab = DownloadAbPage(logged_in_page)
-        _set_group(ab, "对照组1", mysql_db, redis_db)
-        self._open_ctrl_dialog(ab)
-        assertion.assert_true(
-            ab.has_promo_bundle(),
-            name="对照组VIP有搭售区",
-            message="对照组VIP有券弹窗应展示'加购省钱礼包'搭售区",
-        )
-        assertion.assert_true(
-            ab.is_vip_discount_visible(),
-            name="对照组VIP立减可见",
-            message="对照组VIP弹窗应展示VIP立减行",
-        )
+        # VIP立减行（仅 VIP 形态期望）
+        if case.is_vip:
+            assertion.assert_true(
+                ab.is_vip_discount_visible(),
+                name=f"{case.case_id}-VIP立减可见",
+                message=f"{case.scenario_name}: 对照组VIP弹窗应展示VIP立减行",
+            )
 
     # ── CTRL-005: 选中搭售后按钮变化 ──────────────────────────────────────
 
@@ -877,7 +950,7 @@ class TestCtrlModal:
         """
         ab = DownloadAbPage(logged_in_page)
         _set_group(ab, "对照组1", mysql_db, redis_db)
-        self._open_ctrl_dialog(ab)
+        _open_download_dialog(ab)
         selected = ab.select_promo_package(0)
         if not selected:
             pytest.skip(
@@ -908,7 +981,7 @@ class TestCtrlModal:
         ab = DownloadAbPage(logged_in_page)
 
         _set_group(ab, "对照组1", mysql_db, redis_db)
-        self._open_ctrl_dialog(ab)
+        _open_download_dialog(ab)
         promo_c1 = ab.has_promo_bundle()
         btn_c1 = ab.get_main_button_text()
         ab.close_download_dialog()
@@ -941,6 +1014,11 @@ class TestCtrlModal:
 @pytest.mark.xdist_group("download_ab_split")
 class TestTrackEmbed:
     """AUTO-TRACK 数据埋点与监控验证（9 条：5 auto/network + 4 manual）"""
+
+    @pytest.fixture(autouse=True)
+    def _auto_restore(self, _restore_split_group):
+        """每条用例后自动还原切量 radio，避免组间污染。"""
+        yield
 
     @pytest.mark.smoke
     @pytest.mark.main
@@ -998,32 +1076,36 @@ class TestTrackEmbed:
 
     @pytest.mark.core
     @pytest.mark.main
+    @pytest.mark.parametrize(
+        "group_label",
+        ["实验组1", "实验组2", "对照组1", "对照组2"],
+        ids=["实验组1", "实验组2", "对照组1", "对照组2"],
+    )
     def test_auto_track_003_four_group_values_correct_mapping(
-        self, logged_in_page, assertion, mysql_db, redis_db
+        self, logged_in_page, assertion, mysql_db, redis_db, group_label
     ):
-        """AUTO-TRACK-003 (P1/auto): 四组分组值正确映射，无错值
+        """AUTO-TRACK-003 (P1/auto): 四组分组值正确映射，无错值（按组参数化）
 
-        依赖切量控制：逐一切到四组，验证切量表记录的分组值与切量一致。
+        依赖切量控制：切到指定组后，验证切量表记录的分组值与切量一致。
+        参数化为四组，避免单方法内串行多次切量；每组独立 setup/还原。
         """
         ab = DownloadAbPage(logged_in_page)
         account_id = _DATA["accounts"]["nonvip"]["account_id"]
-        for group_label in ["实验组1", "实验组2", "对照组1", "对照组2"]:
-            if not ab.set_split_group(group_label, mysql_db, redis_db):
-                pytest.skip(_SKIP_SPLIT)
-            ab.goto()
-            ab.wait.wait_for_timeout(1000)
-            record = ab.query_split_record(account_id, mysql_db)
-            if record is None:
-                pytest.skip(_SKIP_RECORD_TABLE)
-            group_val = str(record.get("group", ""))
-            assertion.assert_true(
-                group_label in group_val,
-                name=f"切量{group_label}分组值正确",
-                message=(
-                    f"切到 {group_label!r} 后，记录分组值应含 {group_label!r}，"
-                    f"实际: {group_val!r}"
-                ),
-            )
+        _set_group(ab, group_label, mysql_db, redis_db)
+        ab.goto()
+        ab.wait.wait_for_timeout(1000)
+        record = ab.query_split_record(account_id, mysql_db)
+        if record is None:
+            pytest.skip(_SKIP_RECORD_TABLE)
+        group_val = str(record.get("group", ""))
+        assertion.assert_true(
+            group_label in group_val,
+            name=f"切量{group_label}分组值正确",
+            message=(
+                f"切到 {group_label!r} 后，记录分组值应含 {group_label!r}，"
+                f"实际: {group_val!r}"
+            ),
+        )
 
     def test_auto_track_004_cross_day_each_day_one_record_manual(self):
         """AUTO-TRACK-004 (P1/manual): 跨天访问每天各生成一条记录
@@ -1078,26 +1160,10 @@ class TestTrackEmbed:
         """AUTO-TRACK-007 (P1/auto): 未登录用户不产生切量记录
 
         使用裸 page（不走 logged_in_page），以记录数变化为断言依据。
+        与 SPLIT-006 共用 _assert_unlogged_no_record 辅助。
         待澄清#11：未登录处理逻辑确认后更新断言。
         """
-        ab = DownloadAbPage(page)
-        account_id = _DATA["accounts"]["nonvip"]["account_id"]
-        today_str = datetime.date.today().strftime("%Y-%m-%d")
-        before = ab.count_split_records_today(account_id, today_str, mysql_db)
-        if before is None:
-            pytest.skip(_SKIP_RECORD_TABLE)
-        ab.goto()
-        ab.wait.wait_for_timeout(2000)
-        after = ab.count_split_records_today(account_id, today_str, mysql_db)
-        assertion.assert_equal(
-            before,
-            after,
-            name="未登录无切量记录",
-            message=(
-                f"未登录访问后切量记录数应不变"
-                f"（before={before}, after={after}）"
-            ),
-        )
+        _assert_unlogged_no_record(page, assertion, mysql_db, "未登录无切量记录")
 
     @pytest.mark.core
     @pytest.mark.main
@@ -1150,13 +1216,16 @@ class TestTrackEmbed:
 class TestFlowDownload:
     """AUTO-FLOW 端到端下载流程验证（9 条：8 auto/env + 1 manual）"""
 
+    @pytest.fixture(autouse=True)
+    def _auto_restore(self, _restore_split_group):
+        """每条用例后自动还原切量 radio，避免组间污染。"""
+        yield
+
     @staticmethod
     def _setup_exp_dialog(ab: DownloadAbPage, mysql_db, redis_db) -> None:
-        """切实验组1并打开弹窗。"""
+        """切实验组1并打开弹窗（复用全局 _open_download_dialog）。"""
         _set_group(ab, "实验组1", mysql_db, redis_db)
-        ab.goto()
-        ab.click_download_button()
-        ab.wait_for_download_dialog()
+        _open_download_dialog(ab)
 
     @pytest.mark.smoke
     @pytest.mark.main
@@ -1175,7 +1244,12 @@ class TestFlowDownload:
             name="主流程按钮可用",
             message=f"实验组下载弹窗主按钮应含'立即下载'，实际: {btn_text!r}",
         )
-        ab.click_confirm_button()
+        ok = ab.click_confirm_button()
+        assertion.assert_true(
+            ok,
+            name="确认按钮点击成功",
+            message="点击'立即下载'确认按钮应成功（click_confirm_button 返回 True）",
+        )
         ab.wait.wait_for_timeout(3000)
         assertion.assert_false(
             ab.is_field_visible("download_dialog", timeout=2000),
@@ -1249,16 +1323,9 @@ class TestFlowDownload:
 
         前置：余额不足以支付到手价（账号知币<到手价）；仅断言引导提示，不真实充值。
         """
-        ab = DownloadAbPage(logged_in_page)
-        self._setup_exp_dialog(ab, mysql_db, redis_db)
-        ab.click_confirm_button()
-        ab.wait.wait_for_timeout(2500)
-        # TODO[locate]: 余额不足提示/充值引导元素 selector（提测后用实况探针确认 Toast/弹窗文案）
-        # 基线断言：操作后页面不崩溃（余额不足账号就绪后补"提示含充值引导"的断言）
-        assertion.assert_true(
-            True,
-            name="余额不足页面不崩溃",
-            message="余额不足时点立即下载后页面应不崩溃（TODO：余额不足账号就绪后补充断言）",
+        pytest.skip(
+            "【待考虑】余额不足提示/充值引导 selector 未配置，且需余额不足账号；"
+            "提测后补：点立即下载→提示含充值引导 + 知币未扣减"
         )
 
     @pytest.mark.core
@@ -1276,7 +1343,7 @@ class TestFlowDownload:
             message="点X关闭弹窗后弹窗应不可见",
         )
         assertion.assert_true(
-            "su.znzmo.com" in ab._page.url,
+            "su.znzmo.com" in ab.page.url,
             name="关闭后停留详情页",
             message="关闭弹窗后应仍在 su.znzmo.com 详情页，无跳转",
         )
@@ -1290,25 +1357,10 @@ class TestFlowDownload:
 
         使用 context.set_offline() 模拟断网；恢复后验证页面可继续操作。
         """
-        ab = DownloadAbPage(logged_in_page)
-        self._setup_exp_dialog(ab, mysql_db, redis_db)
-        # 断网
-        ab._page.context.set_offline(True)
-        ab.click_confirm_button()
-        ab.wait.wait_for_timeout(2500)
-        # 断网后页面不崩溃
-        assertion.assert_true(
-            True,
-            name="断网后页面无崩溃",
-            message=(
-                "断网时点立即下载后页面应不崩溃"
-                "（TODO：提测后补失败提示 selector 断言）"
-            ),
+        pytest.skip(
+            "【待考虑】断网失败提示 selector 未配置；提测后补：断网点下载→失败提示，"
+            "恢复后重试成功且知币仅扣一次（需余额充足账号 + DB 查询）"
         )
-        # 恢复网络
-        ab._page.context.set_offline(False)
-        ab.wait.wait_for_timeout(1000)
-        # TODO[manual]: 重试成功后查库扣减次数=1（余额充足账号+DB查询，待支付边界确认）
 
     @pytest.mark.core
     @pytest.mark.main
@@ -1320,21 +1372,9 @@ class TestFlowDownload:
         快速连击确认按钮3次，验证按钮防重（置灰/loading）且页面不崩溃。
         TODO[manual]: 完成后查库仅一笔下载订单+知币仅扣一次，待支付边界确认后补 DB 查询。
         """
-        ab = DownloadAbPage(logged_in_page)
-        self._setup_exp_dialog(ab, mysql_db, redis_db)
-        for _ in range(3):
-            try:
-                ab.click_confirm_button()
-            except Exception:
-                pass
-        ab.wait.wait_for_timeout(2000)
-        assertion.assert_true(
-            True,
-            name="连击后无崩溃",
-            message=(
-                "快速连击确认按钮后页面应不崩溃"
-                "（TODO：补充按钮置灰/loading selector + DB 仅一笔订单断言）"
-            ),
+        pytest.skip(
+            "【待考虑】按钮防重（置灰/loading）selector 未配置；提测后补：连击3次→"
+            "按钮防重 + DB 仅一笔订单、知币仅扣一次"
         )
 
     @pytest.mark.ui

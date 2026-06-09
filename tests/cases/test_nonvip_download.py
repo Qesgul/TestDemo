@@ -36,6 +36,12 @@ _DATA = load_yaml(_DATA_PATH)
 _CASES = [CouponPriorityCase(**c) for c in (_DATA.get("cases") or [])]
 
 
+def _skip_if_coupon_todo(dp):
+    """券单选框 selector 未回填（PRD新增功能未上线）时 skip，避免假红。"""
+    if not dp.coupon_radio_ready():
+        pytest.skip("【待考虑】券单选框 selector 未回填（coupon_radio_* 提测后回填）")
+
+
 class TestNonvipDownload:
     """非VIP用户下载确认弹窗计费逻辑修复 - 自动化测试套件。"""
 
@@ -53,6 +59,7 @@ class TestNonvipDownload:
         清理: coupon_sql_templates.cleanup  ids=499000001
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -79,6 +86,7 @@ class TestNonvipDownload:
         清理: coupon_sql_templates.cleanup  ids=499000002
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -106,6 +114,7 @@ class TestNonvipDownload:
         清理: coupon_sql_templates.cleanup  ids=499000003
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -127,6 +136,7 @@ class TestNonvipDownload:
         清理: ids=499000041,499000042
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -159,6 +169,7 @@ class TestNonvipDownload:
         注: 时序断言略脆，存在 flaky 风险，建议在稳定环境执行
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -181,6 +192,7 @@ class TestNonvipDownload:
         清理: coupon_sql_templates.cleanup  ids=499000006
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -210,6 +222,7 @@ class TestNonvipDownload:
         清理: ids=499000071,499000072
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -238,6 +251,7 @@ class TestNonvipDownload:
         清理: ids=499000101
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -258,6 +272,7 @@ class TestNonvipDownload:
         清理: ids=499000102
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -278,6 +293,7 @@ class TestNonvipDownload:
         清理: ids=499000103,499000104
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -298,6 +314,7 @@ class TestNonvipDownload:
         清理: ids=499000141,499000142
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -318,6 +335,7 @@ class TestNonvipDownload:
         清理: ids=499000151,499000152,499000153
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -344,6 +362,7 @@ class TestNonvipDownload:
           SQL: valid_35 (id=499000163) + valid_5 (id=499000164)
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -369,6 +388,7 @@ class TestNonvipDownload:
         TODO[data]: 需开发暴露当前选中券 ID 或在 UI 中有可识别的临期标记
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -403,6 +423,7 @@ class TestNonvipDownload:
         清理: ids=499000191,499000192
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -429,6 +450,7 @@ class TestNonvipDownload:
         清理: ids=499000201,499000202
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -526,6 +548,7 @@ class TestNonvipDownload:
         SQL: valid_35  id=499000304
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -571,6 +594,7 @@ class TestNonvipDownload:
         SQL: valid_35  id=499000306
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()
@@ -673,6 +697,7 @@ class TestNonvipDownload:
         清理: ids=499000403
         """
         dp = NonvipDownloadPage(logged_in_page)
+        _skip_if_coupon_todo(dp)
         dp.goto()
         dp.click_download_button()
         dp.wait_for_download_dialog()

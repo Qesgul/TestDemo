@@ -105,6 +105,14 @@ class NonvipDownloadPage(ModelDetailPage):
     # 券交互
     # ══════════════════════════════════════════════════════════════════════════
 
+    def coupon_radio_ready(self) -> bool:
+        """券单选框 selector 是否已回填（非 TODO_SELECTOR）。
+
+        券单选框为 PRD 新增、提测后才上线的功能；未回填时相关用例应 skip 而非 fail。
+        """
+        sel = str(self._elements.get("coupon_radio_35", ""))
+        return bool(sel) and not sel.startswith("TODO")
+
     def click_coupon(self, coupon_type: str) -> None:
         """点击指定面额的知币券单选框，触发选中/取消选中。
 
@@ -176,7 +184,7 @@ class NonvipDownloadPage(ModelDetailPage):
     def get_discount_amount_text(self) -> str:
         """获取「已优惠」金额文本（原始字符串，含「知币」单位）。"""
         try:
-            return self.get_locator("discount_amount").inner_text(timeout=3000).strip()
+            return self.get_locator("discount_amount").first.inner_text(timeout=3000).strip()
         except Exception as e:
             _logger.debug("get_discount_amount_text 失败: %s", e)
             return ""
@@ -184,7 +192,7 @@ class NonvipDownloadPage(ModelDetailPage):
     def get_total_amount_text(self) -> str:
         """获取「总计应付」金额文本（原始字符串，含「知币」单位）。"""
         try:
-            return self.get_locator("total_amount").inner_text(timeout=3000).strip()
+            return self.get_locator("total_amount").first.inner_text(timeout=3000).strip()
         except Exception as e:
             _logger.debug("get_total_amount_text 失败: %s", e)
             return ""
@@ -192,16 +200,18 @@ class NonvipDownloadPage(ModelDetailPage):
     def get_detail_page_price_text(self) -> str:
         """获取详情页「到手价」文本（弹窗打开前调用，用于 AUTO-CAL-003 一致性比对）。"""
         try:
-            return self.get_locator("detail_page_price").inner_text(timeout=3000).strip()
+            return self.get_locator("detail_page_price").first.inner_text(timeout=3000).strip()
         except Exception as e:
             _logger.debug("get_detail_page_price_text 失败: %s", e)
             return ""
 
     @staticmethod
     def parse_zhibi(text: str) -> int:
-        """从金额文本中提取知币整数，取第一个数字序列。
+        """从金额文本中提取知币整数（保留负号、去千分位逗号）。
 
-        示例: "35 知币" → 35 ; "已优惠 0 知币" → 0 ; "" → 0
+        知币为整数；含小数的现金额(¥)不应走本方法。
+        示例: "35 知币" → 35 ; "已优惠 0 知币" → 0 ; "-5知币" → -5 ;
+              "1,200知币" → 1200 ; "" → 0
         """
-        nums = re.findall(r"\d+", text)
-        return int(nums[0]) if nums else 0
+        m = re.search(r"-?\d[\d,]*", text or "")
+        return int(m.group(0).replace(",", "")) if m else 0

@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 
 from playwright.sync_api import Page
@@ -30,6 +31,16 @@ from pages.methods.nonvip_download_page import NonvipDownloadPage
 _logger = logging.getLogger(__name__)
 
 _AB_DATA_PATH = "tests/data/download_ab_data.yaml"
+
+_IDENT_RE = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+def _ident(name: str) -> str:
+    """校验 SQL 标识符（表名/字段名）仅含字母/数字/下划线，防拼接注入与语法错误。"""
+    s = str(name)
+    if not _IDENT_RE.match(s):
+        raise ValueError(f"非法 SQL 标识符: {name!r}（仅允许字母/数字/下划线）")
+    return s
 
 
 class DownloadAbPage(NonvipDownloadPage):
@@ -76,10 +87,9 @@ class DownloadAbPage(NonvipDownloadPage):
             _logger.warning("切量未配置（group_label=%s），跳过切量设置", group_label)
             return False
 
-        table = self._split_cfg.get("table", "user_group_common")
+        table = _ident(self._split_cfg.get("table", "user_group_common"))
         group_name = self._split_cfg["group_name"]
         radio = self._split_cfg["radio"][group_label]
-        redis_key = self._split_cfg.get("redis_key", "znzmo:group:all")
 
         with mysql_db.connection(commit=True) as conn:
             with conn.cursor() as cur:
@@ -110,15 +120,15 @@ class DownloadAbPage(NonvipDownloadPage):
 
         :return: {日期, 用户ID, 切量分组} dict；表未配置返回 None；无记录返回 {}
         """
-        rcfg = self._split_cfg.get("record_table", {})
-        table = str(rcfg.get("name", ""))
-        if not table or table.startswith("TODO"):
+        cfg = self._record_table_cfg()
+        if cfg is None:
             _logger.warning("切量埋点表未配置，无法查询记录")
             return None
+        table, rcfg = cfg  # table 已在 _record_table_cfg 内经 _ident 校验
 
-        f_date = rcfg["field_date"]
-        f_user = rcfg["field_user"]
-        f_group = rcfg["field_group"]
+        f_date = _ident(rcfg["field_date"])
+        f_user = _ident(rcfg["field_user"])
+        f_group = _ident(rcfg["field_group"])
         with mysql_db.connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -133,12 +143,12 @@ class DownloadAbPage(NonvipDownloadPage):
 
     def count_split_records_today(self, account_id: str, date_str: str, mysql_db) -> Optional[int]:
         """统计某账号某日切量记录条数（TRACK-005 去重校验；表未配置返回 None）。"""
-        rcfg = self._split_cfg.get("record_table", {})
-        table = str(rcfg.get("name", ""))
-        if not table or table.startswith("TODO"):
+        cfg = self._record_table_cfg()
+        if cfg is None:
             return None
-        f_date = rcfg["field_date"]
-        f_user = rcfg["field_user"]
+        table, rcfg = cfg
+        f_date = _ident(rcfg["field_date"])
+        f_user = _ident(rcfg["field_user"])
         with mysql_db.connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -204,8 +214,8 @@ class DownloadAbPage(NonvipDownloadPage):
     # ══════════════════════════════════════════════════════════════════════════
 
     def get_main_button_text(self) -> str:
-        """读取底部主按钮文案（实验组应"立即下载"）。"""
-        return self._safe_text("main_button") or self._safe_text("confirm_btn")
+        """读取底部主按钮文案（实验组应"立即下载"；main_button 与 confirm_btn 同节点）。"""
+        return self._safe_text("main_button")
 
     def get_bottom_bar_text(self) -> str:
         """读取底部合计条文本。"""
@@ -230,16 +240,19 @@ class DownloadAbPage(NonvipDownloadPage):
     # 对照组搭售交互
     # ══════════════════════════════════════════════════════════════════════════
 
-    def click_confirm_button(self) -> None:
+    def click_confirm_button(self) -> bool:
         """点击弹窗内「立即下载」确认按钮（触发实际支付/下载）。
 
         复用继承的 confirm_btn selector（nonvip_download_elements.yaml）。
+        :return: 点击是否成功（不再静默吞异常，便于用例区分成功/失败）
         """
         try:
             self.get_locator("confirm_btn").first.click(timeout=5000)
             self.wait.wait_for_timeout(500)
+            return True
         except Exception as e:
             _logger.warning("click_confirm_button 失败: %s", e)
+            return False
 
     def select_promo_package(self, index: int = 0) -> bool:
         """勾选第 index 个搭售套餐（对照组 CTRL-005 用）。"""
@@ -256,6 +269,14 @@ class DownloadAbPage(NonvipDownloadPage):
     # ══════════════════════════════════════════════════════════════════════════
     # 内部工具
     # ══════════════════════════════════════════════════════════════════════════
+
+    def _record_table_cfg(self) -> Optional[tuple]:
+        """返回切量埋点表配置 (table, rcfg)；表名未配置（空 / TODO）返回 None。"""
+        rcfg = self._split_cfg.get("record_table", {})
+        table = str(rcfg.get("name", ""))
+        if not table or table.startswith("TODO"):
+            return None
+        return _ident(table), rcfg
 
     def _safe_text(self, yaml_key: str, timeout: int = 2500) -> str:
         """按 yaml key 取首个匹配元素文本，失败返回空字符串。"""
