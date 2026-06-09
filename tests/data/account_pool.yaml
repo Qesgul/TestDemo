@@ -25,6 +25,18 @@ accounts:
     tags:
       - default
       - generic_user
-    description: "原 login_data.yaml 默认账号，无特殊业务状态，可用于通用已登录态场景"
+      - vip
+      - vip_download_ab
+    description: "默认账号；已同时作为 AB 实验下载弹窗 VIP 测试账号（vip 身份需在测试环境提前配置好）"
     added_at: "2026-05-26"
-    added_for: "session 级默认登录 / 通用已登录用例"
+    added_for: "session 级默认登录 / 通用已登录用例 / tests/cases/test_download_ab.py VIP 用例"
+
+  - username: "13140725123"
+    password: "Qyff2011"
+    account_id: "255635028913"
+    tags:
+      - nonvip
+      - nonvip_coupon_base
+    description: "非VIP下载弹窗计费逻辑测试账号；通过 SQL 向 goldcoin_voucher 写入不同券状态后使用，account_id 用于 SQL 造数"
+    added_at: "2026-06-05"
+    added_for: "tests/cases/test_nonvip_download.py"

@@ -1,0 +1,42 @@
+
+# 非VIP用户下载确认弹窗 - 元素定位器
+# 适用站点: sgt.znzmo.com（主力）/ 3d.znzmo.com（CAL-007边界模型）
+#
+# selector 来源说明（2026-06-05 Playwright headless 自动抓取，已注入35+40知币测试券）
+#
+# 注意：
+#   download_btn（立即下载）sgt站与3d站 selector 完全一致
+#   [class^="detail__vipFreeDownloadBtn__"]，已继承自 model_detail_elements.yaml，
+#   本文件不重复声明（避免 update() 被空值覆盖）。
+
+# ── 弹窗容器与基础操作（已确认 ✓）────────────────────────────────────────────
+download_dialog: '[role="dialog"]'
+# 关闭按钮（弹窗左上角 svg 图标）
+dialog_close: '[class^="DownloadConfirmModal__btnClose__"]'
+# 确认下载按钮（"立即下载"文字区域，在 btnContent 右侧）
+confirm_btn: '[class^="DownloadConfirmModal__right__"]'
+
+# ── 金额展示（已确认 ✓）──────────────────────────────────────────────────────
+# 「总计应付」: btnContent 左侧 left 区内的 total 元素（"合计20知币"），
+#   DownloadConfirmModal__total__ 在弹窗内出现两次（orderInfo 和 btnContent），
+#   以 btnContent > left 内的为准（文本更干净，parse_zhibi 直接可用）
+total_amount: '[class^="DownloadConfirmModal__left__"] [class^="DownloadConfirmModal__total__"]'
+
+# 「已优惠」: btnContent 左侧 left 区内的 discount 元素（"已优惠40知币"）
+discount_amount: '[class^="DownloadConfirmModal__discount__"]'
+
+# ── 详情页到手价（已确认 ✓）──────────────────────────────────────────────────
+# priceValue 显示非VIP实际支付价（如持35券时显示"25知币"）
+# 注：账号当前因 VIP立减 导致 priceValue 偏低，需换非VIP纯净账号后重新确认
+detail_page_price: '[class^="Commodity3dDescription__priceValue__"]'
+
+# ── 下载抵扣券区域（当前为静态展示，PRD 修复后将变为可交互）──────────────────
+# 当前: DownloadConfirmModal__downloadVocher__（注意原始代码拼写 Vocher≠Voucher）
+# 修复后: 该区域应替换为带单选框的交互组件，届时 coupon_radio_* 才可抓取
+download_vocher_section: '[class^="DownloadConfirmModal__downloadVocher__"]'
+
+# ── 券单选框（TODO：PRD 前端修复上线后 codegen 补全）──────────────────────────
+# 当前 DOM 中无 radio 元素，单选框交互是本次 PRD 要新增的功能
+coupon_radio_35: 'TODO_SELECTOR'   # 35知币免费下载券 单选框（PRD新增，未上线）
+coupon_radio_40: 'TODO_SELECTOR'   # 40知币下载券 单选框（PRD新增，未上线）
+coupon_radio_5: 'TODO_SELECTOR'    # 5知币下载券 单选框（PRD新增，未上线）

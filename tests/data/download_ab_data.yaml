@@ -1,0 +1,131 @@
+# 下载确认弹窗 AB 实验 - 测试数据
+#
+# 运行方式（必须按用例所需身份指定账号）：
+#   # 非VIP 类用例
+#   pytest tests/cases/test_download_ab.py --login-username=13140725123 --login-password=Qyff2011
+#   # VIP 类用例
+#   pytest tests/cases/test_download_ab.py --login-username=17768100279 --login-password=Qyff2011
+#
+# 导航入口 URL 配在 DownloadAbPage.DEFAULT_URL（su.znzmo.com 36知币 付费素材详情页），此处不重复。
+
+# ── 登录账号 ──────────────────────────────────────────────────────────────────
+accounts:
+  vip:
+    username: "17768100279"      # 账号池已加 vip 标签；VIP 类用例使用
+    password: "Qyff2011"
+  nonvip:
+    username: "13140725123"      # nonvip 类用例使用
+    password: "Qyff2011"
+    account_id: "255635028913"   # 券造数 / 切量记录查询使用
+
+# ── 切量控制（机制来自 utils/一键修改_任意切量分组.py）────────────────────────
+# 全局切量：UPDATE user_group_common SET radio=<radio> WHERE group_name=<切量名>; + 清 Redis(znzmo:group:all)
+# 【提测后回填】group_name(切量名) 与 radio(各组对应切量值，长度因分组不同而不同，需仔细确认)。
+split_control:
+  table: "user_group_common"
+  redis_key: "znzmo:group:all"
+  group_name: "TODO_切量名（提测后提供）"
+  radio:
+    实验组1: "TODO_RADIO_实验组1"
+    实验组2: "TODO_RADIO_实验组2"
+    对照组1: "TODO_RADIO_对照组1"
+    对照组2: "TODO_RADIO_对照组2"
+  # 切量埋点表（TRACK 模块查询用，提测后回填表名与字段）
+  record_table:
+    name: "TODO_切量埋点表名"
+    field_date: "TODO_日期字段"
+    field_user: "TODO_用户ID字段"
+    field_group: "TODO_切量分组字段"
+
+# ── 期望文案 ──────────────────────────────────────────────────────────────────
+expected_text:
+  detail_take_price_label: "到手价"
+  detail_coupon_price_label: "券后价"      # 实验组详情页应不出现
+  promo_bundle_label: "省钱礼包"
+  vip_discount_label: "VIP立减"
+  vip_pending_label: "待激活"
+  main_btn_normal: "立即下载"
+  main_btn_bundle: "支付并下载"
+  cash_mark_label: "元"                    # 底部 "+X元" 现金项标志（实验组应无）
+
+# ── EXP-003 详情页到手价==弹窗金额 多场景（URL 提测后回填）─────────────────────
+price_scenarios:
+  - case_id: "EXP-003-a"
+    scenario_name: "无活动立减素材"
+    material_url: "TODO_素材URL_无活动"
+  - case_id: "EXP-003-b"
+    scenario_name: "含活动立减素材"
+    material_url: "TODO_素材URL_含活动"
+  - case_id: "EXP-003-c"
+    scenario_name: "含抵扣券素材"
+    material_url: "TODO_素材URL_含券"
+  - case_id: "EXP-003-d"
+    scenario_name: "价格含小数素材"
+    material_url: "TODO_素材URL_含小数"
+
+# ── EXP 弹窗形态参数化（EXP-017~020；映射 data_types.ExpModalForm）────────────
+cases:
+  - case_id: "EXP-017"
+    scenario_name: "实验组VIP有券完整形态"
+    is_vip: true
+    has_coupon: true
+    expect_vip_row: true
+    expect_coupon_row: true
+    expect_promo: false
+    account_key: "vip"
+  - case_id: "EXP-018"
+    scenario_name: "实验组VIP无券形态"
+    is_vip: true
+    has_coupon: false
+    expect_vip_row: true
+    expect_coupon_row: false
+    expect_promo: false
+    account_key: "vip"
+  - case_id: "EXP-019"
+    scenario_name: "实验组非VIP有券形态"
+    is_vip: false
+    has_coupon: true
+    expect_vip_row: false
+    expect_coupon_row: true
+    expect_promo: false
+    account_key: "nonvip"
+  - case_id: "EXP-020"
+    scenario_name: "实验组非VIP无券最简形态"
+    is_vip: false
+    has_coupon: false
+    expect_vip_row: false
+    expect_coupon_row: false
+    expect_promo: false
+    account_key: "nonvip"
+
+# ── CTRL 弹窗形态参数化（CTRL-002~004；映射 data_types.CtrlModalForm）──────────
+ctrl_cases:
+  - case_id: "CTRL-002"
+    scenario_name: "对照组非VIP无券展示搭售(图1)"
+    is_vip: false
+    has_coupon: false
+    expect_promo: true
+    expect_vip_pending: false
+    account_key: "nonvip"
+    figure_ref: "图1"
+  - case_id: "CTRL-003"
+    scenario_name: "对照组非VIP有券展示搭售+待激活(图2)"
+    is_vip: false
+    has_coupon: true
+    expect_promo: true
+    expect_vip_pending: true
+    account_key: "nonvip"
+    figure_ref: "图2"
+  - case_id: "CTRL-004"
+    scenario_name: "对照组VIP有券展示搭售(图3)"
+    is_vip: true
+    has_coupon: true
+    expect_promo: true
+    expect_vip_pending: false
+    account_key: "vip"
+    figure_ref: "图3"
+
+# ── 券造数说明 ────────────────────────────────────────────────────────────────
+# 有券/无券前置复用 nonvip_download_data.yaml 的 coupon_sql_templates（valid_35 / cleanup 等），
+# 账号 255635028913；VIP 账号券造数需将 account_id 换为 VIP 账号对应 ID（提测后确认）。
+# 各用例 docstring 标注所需 SQL，与 nonvip 套件一致（手工 setup/teardown）。

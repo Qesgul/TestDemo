@@ -39,6 +39,23 @@
 
 收到确认前**绝不操作文件**，即使任务看起来简单明确。
 
+### 例外：测试用例生成流水线免确认（2026-06-05）
+
+以下操作**无需**输出【改动方案】等待确认，可**直接执行**：
+
+- **限定 skill**：`testcase-gen` / `ui-test-case-reviewer` / `extract-auto-cases` 三者
+- **限定产物**：测试设计类文档——测试点、测试用例、评审报告、测试报告、自动化测试用例
+  （如 `test-points.md`、`test-cases.md`、`*-review*.md`、`*报告*.md`、`*_auto.md`，及对应 `.xlsx` / `-slim.md`）
+- **限定位置**：测试用例工作目录（如 `D:\code\testcase\**`）或上述文档的同目录
+
+**仍必须确认（不在例外内）**：
+
+- 生产代码改动（`pages/`、`tests/`、`data_types/`、`common/`、`conftest.py` 等）与任何配置文件
+- 删除 / 移动 / 覆盖既有文件
+- 任何 git 操作（提交仍受规则 6 约束，需用户主动指令）
+
+> 例外仅为减少测试文档生成中的反复确认；超出上述三项限定的任何改动，一律回到本规则默认流程。
+
 ---
 
 ## 数据采集确认机制（规则 1）
@@ -160,6 +177,37 @@
 - 删除 / 移出既有非 web 用例前，仍走规则 5 改动确认
 
 > 操作细则见 `.claude/skills/case-to-code/SKILL.md`「用例可自动化分级」。
+
+---
+
+## 浏览器操作约定（2026-06-09）
+
+凡需要**启动浏览器**进行元素抓取、页面调试、交互验证的场景：
+
+- **一律使用 Playwright**（`sync_playwright` / `capture_snapshot.py` / 自定义调试脚本）驱动，支持 headed 或 headless 模式。
+- **禁止调用** `mcp__Claude_in_Chrome__*` 系列工具（Chrome 扩展连接不稳定，已弃用）。
+- 需要用户可见的调试场景，使用 `headless=False` 启动有界面浏览器。
+- `ai-selector` skill 及所有 selector 抓取流程均遵循此约定。
+
+### 调试登录约定（必须先登录再跳转）
+
+- 调试场景若**提供了账号**或**需要登录态**，统一调用项目已有登录方式
+  （`pages/methods/login_page.py` 的 `login_with()` / `login_page_elements.yaml` 现成选择器），
+  **先完成登录，再 `goto` 目标页**，禁止直接跳目标页后卡在登录弹框。
+- **知末网登录弹窗（www / su / sgt / 3d 等各子站交互一致）为扫码默认态**，需按顺序操作输入框才会渲染：
+  点「手机」tab → 点「账号密码登录」→ 填手机号 → 填密码 → 提交 → 等登录弹窗消失。
+- **跨子域不假设共享 session**：`www.znzmo.com` 的 cookie/CAS session 不一定通过
+  `su.znzmo.com` 等子站鉴权；目标操作所在子域可能独立鉴权，优先用 UI 登录验证而非套用 cookie。
+
+### 调试经验教训（2026-06-09）
+
+- **selector 唯一性必须用官方工具验证**：用 `scripts/verify_locator.py --specs-json`
+  或 `common/selector_finder/verifier.build_locator`，判定标准 `count==1`，
+  禁止用宽松的 `count>0`（会漏掉同名 class 的多命中，如本次 `promo_package_option` count=3）。
+- **同名 hash class 无法区分时**：用标准 CSS 结构定位（`父容器 > 子:first-child`），
+  属标准 CSS 伪类，非 Playwright `.first()`，符合 ai-selector 规则 6。
+- **Windows 终端中文输出走文件**：含中文 / `¥` 的内容不在终端 `print`（GBK 报错），
+  改为写 UTF-8 文件再用 Read 读出。
 
 ---
 

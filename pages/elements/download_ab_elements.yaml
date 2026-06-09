@@ -1,0 +1,54 @@
+# 下载确认弹窗 AB 实验 - 元素定位器
+# 适用站点: su.znzmo.com 付费素材详情页（36知币）；弹窗 = DownloadConfirmModal
+#
+# 复用说明（继承自 nonvip_download_elements.yaml，本文件不重复声明，避免 update() 空值覆盖）：
+#   download_dialog / dialog_close / confirm_btn / total_amount / discount_amount
+#   / download_vocher_section / detail_page_price
+#
+# ⚠️ 本需求「目前未提测」：实验组/对照组态在测试环境尚未上线，无法用 codegen 实抓验证，
+#   故下列实验态专属 selector 一律先置 TODO_SELECTOR（附候选 class 提示）。
+#   提测后按 .claude/skills/ai-selector 或 `python -m playwright codegen <su详情页>` 抓取唯一命中后回填。
+
+# ── 详情页价格区（实验组：展示到手价，不展示券后价）────────────────────────────
+# TODO_SELECTOR：详情页"到手价"标签当前未部署（_hasToHandPrice:false），
+#   提测后用 ai-selector / playwright codegen 重新抓取
+detail_take_price: 'TODO_SELECTOR'    # 详情页"到手价 X知币（划线原价）"数值节点
+# TODO_SELECTOR：详情页"券后价"标签当前未部署，同上
+detail_coupon_price: 'TODO_SELECTOR'  # 详情页"券后价"字样节点（实验组期望取不到）
+
+# ── 弹窗价格明细行 ───────────────────────────────────────────────────────────
+# 活动立减行 ✓ 2026-06-09 Playwright headed 实抓（VIP+非VIP 均确认 "活动立减 -12知币"）
+activity_discount_row: '[class^="DownloadConfirmModal__officialSub__"]'
+# VIP立减行 ✓ 两账号均见 "VIP立减 -5知币"
+vip_discount_row: '[class^="DownloadConfirmModal__vipReduce__"]'
+# TODO_SELECTOR：vip_pending_tag 为对照组专属"待激活"标签，实验组 DOM 中无此节点
+vip_pending_tag: 'TODO_SELECTOR'         # "待激活 -5知币"标签（对照组图2 才有）
+# TODO_SELECTOR：coupon_unused_row 需在"有券未选"场景触发；当前测试中免费券已自动选中，DOM 无此节点
+coupon_unused_row: 'TODO_SELECTOR'       # 灰色"不使用 >"行（有券未选时出现）
+
+# ── 省钱礼包搭售区（对照组/非VIP 有；实验组/VIP 无）────────────────────────────
+# ✓ 2026-06-09 非VIP账号实抓（"购买省钱礼包，每次下载都省钱 5知币下载券 20张…"）
+promo_bundle: '[class^="DownloadConfirmModal__libaoContent__"]'
+
+# ── 底部条与主按钮 ───────────────────────────────────────────────────────────
+# 主按钮 ✓ 与 confirm_btn 同节点；文案 VIP="立即下载"，非VIP="立即下载"（勾选搭售后变"支付并下载"）
+main_button: '[class^="DownloadConfirmModal__right__"]'
+# 底部合计条（"合计X知币 已优惠X知币"，不含按钮）✓ 2026-06-09 实抓
+bottom_bar: '[class^="DownloadConfirmModal__left__"]'
+# TODO_SELECTOR：bottom_cash "+X元" 现金项仅在勾选现金套餐后出现，当前未选，DOM 无此节点
+bottom_cash: 'TODO_SELECTOR'            # 底部现金项 "+X元"（实验组期望取不到）
+
+# ── 弹窗顶部素材信息块（EXP-025 需求补全：假一赔三/缩略图/标题/ID/标签）──────────
+# ✓ 2026-06-09 Playwright headed 实抓
+material_block: '[class^="DownloadConfirmModal__commodityInfo__"]'
+material_thumb: '[class^="DownloadConfirmModal__comImg__"]'
+material_title: '[class^="DownloadConfirmModal__title__"]'
+material_id: '[class^="DownloadConfirmModal__comId__"]'
+material_tags: '[class^="DownloadConfirmModal__activeSkuInfo__"]'
+guarantee_badge: '[class^="DownloadConfirmModal__payThreeContent__"]'
+
+# ── 搭售套餐勾选项（对照组 CTRL-005：勾选后按钮变"支付并下载"）──────────────────
+# ✓ 2026-06-09 非VIP账号实抓；Item1/Item2 class 名完全一致（hash 相同），
+#   无法靠 class 区分，改用直接子 + :first-child 唯一命中第一个套餐（5知币×20张 ¥6.9）。
+#   注：:first-child 为标准 CSS 伪类，非 Playwright .first() 方法，符合 skill 规则 6。
+promo_package_option: '[class^="DownloadConfirmModal__twoLibaoDiv__"] > [class^="DownloadConfirmModal__twoLibaoItem__"]:first-child'

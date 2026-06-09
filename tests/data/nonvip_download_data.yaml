@@ -1,0 +1,122 @@
+# 非VIP用户下载确认弹窗计费逻辑修复 - 测试数据
+#
+# 导航入口 URL 已配置在 NonvipDownloadPage（MODEL_URLS），此文件不重复。
+#
+# 运行方式（需指定账号，否则会用 login_data.yaml 默认账号）：
+#   pytest tests/cases/test_nonvip_download.py \
+#     --login-username=13140725123 --login-password=Qyff2011
+
+# ── 登录账号 ──────────────────────────────────────────────────────────────────
+username: "13140725123"
+password: "Qyff2011"
+account_id: "255635028913"   # goldcoin_voucher.account_id，SQL 造数时使用
+
+# ── 模型原价（知币）──────────────────────────────────────────────────────────
+model_price:
+  60: 60   # sgt.znzmo.com/sgt/36982063.html（主力，DEFAULT_URL）
+  40: 40   # sgt.znzmo.com/sgt/731308280.html（等额边界）
+  23: 23   # 3d.znzmo.com/3dmoxing/1198790555.html（超额边界）
+
+# ── 金额期望值（知币，无需人民币换算）────────────────────────────────────────
+# 已优惠 = min(券面额, 模型原价)；总计 = 模型原价 - 已优惠（不为负）
+coupon_discount:
+  model60_with_35: {deduction: 35, total: 25}   # AUTO-CAL-001
+  model60_with_40: {deduction: 40, total: 20}   # AUTO-CAL-002
+  model40_with_35: {deduction: 35, total: 5}
+  model40_with_40: {deduction: 40, total: 0}    # 等额，总计归0
+  model23_with_35: {deduction: 23, total: 0}    # AUTO-CAL-007: 券>原价，已优惠封顶为原价
+  model23_with_40: {deduction: 23, total: 0}    # 同上
+
+# ── SQL 造数模板 ───────────────────────────────────────────────────────────────
+# 表: znzmo.goldcoin_voucher
+# 字段说明（来自用户提供的参考 SQL）:
+#   id            测试专用 ID，建议 499000001~499999999（勿与生产冲突）
+#   account_id    使用 "255635028913"
+#   amount        0=35知币免费下载券; 4000=40知币; 500=5知币（待确认）
+#   status        1=有效可用; 0=已使用
+#   expire_time   有效期
+#   use_condition 0=无限制(适用本单); 600+=有限制(不适用本单，待确认阈值)
+#   voucher_type  1=35知币免费下载券; 0=其他类型（来自参考 SQL，待确认）
+#   del_status    0=正常未删除
+#
+# 使用方式：由测试前置步骤（mysql_db fixture）执行 INSERT，测后执行 cleanup
+
+coupon_sql_templates:
+
+  # 35知币有效券（适用本单）- S1/CPN-001/002/003/006/DFT-001/003/005/007/009/010/CAL-001等
+  valid_35: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 0, 1, '2026-12-31 00:00:00', NULL, NULL, NULL,
+            3, 0, 0, 0, 0, 1, 0, 0, NOW(), NOW())
+
+  # 40知币有效券（适用本单）- S2/CPN-004/DFT-002/003/004/005/006/CAL-002等
+  valid_40: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 4000, 1, '2026-12-31 00:00:00', NULL, NULL, NULL,
+            3, 0, 0, 0, 0, 0, 0, 0, NOW(), NOW())
+
+  # 5知币有效券（适用本单）- S5/DFT-006/DFT-009/BND-002
+  valid_5: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 500, 1, '2026-12-31 00:00:00', NULL, NULL, NULL,
+            3, 0, 0, 0, 0, 0, 0, 0, NOW(), NOW())
+
+  # 35知币临期券（剩余约1天，适用本单）- DFT-007 临期优先
+  near_expire_35: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 0, 1, DATE_ADD(NOW(), INTERVAL 1 DAY), NULL, NULL, NULL,
+            3, 0, 0, 0, 0, 1, 0, 0, NOW(), NOW())
+
+  # 40知币不适用本单券（use_condition高值）- CPN-007/DFT-010（35适用+40不适用场景）
+  not_applicable_40: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 4000, 1, '2026-12-31 00:00:00', NULL, NULL, NULL,
+            3, 600, 0, 0, 0, 0, 0, 0, NOW(), NOW())
+
+  # 35知币不适用本单券（use_condition高值）- DFT-004（35不适用+40适用，默认选40）
+  # 与 valid_35 区别：use_condition 0→600；其余字段（amount=0/voucher_type=1）保持35券特征
+  not_applicable_35: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 0, 1, '2026-12-31 00:00:00', NULL, NULL, NULL,
+            3, 600, 0, 0, 0, 1, 0, 0, NOW(), NOW())
+
+  # 35知币已过期券 - BND-003
+  expired_35: >-
+    INSERT INTO znzmo.goldcoin_voucher
+    (id, account_id, amount, status, expire_time, used_time, used_id, pay_order_id,
+     voucher_source, use_condition, can_inflate, inflate, cost, voucher_type, free_amount,
+     del_status, create_time, update_time)
+    VALUES ({id}, '255635028913', 0, 1, '2020-01-01 00:00:00', NULL, NULL, NULL,
+            3, 0, 0, 0, 0, 1, 0, 0, NOW(), NOW())
+
+  # 清理：按 ID 删除测试插入的券（占位符 {ids} 替换为逗号分隔的 id 列表）
+  cleanup: "DELETE FROM znzmo.goldcoin_voucher WHERE id IN ({ids})"
+
+# ── 参数化用例：DFT-006 券优先级顺序验证 ─────────────────────────────────────
+cases:
+  - case_id: "DFT-006-a"
+    scenario_name: "40+5组合默认选40知币"
+    coupon_combo: "40+5"
+    expected_selected: "40"
+  - case_id: "DFT-006-b"
+    scenario_name: "35+5组合默认选35知币"
+    coupon_combo: "35+5"
+    expected_selected: "35"
