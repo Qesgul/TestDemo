@@ -24,12 +24,12 @@ accounts:
 split_control:
   table: "user_group_common"
   redis_key: "znzmo:group:all"
-  group_name: "TODO_切量名（提测后提供）"
+  group_name: "downloadConfirmPopTest"
   radio:
-    实验组1: "TODO_RADIO_实验组1"
-    实验组2: "TODO_RADIO_实验组2"
-    对照组1: "TODO_RADIO_对照组1"
-    对照组2: "TODO_RADIO_对照组2"
+    实验组1: "99,-1,-1,-1"
+    实验组2: "-1,99,-1,-1"
+    对照组1: "-1,-1,99,-1"
+    对照组2: "-1,-1,-1,99"
   # 切量埋点表（TRACK 模块查询用，提测后回填表名与字段）
   record_table:
     name: "TODO_切量埋点表名"

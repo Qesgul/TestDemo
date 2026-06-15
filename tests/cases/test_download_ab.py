@@ -142,7 +142,7 @@ def _restore_split_group(mysql_db, redis_db):
                     f"SELECT radio FROM {table} WHERE group_name=%s", [group_name]
                 )
                 row = cur.fetchone()
-        original = str(row[0]) if row else None
+        original = str(row["radio"]) if row else None
     yield
     if group_name and original is not None:
         table = _split_table()
