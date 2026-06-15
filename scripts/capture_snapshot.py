@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from playwright.sync_api import sync_playwright
 
+from common.selector_finder.login_session import ensure_storage_state
 from common.selector_finder.models import ExtractedStep
 from common.selector_finder.scene_hooks import apply_hooks
 
@@ -51,6 +53,20 @@ def main() -> None:
         "--cookies", default=None,
         help="Path to cookies JSON file (same format as common/cookies_dev_*.json)",
     )
+    parser.add_argument(
+        "--storage-state", default=None, dest="storage_state",
+        help="Path to Playwright storage_state JSON (cookies + localStorage)；优先于 --cookies",
+    )
+    parser.add_argument(
+        "--login-user", default=os.environ.get("CAPTURE_LOGIN_USER"),
+        dest="login_user",
+        help="登录用户名（也可通过 CAPTURE_LOGIN_USER 环境变量传入）",
+    )
+    parser.add_argument(
+        "--login-pwd", default=os.environ.get("CAPTURE_LOGIN_PWD"),
+        dest="login_pwd",
+        help="登录密码（也可通过 CAPTURE_LOGIN_PWD 环境变量传入）",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.out)
@@ -64,15 +80,24 @@ def main() -> None:
         element_desc=args.focus,
     )
 
+    # 优先 storage_state（含 cookies + localStorage）；若提供了凭据则自动完成首次登录并缓存
+    state_path = args.storage_state or ensure_storage_state(
+        args.url, args.login_user, args.login_pwd
+    )
+
     with sync_playwright() as pw:
         browser = getattr(pw, args.browser).launch(headless=True)
-        ctx = browser.new_context(viewport={"width": 1280, "height": 800})
 
-        # Inject cookies if provided
-        if args.cookies:
+        ctx_kwargs: dict = {"viewport": {"width": 1280, "height": 800}}
+        if state_path:
+            ctx_kwargs["storage_state"] = state_path
+            _log.info("Using storage_state: %s", state_path)
+        ctx = browser.new_context(**ctx_kwargs)
+
+        # 旧式 cookies 注入（无 storage_state 时的兜底）
+        if args.cookies and not state_path:
             raw = json.loads(Path(args.cookies).read_text(encoding="utf-8"))
             cookie_list = raw if isinstance(raw, list) else raw.get("cookies", [])
-            # Filter to only valid Playwright cookie fields
             pw_fields = {"name", "value", "domain", "path", "expires", "httpOnly", "secure", "sameSite"}
             clean = [{k: v for k, v in c.items() if k in pw_fields} for c in cookie_list]
             ctx.add_cookies(clean)

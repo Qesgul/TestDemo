@@ -1,20 +1,20 @@
 ---
 name: session-recap
 description: >
-  会话复盘、改动汇总、临时文件清理 skill。
+  会话复盘、改动汇总 skill。
   触发词：总结改动、会话复盘、session recap、汇总今日改动、汇总改动、
-  生成复盘报告、清理临时文件、清理废弃脚本、clean artifacts、
-  这段时间的问题、改动总结。
+  生成复盘报告、这段时间的问题、改动总结。
 ---
 
-# Session Recap — 会话复盘 & 清理
+# Session Recap — 会话复盘
+
+> 清理交由 `clean-artifacts` skill / `cleanup` agent，本 skill 仅做会话复盘，不删任何文件。
 
 ## 触发词
 
 以下任意词触发本 skill：
 - "总结改动"、"会话复盘"、"session recap"
 - "汇总今日改动"、"汇总改动"、"生成复盘报告"
-- "清理临时文件"、"清理废弃脚本"、"clean artifacts"
 - "这段时间的问题"、"改动总结"
 
 ---
@@ -117,39 +117,6 @@ pytest --collect-only tests/cases/<改动的 test_*.py> -q
 
 ---
 
-## Step 5：临时文件扫描
-
-扫描以下类型的潜在废弃文件，**列出清单后等用户确认，绝不自动删除**：
-
-```python
-SCAN_PATTERNS = [
-    "scripts/debug_*.py",          # 调试脚本
-    "scripts/test_*.py",           # 临时测试脚本
-    ".planning/snapshot/**",        # 旧快照目录
-    "tests/data/snapshots/*.json",  # 旧 JSON 快照（已迁移到 YAML）
-    "**/*.tmp",                     # 临时文件
-    "**/*.bak",                     # 备份文件
-    "diagnostic_reports/**",        # 诊断报告（可选清理）
-]
-```
-
-输出格式：
-
-```
-【待确认删除文件清单】
-以下文件可能是临时/废弃文件，请确认是否删除：
-
-  [1] scripts/debug_tab_selectors.py  （调试脚本，最后修改: 2026-05-26）
-  [2] tests/data/snapshots/           （旧 JSON 快照目录，已迁移到 YAML）
-  ...
-
-输入要删除的序号（如 1,3），输入 all 全删，输入 skip 跳过清理：
-```
-
-等用户确认后执行 `rm` / `git rm`。
-
----
-
 ## Step 6：汇总输出
 
 ```
@@ -169,18 +136,14 @@ SCAN_PATTERNS = [
   - 语法通过：N/N
   - 用例可收集：N/N
   - 快照数据异常：N 个（见上方详情）
-
-临时文件清理：
-  - 已删除：N 个
-  - 跳过：N 个
 ```
 
 ---
 
 ## 注意事项
 
-- **不修改任何业务代码**，只做检查、报告和清理确认
-- **不自动删除任何文件**，删除操作必须等用户逐项确认
+- **不修改任何业务代码**，只做检查与报告
+- **本 skill 不删除任何文件**，清理需求请转 `clean-artifacts` skill / `cleanup` agent
 - 若 git 历史或文件状态无法读取，提示用户手动提供范围
 - 报告中的"未第一时间发现"是为了改进流程，不是指责，表述保持客观
 
@@ -195,6 +158,5 @@ Claude：
   Step 2 → 列出改动文件
   Step 3 → 输出问题报告
   Step 4 → 运行语法校验 + 快照校验
-  Step 5 → 扫描临时文件，列出清单等确认
   Step 6 → 汇总输出
 ```

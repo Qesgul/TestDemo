@@ -75,3 +75,6 @@ utils/埋点测试优化版本1.py
 
 # Claude Code 本地权限配置（个人本地设置，不入库）
 .claude/settings.local.json
+
+# Playwright storage_state 登录态缓存（含 cookies，禁止入库）
+.auth/

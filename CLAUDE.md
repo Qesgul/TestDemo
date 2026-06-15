@@ -3,10 +3,21 @@
 本文件约束 Claude 在该项目中的**交互行为**，优先级高于默认系统行为。
 所有测试代码约定以 `.cursor/rules/*.mdc` 为权威；本文件只规范 Claude 的操作方式。
 
+本文件分为三大部分：
+1. **常驻行为规则**——所有 agent（含主 agent 与各子 agent）继承的红线（称呼 / 语言 / 规则 1/5/6/8/9 / 浏览器约定 / 检查清单 / 文件归属）。
+2. **角色路由表**（见第二部分）——触发词 → 角色 agent 的**唯一派发入口**（取代旧「Skill 触发映射」）。
+3. **主 agent 编排规则**——编排监督、派发规则、结果校验。
+
+---
+
+# 第一部分：常驻行为规则（所有 agent 继承）
+
 **语言约定**：所有回复默认使用**中文**，除非用户明确要求其他语言。
 此约定同样适用于 **plan 模式的计划输出、写入的 plan file 内容、以及子 agent 的可见汇报**——一律中文。
 
 **称呼约定（最高优先级）**：每次回复的开头必须先称呼用户为 "sir"，任何回复均不得遗漏（含追问、报错、改动方案、确认等所有场景）。若遗漏即视为失焦，需重新校准本约定。
+
+> 防御性内嵌：以下规则 1/5/6/8/9 与浏览器约定为所有 agent 的必守红线。子 agent 不假设自动继承 CLAUDE.md，各 agent prompt 内已内嵌相关红线子集；本文件为权威全文。
 
 ---
 
@@ -55,6 +66,21 @@
 - 任何 git 操作（提交仍受规则 6 约束，需用户主动指令）
 
 > 例外仅为减少测试文档生成中的反复确认；超出上述三项限定的任何改动，一律回到本规则默认流程。
+
+### 多 agent 下的确认模型：方案级一次确认 + 三类例外二次确认（2026-06-15）
+
+在多 agent 编排下，规则 5 的「每步写盘确认」升级为「**方案级一次确认 + 三类例外二次确认**」，在减少单任务内反复确认的同时守住整体安全：
+
+- **方案级一次确认**：`auto-planner` 出整体自动化实现方案 → 主 agent 评审复核可行性 → **用户一次确认** → 流水线低打扰执行。
+- **免二次确认**：方案内**已明确列出**的生产代码改动，按方案执行无需再次确认。
+- **仍需二次确认（三类例外）**：
+  1. 执行**偏离方案**（出现方案未覆盖 / 与方案不符的改动）；
+  2. **删除 / git** 操作（git 永远另需用户主动指令，见规则 6）；
+  3. 冒出**方案外的新生产代码改动**。
+- **规则 5 测试文档例外保留**：`test-design` / `auto-case-extract` 的测试设计文档产出仍免确认。
+- **规则 1 不放宽**：数据采集仍须先打印结果、等用户确认后再写 YAML（见规则 1）。
+
+> 该模型不削弱规则 5 的安全边界——任何方案外、删除、git 动作仍是硬确认点；它只把「方案内已批准的改动」从逐步确认降为一次确认。
 
 ---
 
@@ -108,6 +134,11 @@
 - 在完成文件改动后"顺手"提交
 - 以"每个任务一个 commit"为由在未获许可时提交
 
+### 多 agent 下的落地
+
+- **任何子 agent 都不授予 git 写工具**；commit / push / rebase / merge / tag 永远只在主 agent 执行，且需用户主动指令。
+- 子 agent 在流水线中至多「暂存待提交」（`git add`），实际 commit 一律等用户主动指令。
+
 ---
 
 ## 缺陷反馈与阻断机制（规则 8）
@@ -150,6 +181,12 @@
 - **不掩盖**：不能因「要让用例通过」就用 `assert_true(True)` / 注释绕过缺陷
 - **不伪造**：事件无法触发时，区分「研发缺陷」与「需登录 / 接口桩」（pending），如实标注（与埋点指南红线一致）
 - **不擅自跳过**：严重缺陷先反馈、等指示，不默默 skip 继续往下生成
+
+### 多 agent 下的落地
+
+- `selector-debug` 等只读诊断自由跑，发现疑似缺陷按上述固定格式产出，由主 agent 转达用户。
+- 红线沿用：不掩盖、不伪造断言、严重缺陷先阻断再等指示。
+- **与踩坑库边界**：踩坑库（`troubleshooter` / `.claude/playbooks/`）只沉淀「已解决的自动化调试解法」；**研发缺陷**仍走规则 8 反馈给用户，**不进踩坑库**。
 
 ---
 
@@ -199,6 +236,18 @@
 - **跨子域不假设共享 session**：`www.znzmo.com` 的 cookie/CAS session 不一定通过
   `su.znzmo.com` 等子站鉴权；目标操作所在子域可能独立鉴权，优先用 UI 登录验证而非套用 cookie。
 
+### 登录态复用约定（2026-06-15）
+
+**三条红线，防止反复登录**：
+
+1. **抓取 / 调试前优先复用 storage_state**：提供了账号凭据时，调用 `common/selector_finder/login_session.py` 的 `ensure_storage_state(url, user, pwd)` 获取缓存的登录态 JSON 路径，再 `browser.new_context(storage_state=path)` 启动——**不每次重新走 UI 登录流程**。`capture_snapshot.py` 和 `find_selectors.py` 已内置 `--login-user/--login-pwd` 参数（也可通过 `CAPTURE_LOGIN_USER/PWD` 环境变量传入）。
+
+2. **非校验目标的弹窗一律 reload 绕过**：遇到 `.ant-modal-wrap / .ant-modal-mask` 阻塞交互时，调用 `reload_dismiss_popups(page)` 循环 reload（最多 3 次）直到弹窗消失——**禁止花时间猎取关闭按钮 selector**。例外：用例明确要校验某弹窗的，正常走断言，不 reload。
+
+3. **跨 TLD（.cn vs .com）不假设共享 session**：`ai.znzmo.cn` 等与 `znzmo.com` 不同 TLD 的站点，`common/api/auth.py` 的 CAS 登录完全无效；须在目标 TLD 各自做 UI 登录，再用 storage_state 复用。
+
+> 已验证解法与 ai.znzmo.cn 登录选择器详见 `.claude/playbooks/login-session.md`「跨 TLD 站点」条目。
+
 ### 调试经验教训（2026-06-09）
 
 - **selector 唯一性必须用官方工具验证**：用 `scripts/verify_locator.py --specs-json`
@@ -208,6 +257,8 @@
   属标准 CSS 伪类，非 Playwright `.first()`，符合 ai-selector 规则 6。
 - **Windows 终端中文输出走文件**：含中文 / `¥` 的内容不在终端 `print`（GBK 报错），
   改为写 UTF-8 文件再用 Read 读出。
+
+> 上述调试经验的可复用解法已沉淀进踩坑库 `.claude/playbooks/`，由 `troubleshooter` 维护、各浏览器类 agent（`selector-debug` / `gio-tracking`）引用。
 
 ---
 
@@ -234,35 +285,91 @@
 | 数据文件格式 | `.cursor/rules/test-data-conventions.mdc` |
 | 会话复盘 / 清理机制 | `.claude/skills/session-recap/SKILL.md` |
 | GIO 埋点用例生成规范 | `docs/gio埋点自动化生成指南.md` |
+| 角色 agent 定义 | `.claude/agents/*.md` |
+| 踩坑库（项目特有痛点解法） | `.claude/playbooks/`（`troubleshooter` 维护） |
 
 ---
 
-## Skill 触发映射（优先级最高）
+# 第二部分：Agent 路由表（唯一派发入口）
 
-识别到以下任意触发词，**必须在执行任何操作前**先调用对应 `Skill`：
+**路由表为唯一派发入口**：识别到下表任一触发词，主 agent **派发到对应角色 agent**，不再走旧的「Skill 触发映射」直接调 skill（旧表已删除，避免 skill / agent 双触发冲突）。具体「怎么做」的流程知识由各 agent 内部按需复用对应 skill。
 
-| 触发词（任意匹配一个即触发） | 必须先调用 |
+| 触发词（任意匹配一个即触发） | 派发 agent |
 |---|---|
-| 总结改动 / 会话复盘 / session recap / 汇总今日改动 / 汇总改动 / 生成复盘报告 / 清理临时文件 / 清理废弃脚本 / clean artifacts / 这段时间的问题 / 改动总结 | `Skill("session-recap")` |
-| 清理无用文件 / 清理项目 / clean-artifacts | `Skill("clean-artifacts")` |
-| 把这份用例转成自动化 / 生成用例代码 / 根据 markdown 生成 / convert test cases / 转成自动化代码 | `Skill("case-to-code")` |
-| 用AI获取selector / 帮我找元素的selector / fill TODO_SELECTOR / 自动生成定位器 / ai-selector / selector_finder / 生成元素定位 | `Skill("ai-selector")` |
+| 生成测试用例 / 分析需求 / 写测试用例 / 测试设计 / 用例设计 / 评审用例 / 检查用例 / 生成测试报告 | `test-design` |
+| 提取自动化测试用例 / 从用例提取自动化 / 筛选可自动化用例 / 把测试用例转成自动化用例 | `auto-case-extract` |
+| 出自动化方案 / 自动化怎么实现 / 实现方案 / 自动化可行性评估 | `auto-planner` |
+| 把这份用例转成自动化 / 根据 markdown 生成代码 / convert test cases / 生成 5 件套 / fill 5件套 | `code-engineer` |
+| 用AI获取selector / 帮我找元素的selector / fill TODO_SELECTOR / 自动生成定位器 / selector_finder / 调试失败 / 定位问题 / 验证 selector 唯一性 | `selector-debug` |
+| 生成埋点用例 / 编写埋点用例 / 埋点自动化 / gio 埋点 / growingio / render_* 事件 / tracking 用例 / 上报校验 / 曝光埋点 / 点击埋点 | `gio-tracking` |
+| 会话复盘 / 总结改动 / 汇总今日改动 / 汇总改动 / 生成复盘报告 / 这段时间的问题 / 改动总结 | `session-recap` |
+| 清理无用文件 / 清理临时文件 / 清理废弃脚本 / 清理项目 / clean artifacts / clean-artifacts | `cleanup` |
+| 这个坑怎么解 / 记下这个解法 / 踩坑库 / 已知解法 / playbook（多为主 agent 内部调用） | `troubleshooter` |
 
-规则：**识别到触发词 → 立即 `Skill(name)` → 再做其他任何事。即使只是想先问问题或采集信息也不例外。**
+### 路由说明
+
+- **埋点强制先读指南由 `gio-tracking` 承接**：原「埋点用例生成：强制参考指南」要求「动手前先 Read `docs/gio埋点自动化生成指南.md`」的意图，现由 `gio-tracking` agent 承接——该 agent prompt 内**强制开头先 Read 该指南**，并按其「5 步标准流程 + 5 条避坑清单」执行，红线（先探针后下结论 `decode_gio_body`、复用 `gio_tracking` fixture + `assert_event`、不伪造断言）一并内嵌。
+- **`troubleshooter` 为支撑层、非流水线阶段**：不被其他子 agent 互相调用；平时由各 agent 被动引用对应问题域条目，反复卡住时由**主 agent**主动调用 consult 注入解法 / 解决后 capture 回写。
+- **唯一入口声明**：路由表是触发词派发的唯一入口。若触发词同时疑似命中旧 skill 习惯，一律以路由表为准派给对应 agent，避免双触发。
 
 ---
 
-## 埋点用例生成：强制参考指南
+# 第三部分：主 agent 编排规则
 
-识别到以下任意触发词，**在动手生成/修改任何埋点相关代码之前，必须先 `Read` `docs/gio埋点自动化生成指南.md`**，并严格按其「5 步标准流程」+「5 条避坑清单」执行：
+主 agent 不仅做路由，还须保证整条流水线**真的能跑完**、产物**真的合契约**。下列编排监督 / 派发 / 结果校验三组规则均由主 agent 统一执行；子 agent 不得绕过确认闸门。
 
-| 触发词（任意匹配一个即触发） |
-|---|
-| 生成埋点用例 / 编写埋点用例 / 埋点自动化 / gio 埋点 / growingio / render_* 事件 / tracking 用例 / 上报校验 / 曝光埋点 / 点击埋点 |
+## 编排监督
 
-**核心红线（指南详述，此处强调最易踩的 3 条）**：
-1. **先探针后下结论**：判断"是否走 gio / 某事件是否存在"前，必须用 `decode_gio_body` 解码实况请求，禁止凭 body 明文搜索或 URL 域名臆断。
-2. **复用现成框架**：直接用 `gio_tracking` fixture + `assert_event`，禁止自己挂 route 重造轮子。
-3. **不伪造断言**：事件无法触发时区分"需登录/接口桩"（pending）与"页面未埋 handler"（研发缺陷），绝不编造假断言。
+主 agent 须监督每条流水线跑到完成：
 
-规则：**识别到触发词 → 先 `Read` 指南 → 再按指南动手。即使任务看起来简单明确也不例外。**
+- **超时 / 卡死检测**：某子 agent 长时间无产物或无进展 → 主 agent 中止该子任务并记录现象。
+- **循环检测**：同一子任务重复失败 ≥2–3 次且产物无改善 → 判定循环，停止盲目重试。
+- **查踩坑库优先**：反复失败时**先调 `troubleshooter` 查 / 注入该问题域已知解法**（consult 主动通道）再让 worker 重试，避免从零摸索。
+- **重试与换方案**：失败先按已知解法重试 1 次；仍失败则换方法 / 换 agent / 调整方案（如 selector 抓不到 → 改 CSS 结构定位）。**换方案仍确实抓不到** → 标 `pending/skip` 登记放行（按下方结果校验 §9.1），不阻塞整批，但显式上报。
+- **失败如实上报**：重试 + 换方案均无效 → 停止该分支，按缺陷反馈 / 阻断格式（规则 8）如实汇报，**不伪造、不静默 skip**，等用户指示。
+- **解决后回写**：新问题最终解决 → 触发 `troubleshooter` capture 回写踩坑库并对已有条目去重。
+- **监督边界**：主 agent 只管编排、闸门、监督，不替子 agent 做专业判断。
+
+## 派发规则
+
+### 无命中兜底
+触发词未命中任何 agent → 主 agent **不臆测派发**：先一句话澄清意图并给出最接近的 1–2 个候选 agent；仍无法判定则主 agent 自行处理（**仅限只读分析类**），**绝不默认派给任何写权限 agent**。
+
+### 跨任务编排
+单条请求跨多 agent（如「根据需求生成用例并转成代码」）→ 主 agent 拆解为有序子任务，按流水线编排，逐阶段把产物作为下阶段输入；跨 agent 上下文由主 agent 维护并以**契约数据**传递（子 agent 独立上下文，不共享记忆）。
+
+### 串行 / 并行 / 优先级
+- **必须串行（有数据依赖）**：① `test-design` → ② `auto-case-extract` → ③ `auto-planner` →（**方案评审 gate**）→ ④ `code-engineer` → ⑤ `selector-debug`。
+- **方案评审 gate（强约束）**：**有可自动化用例但尚无代码时，必须先过 ③ `auto-planner` + 主 agent 复核可行性 + 用户一次确认，方案通过后才进 ④ 转码**，不允许跳过方案直接生成代码。
+- **可并行**：同批多个独立用例的 selector 抓取；⑥ `gio-tracking` 与 ⑤ `selector-debug` 在不同用例上；⑦ `session-recap` / ⑧ `cleanup` 运维类与主流程无依赖、可异步。
+- **禁止并行**：写同一文件的 agent（④ 与 ⑤ 同时写时须串行避免冲突）；任何经确认 gate 的写操作串行过主 agent。
+- **⑨ `troubleshooter`** 随时可被主 agent 旁路调用（consult / capture），不占流水线串行位。
+- **优先级**：
+  - **阻断最高**：⑤ 发现严重缺陷（规则 8 阻断）> 继续生成 → 立即停、上报。
+  - **闸门优先于执行**：确认 / 评审 gate 未过不得推进。
+  - **运维最低**：⑧ `cleanup` 绝不与生成主流程争抢、绝不在生成中途删文件。
+
+## 结果校验
+
+每个子 agent 返回后，主 agent 按**产物契约**校验：
+
+- **存在性**：应产出的文件 / 数据是否存在。
+- **格式**：是否符合约定（5 件套结构、elements yaml `count==1`、用例 12 列模板）。
+- **完整性**：有无占位 / 空断言（`assert_true(True)` 类）/ 残留 `TODO_SELECTOR`（分级处理，见 §9.1）。
+- **一致性**：与上一阶段契约是否对得上（用例编号、selector key 映射）。
+
+### §9.1 `TODO_SELECTOR` 分级处置（不一刀切）
+
+区分「疏漏」与「确实抓不到」：
+
+- **疏漏型 → 硬拦截、退回修正**：`selector-debug` 未尝试、或本可解决却遗留的 `TODO_SELECTOR`；空断言；结构 / 格式不符。**不进下一阶段**，退回该子 agent 修正或按编排监督上报。
+- **确属抓不到型 → 登记放行、不阻塞整批**：已用多种方法（含 CSS 结构兜底）确实定位不到的元素，按以下处理后**放行让其余用例继续流转**：
+  1. 该用例对应步骤标 `pending/skip` 并写明原因（规则 8 三分类：研发缺陷 / 需登录·接口桩 / 规则 9 非 web 不纳入）；
+  2. 登记进方案报告或 `CONVERSION-REPORT` 的「待处理·转人工」清单；
+  3. 主 agent **显式上报**用户，不静默放过。
+
+> 红线：不为掩盖而伪造断言（规则 8）；严格区分「确实抓不到」与「没认真抓」。
+
+### §9.2 方案评审复核
+
+③ `auto-planner` 的方案同样走结果校验：复核**可行性**——selector 是否可定位、依赖是否纯 web 端（规则 9）、测试数据是否齐备。未通过 → 退回 ③ 重做 / 上报；通过 → 用户一次确认后进 ④。

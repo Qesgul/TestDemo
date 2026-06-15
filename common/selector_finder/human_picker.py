@@ -121,6 +121,7 @@ def pick_missing(
     url: str,
     missing_steps: list[ExtractedStep],
     browser_type: str = "chromium",
+    storage_state: Optional[str] = None,
 ) -> list[ResolvedElement]:
     """
     启动有头浏览器，让用户逐一点选 AI 未能解析的元素。
@@ -138,7 +139,10 @@ def pick_missing(
 
     with sync_playwright() as pw:
         browser = getattr(pw, browser_type).launch(headless=False)
-        context = browser.new_context()
+        ctx_kwargs: dict = {}
+        if storage_state:
+            ctx_kwargs["storage_state"] = storage_state
+        context = browser.new_context(**ctx_kwargs)
         page = context.new_page()
 
         # 注入 inspector.js（每次导航前执行，定义 window.__selectorFinder）

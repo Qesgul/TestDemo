@@ -17,12 +17,14 @@ selector_finder CLI 入口。
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
 # 保证项目根目录在 sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from common.selector_finder.login_session import ensure_storage_state
 from common.selector_finder.pipeline import run_pipeline
 
 logging.basicConfig(
@@ -54,7 +56,22 @@ def main() -> None:
     )
     # 兼容旧参数
     parser.add_argument("--retries", type=int, default=3, help="保留参数（当前未使用）")
+    parser.add_argument(
+        "--storage-state", default=None, dest="storage_state",
+        help="Playwright storage_state JSON 路径；提供后复用登录态，无需重复登录",
+    )
+    parser.add_argument(
+        "--login-user", default=os.environ.get("CAPTURE_LOGIN_USER"), dest="login_user",
+        help="登录用户名（也可通过 CAPTURE_LOGIN_USER 环境变量传入）",
+    )
+    parser.add_argument(
+        "--login-pwd", default=os.environ.get("CAPTURE_LOGIN_PWD"), dest="login_pwd",
+        help="登录密码（也可通过 CAPTURE_LOGIN_PWD 环境变量传入）",
+    )
     args = parser.parse_args()
+
+    # 优先用显式 --storage-state；否则按凭据自动完成首次登录并缓存
+    state_path = args.storage_state or ensure_storage_state(args.url, args.login_user, args.login_pwd)
 
     report = run_pipeline(
         url=args.url,
@@ -64,6 +81,7 @@ def main() -> None:
         enable_human_picker=not args.no_human,
         browser_type=args.browser,
         elements_yaml_dir=args.elements_dir,
+        storage_state=state_path,
         max_retries=args.retries,
     )
 

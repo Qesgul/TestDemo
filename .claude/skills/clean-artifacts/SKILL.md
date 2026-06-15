@@ -34,6 +34,8 @@ pages/                        ← Page Object 全部文件
 tests/                        ← 测试用例全部文件
 data_types/                   ← 数据类型定义
 .claude/skills/               ← Claude skill 定义
+.claude/agents/               ← agent 定义
+.claude/playbooks/            ← 踩坑库知识
 docs/                         ← 设计文档 / 实施计划
 ```
 
@@ -144,3 +146,4 @@ pytest --collect-only -q 2>&1 | tail -5
 - 不删除 git 已追踪的文件（除非用户明确要求）
 - 不清空 `utils/`（含用户手工维护的工具脚本）
 - 不修改或删除 `.claude/` 内的 skill 定义
+- 不删除 `.claude/agents/`、`.claude/playbooks/`（agent 定义与踩坑库）

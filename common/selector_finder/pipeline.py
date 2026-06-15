@@ -114,6 +114,7 @@ def run_pipeline(
     enable_human_picker: bool = True,
     browser_type: str = "chromium",
     elements_yaml_dir: str = "pages/elements",
+    storage_state: Optional[str] = None,
     # 兼容旧参数
     max_retries: int = 3,
 ) -> SelectorReport:
@@ -128,6 +129,7 @@ def run_pipeline(
         enable_human_picker: 是否启用人工点选兜底（默认 True）。
         browser_type: Playwright 浏览器类型。
         elements_yaml_dir: 现有元素 yaml 目录（用于复用检查）。
+        storage_state: Playwright storage_state JSON 路径（含 cookies + localStorage），提供后复用登录态。
         max_retries: 兼容旧接口，当前未使用。
 
     Returns:
@@ -152,7 +154,11 @@ def run_pipeline(
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             browser = getattr(pw, browser_type).launch(headless=True)
-            page = browser.new_context().new_page()
+            ctx_kwargs: dict = {}
+            if storage_state:
+                ctx_kwargs["storage_state"] = storage_state
+                _logger.info("run_pipeline: 使用 storage_state 登录态: %s", storage_state)
+            page = browser.new_context(**ctx_kwargs).new_page()
             page.set_default_timeout(15_000)
             page.goto(url, wait_until="domcontentloaded")
             page.wait_for_timeout(2000)
@@ -178,7 +184,7 @@ def run_pipeline(
     # Step 3: 人工点选（针对复用未命中的步骤）
     if reuse_missing and enable_human_picker:
         _logger.info("启动人工点选，待处理 %d 个元素...", len(reuse_missing))
-        human_results = human_picker.pick_missing(url, reuse_missing, browser_type)
+        human_results = human_picker.pick_missing(url, reuse_missing, browser_type, storage_state=storage_state)
         picked_indices = {r.step_index for r in human_results}
         report.missing = [s for s in reuse_missing if s.step_index not in picked_indices]
         report.resolved.extend(human_results)
