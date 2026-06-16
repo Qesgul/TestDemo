@@ -47,12 +47,21 @@ def reload_dismiss_popups(page, max_reloads: int = 3) -> None:
 # ── 登录态检测 ─────────────────────────────────────────────────────────────────
 
 def is_logged_in(page) -> bool:
-    """登录态判定：#loginsuccessnews（「登录」入口链接）不可见即已登录。"""
+    """登录态判定：同时兼容 www/ai 站（#loginsuccessnews）和 su/sgt 站（LoginModal）。
+
+    - www.znzmo.com / ai.znzmo.cn：「登录」入口 #loginsuccessnews 不可见即已登录
+    - su.znzmo.com / sgt.znzmo.com 等子站：无 #loginsuccessnews，
+      改为检测 LoginModal__loginModalContainer__ 是否可见（可见=未登录）
+    """
     try:
         entry = page.locator("#loginsuccessnews")
-        if entry.count() == 0:
-            return True
-        return not entry.first.is_visible(timeout=1500)
+        if entry.count() > 0:
+            return not entry.first.is_visible(timeout=1500)
+        # 无 #loginsuccessnews 时（su/sgt 子站），改检测登录弹窗容器
+        login_modal = page.locator('[class*="LoginModal__loginModalContainer__"]')
+        if login_modal.count() > 0:
+            return not login_modal.first.is_visible(timeout=1500)
+        return True
     except Exception:
         return True
 

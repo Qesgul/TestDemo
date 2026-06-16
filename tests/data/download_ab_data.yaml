@@ -6,13 +6,14 @@
 #   # VIP 类用例
 #   pytest tests/cases/test_download_ab.py --login-username=17768100279 --login-password=Qyff2011
 #
-# 导航入口 URL 配在 DownloadAbPage.DEFAULT_URL（su.znzmo.com 36知币 付费素材详情页），此处不重复。
+# 导航入口 URL 配在 DownloadAbPage.DEFAULT_URL（3d.znzmo.com 1194029877 付费素材详情页），此处不重复。
 
 # ── 登录账号 ──────────────────────────────────────────────────────────────────
 accounts:
   vip:
     username: "17768100279"      # 账号池已加 vip 标签；VIP 类用例使用
     password: "Qyff2011"
+    account_id: "2638170324148"  # VIP 账号 account_id（券造数 / 切量记录查询使用）
   nonvip:
     username: "13140725123"      # nonvip 类用例使用
     password: "Qyff2011"
@@ -52,16 +53,16 @@ expected_text:
 price_scenarios:
   - case_id: "EXP-003-a"
     scenario_name: "无活动立减素材"
-    material_url: "TODO_素材URL_无活动"
+    material_url: "https://3d.znzmo.com/3dmoxing/1194029877.html"  # ⚠️3d子域，需确认登录态共享
   - case_id: "EXP-003-b"
     scenario_name: "含活动立减素材"
-    material_url: "TODO_素材URL_含活动"
+    material_url: "https://3d.znzmo.com/3dmoxing/1205324117.html"  # 原su素材已购买；暂用3d素材替代，待确认是否有活动立减
   - case_id: "EXP-003-c"
     scenario_name: "含抵扣券素材"
-    material_url: "TODO_素材URL_含券"
+    material_url: "https://3d.znzmo.com/3dmoxing/1205324117.html"  # 同b，券通过DB造数注入；3d素材替代占位
   - case_id: "EXP-003-d"
     scenario_name: "价格含小数素材"
-    material_url: "TODO_素材URL_含小数"
+    material_url: "https://3d.znzmo.com/3dmoxing/1205324117.html"  # ⚠️3d子域，需确认登录态共享
 
 # ── EXP 弹窗形态参数化（EXP-017~020；映射 data_types.ExpModalForm）────────────
 cases:

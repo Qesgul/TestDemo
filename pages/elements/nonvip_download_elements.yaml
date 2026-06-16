@@ -10,7 +10,7 @@
 #   本文件不重复声明（避免 update() 被空值覆盖）。
 
 # ── 弹窗容器与基础操作（已确认 ✓）────────────────────────────────────────────
-download_dialog: '[role="dialog"]'
+download_dialog: '[role="dialog"]:has([class^="DownloadConfirmModal__"])'
 # 关闭按钮（弹窗左上角 svg 图标）
 dialog_close: '[class^="DownloadConfirmModal__btnClose__"]'
 # 确认下载按钮（"立即下载"文字区域，在 btnContent 右侧）

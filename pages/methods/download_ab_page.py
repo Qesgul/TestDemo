@@ -46,8 +46,9 @@ def _ident(name: str) -> str:
 class DownloadAbPage(NonvipDownloadPage):
     """下载确认弹窗 AB 实验 - 基于 NonvipDownloadPage 扩展。"""
 
-    # ── 唯一 URL 配置点：复用 su.znzmo.com 36知币 付费素材详情页 ─────────────────
-    DEFAULT_URL = "https://su.znzmo.com/sumoxing/1200607583.html?collDownType=1"
+    # ── 唯一 URL / 素材 ID 配置点 ─────────────────────────────────────────────────
+    DEFAULT_URL = "https://3d.znzmo.com/3dmoxing/1194029877.html"
+    COMMODITY_ID = 1194029877  # 与 DEFAULT_URL 保持同步
 
     def __init__(self, page: Page, auto_close_popups: bool = False) -> None:
         super().__init__(page=page, auto_close_popups=auto_close_popups)
@@ -56,6 +57,15 @@ class DownloadAbPage(NonvipDownloadPage):
         self._elements.update(ab_elements)
         # 切量配置（切量名 / radio / 埋点表 提测后在 data yaml 回填）
         self._split_cfg = (load_yaml(_AB_DATA_PATH) or {}).get("split_control", {})
+
+    def goto(self, url: Optional[str] = None, **kwargs) -> None:
+        """覆写 goto：domcontentloaded 导航，避免 ModelDetailPage 的 5000ms 等待。
+
+        使用 domcontentloaded 而非默认 load，防止 3d.znzmo.com 延迟出现的
+        LoginModal（~2s 后出现）拦截下载按钮点击。
+        """
+        self.page.goto(url or self.DEFAULT_URL, wait_until="domcontentloaded")
+        self.wait.wait_for_timeout(800)
 
     # ══════════════════════════════════════════════════════════════════════════
     # 切量控制（全局配置：UPDATE user_group_common + 清 Redis）

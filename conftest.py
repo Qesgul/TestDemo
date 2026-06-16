@@ -31,100 +31,6 @@ logger = logging.getLogger(__name__)
 # 仅业务用例使用；测试登录功能本身的用例继续走 page fixture（原始未登录态）。
 
 
-def _ensure_su_login(page, username: str, password: str) -> None:
-    """确保 su.znzmo.com 已建立登录态。
-
-    CAS 登录仅在 www.znzmo.com 建立 session；su.znzmo.com 独立鉴权，
-    需额外做一次 UI 账号密码登录。
-
-    使用 collDownType=1 URL 可靠触发登录弹窗（经 diag_modal.py 诊断确认）。
-    登录后主动关闭因 collDownType=1 而自动弹出的下载确认弹窗，避免干扰测试。
-
-    弹窗判断逻辑：
-    - 含「手机」tab → 登录弹窗（未登录）→ 执行账号密码登录
-    - 不含「手机」tab → 下载确认弹窗（已登录）→ 关闭并返回
-    """
-    SU_URL = "https://su.znzmo.com/sumoxing/1200607583.html?collDownType=1"
-    try:
-        page.goto(SU_URL, wait_until="domcontentloaded", timeout=20_000)
-        page.wait_for_timeout(2000)
-
-        # 等待弹窗出现（未登录→登录弹窗；已登录→下载确认弹窗），最多等 5s
-        dialog_loc = page.locator('[role="dialog"]')
-        try:
-            dialog_loc.wait_for(state="visible", timeout=5000)
-        except Exception:
-            logger.info("su.znzmo.com 页面加载后无弹窗，跳过 su 登录处理")
-            return
-
-        # 判断弹窗类型：登录弹窗含「手机」tab，下载确认弹窗不含
-        phone_tab = page.locator('text=手机')
-        is_login_modal = False
-        try:
-            phone_tab.first.wait_for(state="visible", timeout=2000)
-            is_login_modal = True
-        except Exception:
-            pass
-
-        if not is_login_modal:
-            # 下载确认弹窗出现 → 用户已在 su.znzmo.com 登录，关闭弹窗并返回
-            logger.info("su.znzmo.com 已有登录态（下载确认弹窗已出现），关闭弹窗")
-            try:
-                close_btn = page.locator('[class^="DownloadConfirmModal__btnClose__"]')
-                close_btn.first.click(timeout=3000)
-                page.wait_for_timeout(500)
-            except Exception:
-                try:
-                    page.keyboard.press("Escape")
-                    page.wait_for_timeout(500)
-                except Exception:
-                    pass
-            return
-
-        logger.info("su.znzmo.com 检测到登录弹窗，执行 UI 账号密码登录（用户：%s）", username)
-
-        # 1. 点「手机」tab
-        phone_tab.first.click()
-        page.wait_for_timeout(500)
-
-        # 2. 点「账号密码登录」
-        page.locator('text=账号密码登录').first.click()
-        page.wait_for_timeout(500)
-
-        # 3. 填手机号
-        page.locator('input[placeholder="请输入手机号"]').first.fill(username)
-        page.wait_for_timeout(300)
-
-        # 4. 填密码
-        page.locator('input[placeholder="请输入密码"]').first.fill(password)
-        page.wait_for_timeout(300)
-
-        # 5. 点提交
-        page.locator('[class^="Accountpassword__login-btn__"]').first.click()
-
-        # 6. 等登录弹窗消失（以「手机」tab 消失为信号，避免等到后续下载确认弹窗）
-        try:
-            phone_tab.first.wait_for(state="hidden", timeout=15_000)
-            logger.info("su.znzmo.com 登录弹窗已关闭")
-        except Exception as e:
-            logger.warning("su.znzmo.com 登录弹窗「手机」tab 未消失（登录可能未完成）: %s", e)
-
-        # 7. collDownType=1 登录后可能自动触发下载确认弹窗，主动关闭以免干扰后续测试
-        page.wait_for_timeout(1500)
-        try:
-            close_btn = page.locator('[class^="DownloadConfirmModal__btnClose__"]')
-            if close_btn.first.is_visible(timeout=2000):
-                close_btn.first.click()
-                page.wait_for_timeout(500)
-                logger.info("su.znzmo.com 登录后出现的下载确认弹窗已关闭")
-        except Exception:
-            pass
-
-        logger.info("su.znzmo.com UI 账号密码登录完成")
-
-    except Exception as e:
-        logger.warning("_ensure_su_login 执行失败，su.znzmo.com 登录态未建立: %s", e)
-
 
 @pytest.fixture(scope="session")
 def logged_in_context(browser, request, playwright):
@@ -178,22 +84,16 @@ def logged_in_context(browser, request, playwright):
     anchor_page.set_default_timeout(DEFAULT_TIMEOUT_MS)
     anchor_page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
     try:
-        from common.api.auth import cas_login
-        cas_login(playwright, context, anchor_page, username, password)
-        _ensure_su_login(anchor_page, username, password)
-        logger.info("session 级登录完成（CAS API），anchor_page 将作为测试主 tab 复用至 session 结束")
-    except Exception as api_err:
-        logger.warning("CAS API 登录失败（%s），回退至 UI 登录", api_err)
-        try:
-            from pages.methods.login_page import LoginPage
-            login = LoginPage(anchor_page)
-            login.goto_login_page()
-            login.login_with(username, password)
-            _ensure_su_login(anchor_page, username, password)
-            logger.info("session 级登录完成（UI 兜底），anchor_page 将作为测试主 tab 复用至 session 结束")
-        except Exception:
-            logger.exception("session 级登录失败（CAS API + UI 均失败）")
-            raise
+        from common.api.auth import ui_login_via_su, verify_session_alive
+        success = ui_login_via_su(anchor_page, username, password)
+        if not success:
+            raise RuntimeError("su.znzmo.com UI 登录失败（LoginModal 未关闭）")
+        if not verify_session_alive(context):
+            raise RuntimeError("UI 登录后服务端验活失败（session cookie 未正确建立）")
+        logger.info("session 级 UI 登录完成（su.znzmo.com），.znzmo.com cookie 已共享至全子域")
+    except Exception:
+        logger.exception("session 级登录失败")
+        raise
 
     # 把 anchor_page 暴露给 logged_in_page fixture 使用
     context._anchor_page = anchor_page  # type: ignore[attr-defined]
@@ -272,6 +172,14 @@ def logged_in_page(logged_in_context):
     finally:
         # anchor_page 作为窗口保活页永不关闭；仅关闭后续用例新建的独立 page
         if not reuse_anchor:
+            try:
+                # 显式关闭 DownloadConfirmModal，确保服务端"下载流程进行中"状态随 page 关闭前被清除
+                close_btn = page.locator('[class^="DownloadConfirmModal__btnClose__"]')
+                if close_btn.is_visible():
+                    close_btn.click()
+                    page.wait_for_timeout(200)
+            except Exception:
+                pass
             try:
                 page.close()
             except Exception:
