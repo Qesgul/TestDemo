@@ -20,3 +20,14 @@
   - 错误：`page.locator(".promo_package_option").first()`（违反规则6，且脆弱）。
 - **适用 agent**: selector-debug
 - **最近验证日期**: 2026-06-09
+
+## Playwright 立即型 API（is_visible/is_enabled/is_checked）不接 timeout 参数
+- **问题域**: PlaywrightAPI用法
+- **症状**: 给 `Locator.is_visible()` / `is_enabled()` / `is_checked()` 传 `timeout` 参数（如 `is_visible(timeout=500)`）不生效——这些是**立即返回型** API，不等待元素出现；部分版本对该参数**静默忽略、不报错**，极易漏看，误以为「带了等待」实则当下就判定。
+- **根因**: Playwright Python 把 `is_*` 系列设计为「即时状态查询」，不接受 timeout；真正带等待语义的是 `wait_for` / `expect`。
+- **解决方案**:
+  - 仅做**即时判断** → 用无参 `locator.is_visible()` / `is_enabled()` / `is_checked()`。
+  - 需要**等待**元素出现 / 可见再判断 → 用 `locator.wait_for(state="visible", timeout=...)` 或 `expect(locator).to_be_visible(timeout=...)`。
+- **出处**: `conftest.py` teardown 曾误写 `is_visible(timeout=500)`，本会话已改为 `is_visible()`。
+- **适用 agent**: selector-debug / gio-tracking / code-engineer
+- **最近验证日期**: 2026-06-16

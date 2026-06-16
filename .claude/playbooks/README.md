@@ -26,7 +26,7 @@
 
 **约定**：
 
-- 一个文件对应一个问题域大类（`selector.md` / `login-session.md` / `gio-tracking.md` / `windows-env.md` …），同类条目追加在同一文件。
+- 一个文件对应一个问题域大类（`selector.md` / `login-session.md` / `gio-tracking.md` / `dialog-fixture.md` / `windows-env.md` …），同类条目追加在同一文件。
 - 条目标题用二级标题 `## <问题标题>`，便于 grep 检索与目录化。
 - 新增条目必须填全 6 个字段；缺「最近验证日期」视为不合规。
 
@@ -46,6 +46,7 @@
 
 - `selector-debug` → 引用 `selector.md`、`login-session.md`（抓取 / 验证 / 失败定位前先查）。
 - `gio-tracking` → 引用 `gio-tracking.md`、`login-session.md`（埋点校验、登录态前先查）。
+- `code-engineer` → 引用 `dialog-fixture.md`、`selector.md`、`login-session.md`（写 fixture / teardown、转码、登录态前先查）。
 - 所有需在终端 print 中文的 agent → 引用 `windows-env.md`。
 
 引用方式：动手前 `Read` 对应文件，按命中条目的「解决方案」执行；无命中再走常规排查，解决后交 `troubleshooter` capture 回写。
