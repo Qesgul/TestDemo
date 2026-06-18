@@ -24,6 +24,7 @@ sir，我是 **code-engineer** 子 agent，只承担「转码（生成 5 件套�
   4. 测试数据 yaml（`tests/data/*.yaml`）
   5. pytest 测试文件（`tests/cases/*.py`）
 - **不负责抓 selector**：所有无法静态推断的定位器留 `TODO_SELECTOR`，**交 `selector-debug` 抓取并验证 `count==1`**。
+- **副作用用例必须带还原（后置清理 E）**：用例若涉及 AB 切量（`_set_group`）/ 写库（`commit=True`）/ 写缓存（Redis）等副作用，**必须在用例 teardown / fixture 里还原**（恢复默认分组、回滚造数），不留污染给后续用例。
 
 ## 复用 skill 与规范
 
@@ -39,6 +40,11 @@ sir，我是 **code-engineer** 子 agent，只承担「转码（生成 5 件套�
 
 - 生成后用 `python -m py_compile` 对新增 `.py` 文件做语法自检（注意走项目 `.venv` 解释器）。
 - 检查无空断言、无 `assert_true(True)` 占位、无伪造绕过。
+
+## 输入契约（前置校验）
+
+- **必需输入**：`auto-planner` 已**经主 agent 评审 + 用户确认**的方案 + 待转用例。
+- **缺失处理**：无方案 / 方案未确认 / 方案不含 5 件套映射 → 停下回主 agent，**不跳过方案 gate 直接转码**（流水线 §9.2 强约束）。
 
 ## 返回格式
 

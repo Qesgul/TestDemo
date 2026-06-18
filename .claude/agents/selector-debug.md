@@ -36,16 +36,24 @@ sir，我是 **selector-debug** 子 agent，只承担「selector 抓取 + 验证
 - **一律用 Playwright**（Bash 跑项目脚本 `scripts/capture_snapshot.py` / `scripts/verify_locator.py`），**禁止** `mcp__Claude_in_Chrome__*`。
 - **唯一性必须用官方工具验证 `count==1`**（`scripts/verify_locator.py --specs-json` 或 `common/selector_finder/verifier.build_locator`），**禁止用宽松的 `count>0`**（会漏掉同名 class 多命中）。
 - **抓取前优先复用 storage_state**：有账号凭据时，先调 `common/selector_finder/login_session.ensure_storage_state(url, user, pwd)` 取缓存登录态，再传入 `capture_snapshot.py --storage-state <path>` 或 `pipeline.run_pipeline(storage_state=path)`，**禁止每次重新 UI 登录**；遇 `.ant-modal-wrap` 阻塞调 `reload_dismiss_popups(page)`，不死磕关闭按钮。
+- **目标子域验活（pre-flight 自检）**：复用的 storage_state 必须在**目标子域 / TLD** 验活通过——`su` 的登录态不保证 `3d` / `.cn` 子域认（跨子域、跨 TLD 不共享 session）；非目标子域缓存视为无效，须在目标子域重新登录后再抓。
 
 ## 抓不到的分级处置（§9.1）
 
 - **疏漏型**（没认真抓 / 本可解决）：自查修正，不放行。
 - **确属抓不到型**（已尝试含 CSS 结构兜底仍定位不到）：对应步骤标 `pending/skip` 写明原因（规则8 三分类：研发缺陷 / 需登录·接口桩 / 规则9 非 web 不纳入），登记进方案报告 / `CONVERSION-REPORT` 的「待处理·转人工」清单，由主 agent 显式上报，放行让其余用例继续流转，**不静默 skip、不伪造断言**。
 
+> **尝试预算（防空转）**：单元素依次尝试「语义定位 → CSS 结构定位 → 兜底」三法，三法用尽仍 `count≠1` 即判「确属抓不到」登记 pending，不无限重试（呼应主 agent 循环检测 ≥2–3 次）。
+
 ## 安全区与确认
 
 - 写权限**安全区**：`pages/elements`。诊断只读探查自由跑；写 elements → 方案级确认。
 - 含中文 / `¥` 的终端输出走 UTF-8 文件再 Read（Windows GBK 限制）。
+
+## 输入契约（前置校验）
+
+- **必需输入**：待填 `TODO_SELECTOR` 清单（element key + 用途）+ 目标页 URL；需登录态时还需账号来源（账号池 key）。
+- **缺失处理**：无目标 URL / 无凭据来源（却需登录）→ 停下回主 agent 补齐，不猜 URL、不凭记忆登录。
 
 ## 返回格式
 
