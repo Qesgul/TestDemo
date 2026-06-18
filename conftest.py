@@ -494,3 +494,7 @@ def pytest_collection_modifyitems(config, items):
         if "flaky" in item.keywords:
             item.user_properties.append(("retry_enabled", True))
             item.user_properties.append(("max_reruns", config.getoption("--max-reruns")))
+        # test_download_ab.py 强制分配到同一 xdist worker（内部串行），
+        # 避免两个 worker 并发操作同一账号下载弹窗产生服务端状态干扰
+        if "test_download_ab" in item.fspath.basename:
+            item.add_marker(pytest.mark.xdist_group("download_ab"))
