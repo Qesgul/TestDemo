@@ -10,7 +10,8 @@ CLAUDE_MD = ROOT / "CLAUDE.md"
 
 EXPECTED_AGENTS = {
     "test-design", "auto-case-extract", "auto-planner", "code-engineer",
-    "selector-debug", "gio-tracking", "session-recap", "cleanup", "troubleshooter",
+    "selector-debug", "gio-tracking", "test-runner", "test-tooling",
+    "session-recap", "cleanup", "troubleshooter",
 }
 ALLOWED_TOOLS = {"Read", "Write", "Edit", "Bash", "Glob", "Grep", "Skill",
                  "WebSearch", "WebFetch", "Task"}
