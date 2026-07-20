@@ -1,0 +1,399 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\qss\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\TestDemo
+configfile: pytest.ini
+plugins: allure-pytest-2.16.0, anyio-4.13.0, base-url-2.1.0, playwright-0.7.2, rerunfailures-16.1, xdist-3.8.0
+collecting ... collected 1 item
+
+tests/cases/test_aidrawedit_pricing.py::TestAllDomains::test_all_domains[chromium] 
+======================================================================
+  领域: 室内设计
+======================================================================
+
+  室内设计: 顶部=['局部重绘', '换材质', '换颜色'], 更多=['换风格', '换天气', '擦除', '高清放大', '细节增强', '去水印', '扩图', '换视角', '修复人物']
+
+  [1/12] 非编辑-局部重绘... ✓ 0 条
+
+  [2/12] 非编辑-换材质... ✓ 0 条
+
+  [3/12] 非编辑-换颜色... ✓ 0 条
+
+  [4/12] 非编辑-换风格... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [5/12] 非编辑-换天气... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [6/12] 非编辑-擦除... ✓ 0 条
+
+  [7/12] 非编辑-高清放大... ✓ 1 条
+    固定                   2          API=2
+
+  [8/12] 非编辑-细节增强... ✓ 1 条
+    固定                   2          API=2
+
+  [9/12] 非编辑-去水印... ✓ 1 条
+    固定                   2          API=2
+
+  [10/12] 非编辑-扩图... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [11/12] 非编辑-换视角... ✓ 2 条
+    标准模式                 2          API=2
+    Nano Banana Pro      15         API=15
+
+  [12/12] 非编辑-修复人物... ✓ 1 条
+    固定                   2          API=2
+
+  [1/12] 编辑-局部重绘... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [2/12] 编辑-换材质... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [3/12] 编辑-换颜色... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [4/12] 编辑-换风格... 跳过(无法选中)
+
+  [5/12] 编辑-换天气... 跳过(无法选中)
+
+  [6/12] 编辑-擦除... ✓ 2 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+
+  [7/12] 编辑-高清放大... 跳过(无法选中)
+
+  [8/12] 编辑-细节增强... 跳过(无法选中)
+
+  [9/12] 编辑-去水印... ✓ 1 条
+    固定                   2          API=2
+
+  [10/12] 编辑-扩图... 跳过(无法选中)
+
+  [11/12] 编辑-换视角... 跳过(无法选中)
+
+  [12/12] 编辑-修复人物... 跳过(无法选中)
+
+  室内设计 完成: 非编辑=12条, 编辑=9条
+
+======================================================================
+  领域: 建筑设计
+======================================================================
+
+  建筑设计: 顶部=['智能修改', '换立面', '换配景', '换材质'], 更多=['换颜色', '换风格', '素材植入', '调氛围', '换天气', '调光影', '擦除', '高清增强', '去水印', '扩图', '换视角', '拆PSD', '修复人物']
+
+  [1/17] 非编辑-智能修改... ✓ 2 条
+    Nano Banana Pro      12         API=12
+    GPT Image 2          12         API=12
+
+  [2/17] 非编辑-换立面... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [3/17] 非编辑-换配景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [4/17] 非编辑-换材质... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [5/17] 非编辑-换颜色... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [6/17] 非编辑-换风格... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [7/17] 非编辑-素材植入... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [8/17] 非编辑-调氛围... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [9/17] 非编辑-换天气... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [10/17] 非编辑-调光影... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [11/17] 非编辑-擦除... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [12/17] 非编辑-高清增强... ✓ 1 条
+    固定                   2          API=2
+
+  [13/17] 非编辑-去水印... ✓ 2 条
+    标准模式                 2          API=2
+    GPT Image 2          15         API=15
+
+  [14/17] 非编辑-扩图... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [15/17] 非编辑-换视角... ✓ 3 条
+    标准模式                 2          API=2
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [16/17] 非编辑-拆PSD... ✓ 1 条
+    固定                   50         API=50
+
+  [17/17] 非编辑-修复人物... ✓ 1 条
+    固定                   2          API=2
+
+  [1/17] 编辑-智能修改... ✓ 2 条
+    Nano Banana Pro      12         API=12
+    GPT Image 2          12         API=12
+
+  [2/17] 编辑-换立面... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [3/17] 编辑-换配景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [4/17] 编辑-换材质... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [5/17] 编辑-换颜色... ✓ 2 条
+    标准模式                 5          API=5
+    GPT Image 2          15         API=15
+
+  [6/17] 编辑-换风格... 跳过(无法选中)
+
+  [7/17] 编辑-素材植入... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [8/17] 编辑-调氛围... 跳过(无法选中)
+
+  [9/17] 编辑-换天气... 跳过(无法选中)
+
+  [10/17] 编辑-调光影... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [11/17] 编辑-擦除... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [12/17] 编辑-高清增强... 跳过(无法选中)
+
+  [13/17] 编辑-去水印... ✓ 2 条
+    标准模式                 2          API=2
+    GPT Image 2          15         API=15
+
+  [14/17] 编辑-扩图... 跳过(无法选中)
+
+  [15/17] 编辑-换视角... 跳过(无法选中)
+
+  [16/17] 编辑-拆PSD... 跳过(无法选中)
+
+  [17/17] 编辑-修复人物... 跳过(无法选中)
+
+  建筑设计 完成: 非编辑=37条, 编辑=21条
+
+======================================================================
+  领域: 景观设计
+======================================================================
+
+  景观设计: 顶部=['智能修改', '换硬景', '换软景', '换配景'], 更多=['换材质', '换颜色', '换风格', '素材植入', '植物四季转换', '换天气', '调氛围', '调光影', '擦除', '高清增强', '去水印', '扩图', '换视角', '拆PSD', '修复人物']
+
+  [1/19] 非编辑-智能修改... ✓ 2 条
+    Nano Banana Pro      12         API=12
+    GPT Image 2          12         API=12
+
+  [2/19] 非编辑-换硬景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [3/19] 非编辑-换软景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [4/19] 非编辑-换配景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [5/19] 非编辑-换材质... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [6/19] 非编辑-换颜色... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [7/19] 非编辑-换风格... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [8/19] 非编辑-素材植入... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [9/19] 非编辑-植物四季转换... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [10/19] 非编辑-换天气... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [11/19] 非编辑-调氛围... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [12/19] 非编辑-调光影... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [13/19] 非编辑-擦除... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [14/19] 非编辑-高清增强... ✓ 1 条
+    固定                   2          API=2
+
+  [15/19] 非编辑-去水印... ✓ 2 条
+    标准模式                 2          API=2
+    GPT Image 2          15         API=15
+
+  [16/19] 非编辑-扩图... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [17/19] 非编辑-换视角... 错误: Locator.click: Timeout 3000ms exceeded.
+Call log:
+  - waiting for locator("[class*=\"modeSelectBtn\"]").first
+    - locator resolved to <div class="ModeSelectDropdown__modeSelectBtn__jVBbP">…</div>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div role="tooltip" class="ant-tooltip-inner">请填写视角描述</div> from <div>…</div> subtree intercepts pointer events
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div role="tooltip" class="ant-tooltip-inner">请填写视角描述</div> from <div>…</div> subtree intercepts pointer events
+    - retrying click action
+      - waiting 100ms
+    6 × waiting for element to be visible, enabled and stable
+      - element is visible, enabled and stable
+      - scrolling into view if needed
+      - done scrolling
+      - <div role="tooltip" class="ant-tooltip-inner">请填写视角描述</div> from <div>…</div> subtree intercepts pointer events
+    - retrying click action
+      - waiting 500ms
+
+
+  [18/19] 非编辑-拆PSD... ✓ 1 条
+    固定                   50         API=50
+
+  [19/19] 非编辑-修复人物... ✓ 1 条
+    固定                   2          API=2
+
+  [1/19] 编辑-智能修改... ✓ 2 条
+    Nano Banana Pro      12         API=12
+    GPT Image 2          12         API=12
+
+  [2/19] 编辑-换硬景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [3/19] 编辑-换软景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [4/19] 编辑-换配景... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [5/19] 编辑-换材质... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [6/19] 编辑-换颜色... ✓ 2 条
+    标准模式                 5          API=5
+    GPT Image 2          15         API=15
+
+  [7/19] 编辑-换风格... 跳过(无法选中)
+
+  [8/19] 编辑-素材植入... ✓ 2 条
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [9/19] 编辑-植物四季转换... 跳过(无法选中)
+
+  [10/19] 编辑-换天气... 跳过(无法选中)
+
+  [11/19] 编辑-调氛围... 跳过(无法选中)
+
+  [12/19] 编辑-调光影... 跳过(无法选中)
+
+  [13/19] 编辑-擦除... ✓ 3 条
+    标准模式                 5          API=5
+    Nano Banana Pro      15         API=15
+    GPT Image 2          15         API=15
+
+  [14/19] 编辑-高清增强... 跳过(无法选中)
+
+  [15/19] 编辑-去水印... ✓ 2 条
+    标准模式                 2          API=2
+    GPT Image 2          15         API=15
+
+  [16/19] 编辑-扩图... 跳过(无法选中)
+
+  [17/19] 编辑-换视角... 跳过(无法选中)
+
+  [18/19] 编辑-拆PSD... 跳过(无法选中)
+
+  [19/19] 编辑-修复人物... 跳过(无法选中)
+
+  景观设计 完成: 非编辑=38条, 编辑=20条
+
+======================================================================
+  领域: 通用设计
+======================================================================
+
+  通用设计: 顶部=['局部重绘', '换材质', '换颜色'], 更多=['换风格', '换天气', '擦除', '高清放大', '细节增强', '去水印', '扩图', '换视角', '修复人物']
+
+  [1/12] 非编辑-局部重绘... ✓ 0 条
+
+  [2/12] 非编辑-换材质... ✓ 0 条
+
+  [3/12] 非编辑-换颜色... 

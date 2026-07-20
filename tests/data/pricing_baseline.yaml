@@ -1,0 +1,390 @@
+# AI 绘图统一价格基准（单一数据源）
+#
+# 所有定价测试用例和 API 脚本的价格校验都从本文件读取预期值。
+# 修改价格只需改本文件，所有测试自动感知。
+#
+# 结构：product → combination → member → period → price
+# period: peak=高峰, normal=平峰, off_peak=低谷
+# price 单位：知点（null 表示待补充）
+
+# ── 会员账号 ──────────────────────────────────────────────────────────────────
+members:
+  普通会员:    { username: "17700000001", password: "Qyff2011" }
+  新黄金会员:  { username: "17700000002", password: "Qyff2011" }
+  老黄金会员:  { username: "13006082049",  password: "Qyff2011" }
+  铂金会员:    { username: "13006627298", password: "Qyff2011" }
+  新钻石会员:  { username: "17768100279", password: "Qyff2011" }
+  老钻石会员:  { username: "15122333716",  password: "Qyff2011" }
+  黑金会员:    { username: "15670979978", password: "Qyff2011" }
+
+# ── 价格规则 ──────────────────────────────────────────────────────────────────
+pricing:
+
+  Agent模式:
+    GPT Image 2:
+      api_params:
+        channel: "znzmo"
+        serviceType: "17"
+        subServiceType: "1701"
+        isIntelligentAgentTask: 1
+        bananaChannel: 4
+      prices:
+        普通会员:   { peak: 15,  normal: 15,  off_peak: 15 }
+        新黄金会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: 12,  normal: 12,  off_peak: 12 }
+        新钻石会员: { peak: 12,  normal: 12,  off_peak: 12 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: 10,  normal: 10,  off_peak: 10 }
+
+    Nano Banana Pro:
+      api_params:
+        channel: "znzmo"
+        serviceType: "17"
+        subServiceType: "1701"
+        isIntelligentAgentTask: 1
+        bananaChannel: 1
+      prices:
+        普通会员:   { peak: 15,  normal: 15,  off_peak: 15 }
+        新黄金会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: 12,  normal: 12,  off_peak: 12 }
+        新钻石会员: { peak: 12,  normal: 12,  off_peak: 12 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: 10,  normal: 10,  off_peak: 10 }
+
+    Nano Banana 2:
+      api_params:
+        channel: "znzmo"
+        serviceType: "17"
+        subServiceType: "1701"
+        isIntelligentAgentTask: 1
+        bananaChannel: 3
+      prices:
+        普通会员:   { peak: 10,  normal: 10,  off_peak: 10 }
+        新黄金会员: { peak: 10,  normal: 10,  off_peak: 10 }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: 8,   normal: 8,   off_peak: 8 }
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: 7,   normal: 7,   off_peak: 7 }
+
+  精准渲染:
+    标准模式:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1601"
+        workFlowType: 2
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 6,   normal: 6,   off_peak: 6 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    思考模式:
+      api_params:
+        channel: "znzmo"
+        serviceType: "16"
+        subServiceType: "1601"
+        workFlowType: 2
+        batchSize: 1
+        pictureQuality: 2
+        referenceImg: ""
+        sceneName: []
+        deepMode: 1
+      prices:
+        普通会员:   { peak: 15,  normal: 15,  off_peak: 15 }
+        新黄金会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老黄金会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        铂金会员:   { peak: 12,  normal: 12,  off_peak: 12 }
+        新钻石会员: { peak: 12,  normal: 12,  off_peak: 12 }
+        老钻石会员: { peak: 12,  normal: 12,  off_peak: 12 }
+        黑金会员:   { peak: 10,  normal: 10,  off_peak: 10 }
+
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1601"
+        workFlowType: 3
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  创作渲染:
+    标准模式:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1602"
+        workFlowType: 2
+        batchSize: 4
+        pictureQuality: 0
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1602"
+        workFlowType: 3
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  效果图美化:
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1603"
+        workFlowType: 3
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  # ── 平面填彩 (menuKey=floorPlanColor, subServiceType=1604) ─────────────────
+  平面填彩:
+    标准模式:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1604"
+        workFlowType: 2
+        batchSize: 4
+        pictureQuality: 0
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1604"
+        workFlowType: 3
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    GPT Image 2:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1604"
+        workFlowType: 4
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  # ── 实景改造 (menuKey=insituRenovation, subServiceType=1606) ──────────────
+  实景改造:
+    标准模式:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1606"
+        workFlowType: 2
+        batchSize: 4
+        pictureQuality: 0
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1606"
+        workFlowType: 3
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  # ── 全景渲染 (menuKey=panoramicRender, subServiceType=1612) ─────────────────
+  # 全景渲染需要从左侧菜单进入，使用 DeepMode 切换（与精准渲染相同模式）
+  全景渲染:
+    标准模式:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1612"
+        workFlowType: 2
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 4,   normal: 4,   off_peak: 4 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+    Nano Banana Pro:
+      api_params:
+        serviceType: "16"
+        subServiceType: "1612"
+        workFlowType: 3
+        batchSize: 1
+        pictureQuality: 2
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 15,  normal: 15,  off_peak: 15 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  # ── 图转CAD (subServiceType=1614) ─────────────────────────────────────────
+  图转CAD:
+    标准模式:
+      api_params:
+        channel: ""
+        serviceType: "16"
+        subServiceType: "1614"
+        workFlowType: 0
+        batchSize: 1
+        pictureQuality: 0
+        referenceImg: ""
+        sceneName: []
+        deepMode: null
+      prices:
+        普通会员:   { peak: null, normal: null, off_peak: null }
+        新黄金会员: { peak: null, normal: null, off_peak: null }
+        老黄金会员: { peak: null, normal: null, off_peak: null }
+        铂金会员:   { peak: null, normal: null, off_peak: null }
+        新钻石会员: { peak: 30,  normal: 30,  off_peak: 30 }
+        老钻石会员: { peak: null, normal: null, off_peak: null }
+        黑金会员:   { peak: null, normal: null, off_peak: null }
+
+  # ── 旧版图生图 (menuKey=tushengtuPurpose) ──────────────────────────────────
+  # 无 API 参数映射，仅 UI 采集
+  旧版图生图:
+    家装_创作渲染:
+      prices:
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+    家装_精准渲染:
+      prices:
+        新钻石会员: { peak: 6,   normal: 6,   off_peak: 6 }
+    家装_平面填彩:
+      prices:
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+    家装_毛坯精装设计:
+      prices:
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+    家装_新房软装搭配:
+      prices:
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+    家装_旧房改造焕新:
+      prices:
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+    建筑_创作渲染:
+      prices:
+        新钻石会员: { peak: 8,   normal: 8,   off_peak: 8 }
+    建筑_精准渲染:
+      prices:
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+    建筑_总平填彩:
+      prices:
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+    建筑_实景改造:
+      prices:
+        新钻石会员: { peak: 16,  normal: 16,  off_peak: 16 }
+    建筑_环境生成器:
+      prices:
+        新钻石会员: { peak: 4,   normal: 4,   off_peak: 4 }
+
+  # ── 生成历史下载 (menuKey=history) ────────────────────────────────────────
+  # 下载选项：超清原图Pro、超清修复、下载PSD
+  # 注：API参数已通过UI测试捕获确认
+  生成历史下载:
+    超清原图Pro:
+      api_params:
+        channel: "4kfix"
+        baseImageId: 20017777
+      prices:
+        普通会员:   { peak: 2,  normal: 2,  off_peak: 2 }
+        新黄金会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        老黄金会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        铂金会员:   { peak: 0,  normal: 0,  off_peak: 0 }
+        新钻石会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        老钻石会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        黑金会员:   { peak: 0,  normal: 0,  off_peak: 0 }
+    超清修复:
+      api_params:
+        channel: "4k"
+        baseImageId: 20017777
+      prices:
+        普通会员:   { peak: 2,  normal: 2,  off_peak: 2 }
+        新黄金会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        老黄金会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        铂金会员:   { peak: 0,  normal: 0,  off_peak: 0 }
+        新钻石会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        老钻石会员: { peak: 0,  normal: 0,  off_peak: 0 }
+        黑金会员:   { peak: 0,  normal: 0,  off_peak: 0 }
+    下载PSD:
+      api_params:
+        channel: "znzmo"
+        serviceType: "6"
+        subServiceType: "638"
+        workFlowType: 4
+        domain: "1"
+        editAreaMode: 0
+      prices:
+        普通会员:   { peak: 50, normal: 50, off_peak: 50 }
+        新黄金会员: { peak: 50, normal: 50, off_peak: 50 }
+        老黄金会员: { peak: 50, normal: 50, off_peak: 50 }
+        铂金会员:   { peak: 50, normal: 50, off_peak: 50 }
+        新钻石会员: { peak: 50, normal: 50, off_peak: 50 }
+        老钻石会员: { peak: 50, normal: 50, off_peak: 50 }
+        黑金会员:   { peak: 50, normal: 50, off_peak: 50 }

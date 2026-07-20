@@ -1,0 +1,52 @@
+# 定价采集页面元素定义
+# URL: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=agent
+#
+# 所有选择器使用 [class*="xxx"] 模糊匹配，规避 CSS Modules 动态 hash 后缀。
+# 下拉面板内的元素统一用 scope 限定父容器，避免多命中。
+# 验证：展开前后 count 检查（2026-07-07）。
+
+# ── 模型选择器（左下角） ──────────────────────────────────────────────────────
+model_selector_wrapper:
+  type: css
+  selector: '[class*="agentSelectWrapper"]'
+
+# 下拉面板容器（点击模型选择器后出现）
+model_dropdown_panel:
+  type: css
+  selector: '[class*="agentSelectPopoverContent"]'
+
+# 单个模型选项 — scope 限定在面板内，避免匹配面板外同名 class
+model_option_item:
+  type: css
+  selector: '[class*="mode__"]'
+  scope: '[class*="agentSelectPopoverContent"]'
+
+# 模型选项的标题文本 — scope 限定在面板内
+model_option_title:
+  type: css
+  selector: '[class*="modeTitle"]'
+  scope: '[class*="agentSelectPopoverContent"]'
+
+# 模型选项的描述文本 — scope 限定在面板内
+model_option_desc:
+  type: css
+  selector: '[class*="modeDesc"]'
+  scope: '[class*="agentSelectPopoverContent"]'
+
+# ── 价格展示区（右下角输入框区域） ────────────────────────────────────────────
+price_number:
+  type: css
+  selector: '[class*="priceNum"]'
+
+price_tag_container:
+  type: css
+  selector: '[class*="priceTag"]'
+
+status_bar:
+  type: css
+  selector: '[class*="statusBar"]'
+
+# ── 知点余额（右上角） ────────────────────────────────────────────────────────
+coin_balance:
+  type: css
+  selector: '[class*="zidianAmount"]'

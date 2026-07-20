@@ -3,8 +3,8 @@ def test_load_storage_state_shape(monkeypatch):
     import common.api.auth as auth
     monkeypatch.setattr(auth, "_default_account", lambda: "acc")
     monkeypatch.setattr(auth.CookieManager, "load_cookies",
-                        lambda account: {"cookies": [{"name": "x", "value": "1"}], "timestamp": "t"})
-    monkeypatch.setattr(auth.CookieManager, "is_cookie_valid", lambda data: True)
+                        lambda account, **kw: {"cookies": [{"name": "x", "value": "1"}], "timestamp": "t"})
+    monkeypatch.setattr(auth.CookieManager, "is_cookie_valid", lambda data, **kw: True)
     ss = auth.load_storage_state()
     assert ss == {"cookies": [{"name": "x", "value": "1"}], "origins": []}
 
@@ -12,7 +12,7 @@ def test_load_storage_state_shape(monkeypatch):
 def test_load_storage_state_none_when_no_cookie(monkeypatch):
     import common.api.auth as auth
     monkeypatch.setattr(auth, "_default_account", lambda: "acc")
-    monkeypatch.setattr(auth.CookieManager, "load_cookies", lambda account: None)
+    monkeypatch.setattr(auth.CookieManager, "load_cookies", lambda account, **kw: None)
     assert auth.load_storage_state() is None
 
 

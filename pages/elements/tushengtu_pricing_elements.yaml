@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+# 旧版图生图定价采集 - 元素选择器
+# 页面: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=tushengtuPurpose
+
+# 创作类型 tab（家装/工装/建筑/景观）
+creative_type_tab:
+  type: css
+  selector: '[class*="CreativeTypeDrawer__tabItem"] span'
+
+# 子分类卡片名称（创作渲染/精准渲染等）
+subcategory_card:
+  type: css
+  selector: '[class*="cardInfoName"]'
+
+# 价格数字元素
+price_number:
+  type: css
+  selector: '[class*="zdIconText"]'
+
+# 知点余额
+coin_balance:
+  type: css
+  selector: '[class*="zidianAmount"]'

@@ -20,7 +20,7 @@
 | 术语 | 适用业务线 | 定义 |
 |---|---|---|
 | 知币（Zhi-Coin） | 素材 | 下载付费模型的通用积分，**1元=10知币**；旧称"金币" |
-| 知点（Zhi-Point） | AI绘图 | AI生图消耗单位；精准渲染 sub_service_type=1601 |
+| 知点（Zhi-Point） | AI绘图 | AI生图消耗单位；精准渲染 sub_service_type=1601；各模型定价见下方 |
 | 现金 / CNY | 素材 | 搭售省钱礼包时额外收取的人民币部分（与知币混合支付） |
 
 ---
@@ -45,6 +45,23 @@
 | 铂金 | VIP |
 | 钻石 | SVIP |
 | 黑金 | SVIP |
+
+---
+
+## AI 绘图模型定价（钻石会员）
+
+> 数据来源：UI 自动化采集 + API 验证（2026-07-08）
+> 接口：`POST https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice`
+> 价格区分参数：`bananaChannel`（非 modelId）
+
+| 模型 | bananaChannel | 价格（知点） | 描述 |
+|---|---|---|---|
+| GPT Image 2 | 4 | 12 | 更懂复杂指令、文字渲染精准 |
+| Nano Banana Pro | 1 | 12 | 专家级出图，高审美标准 |
+| Nano Banana 2 | 3 | 8 | 标准旗舰，兼顾速度与质量 |
+| 标准模式（非Agent） | — | 12 | serviceType=16, workFlowType=2 |
+
+> 以上为钻石会员（17768100279）价格，不同会员等级价格可能不同。
 
 ---
 

@@ -20,10 +20,38 @@ if sys.platform == "win32":
 
 from common.browser_manager import BrowserManager
 from common.assertions import create_assertion, enable_diagnostics, disable_diagnostics
+from common.auth_session import AI_DRAW_PROFILE, load_default_account
 from common.yaml_loader import load_yaml
 from config.settings import DEFAULT_TIMEOUT_MS, get_config
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_login_credentials(request):
+    cli_user = request.config.getoption("--login-username", default=None)
+    cli_pwd = request.config.getoption("--login-password", default=None)
+    env_user = os.getenv("TEST_LOGIN_USERNAME")
+    env_pwd = os.getenv("TEST_LOGIN_PASSWORD")
+
+    if cli_user and cli_pwd:
+        logger.info("使用 CLI 参数账号登录: %s", cli_user)
+        return cli_user, cli_pwd
+    if env_user and env_pwd:
+        logger.info("使用环境变量账号登录: %s", env_user)
+        return env_user, env_pwd
+
+    account = load_default_account()
+    if account and account.get("username") and account.get("password"):
+        logger.info("使用 account_pool.yaml 默认账号登录: %s", account["username"])
+        return account["username"], account["password"]
+
+    login_data = load_yaml("tests/data/login_data.yaml") or {}
+    cases = login_data.get("cases") or []
+    if not cases:
+        raise RuntimeError("缺少登录账号：请检查 tests/data/account_pool.yaml")
+    creds = cases[0]
+    logger.info("使用 login_data.yaml 兼容账号登录: %s", creds["username"])
+    return creds["username"], creds["password"]
 
 
 # ─── Session 级登录态复用：所有用例共享一份 storage_state ─────────────────────
@@ -46,29 +74,7 @@ def logged_in_context(browser, request, playwright):
     2. 环境变量 ``TEST_LOGIN_USERNAME`` / ``TEST_LOGIN_PASSWORD``
     3. tests/data/login_data.yaml 默认账号（向后兼容）
     """
-    # 多源账号解析
-    cli_user = request.config.getoption("--login-username", default=None)
-    cli_pwd  = request.config.getoption("--login-password", default=None)
-    env_user = os.getenv("TEST_LOGIN_USERNAME")
-    env_pwd  = os.getenv("TEST_LOGIN_PASSWORD")
-
-    if cli_user and cli_pwd:
-        username, password = cli_user, cli_pwd
-        logger.info("使用 CLI 参数账号登录: %s", username)
-    elif env_user and env_pwd:
-        username, password = env_user, env_pwd
-        logger.info("使用环境变量账号登录: %s", username)
-    else:
-        login_data = load_yaml("tests/data/login_data.yaml") or {}
-        cases = login_data.get("cases") or []
-        if not cases:
-            raise RuntimeError(
-                "tests/data/login_data.yaml 缺少 cases，无法初始化 session 登录态"
-            )
-        creds = cases[0]
-        username = creds["username"]
-        password = creds["password"]
-        logger.info("使用 login_data.yaml 默认账号登录: %s", username)
+    username, password = _resolve_login_credentials(request)
 
     context = browser.new_context()
     context.set_default_timeout(DEFAULT_TIMEOUT_MS)
@@ -203,14 +209,22 @@ def browser_lifecycle():
 def _resolve_active_page(request):
     """挑出当前测试真正使用的 page。
 
-    - 若 test 显式声明了 ``logged_in_page``，优先用它；
+    - 若 test 显式声明了 ``ai_draw_page``，优先用它（AI 绘图专用）；
+    - 若 test 显式声明了 ``logged_in_page``，用它；
+    - 若 test 显式声明了 ``pricing_session``，从其 tuple 返回值中提取 page；
     - 否则回退到 pytest-playwright 的 ``page``；
     - 都没有则返回 None（避免主动 getfixturevalue 触发 pytest-playwright
       额外创建一个空白窗口）。
     """
     fixture_names = set(getattr(request, "fixturenames", ()))
+    if "ai_draw_page" in fixture_names:
+        return request.getfixturevalue("ai_draw_page")
     if "logged_in_page" in fixture_names:
         return request.getfixturevalue("logged_in_page")
+    if "pricing_session" in fixture_names:
+        result = request.getfixturevalue("pricing_session")
+        # pricing_session yields (page, token) or (page, token, member)
+        return result[0] if isinstance(result, (tuple, list)) else result
     if "page" in fixture_names:
         return request.getfixturevalue("page")
     return None
@@ -267,10 +281,9 @@ def assertion(request):
     yield 之后通过 pytest TerminalWriter 把关键校验点汇总打印到 stdout。
     """
     page = _resolve_active_page(request)
-    if page is None:
-        # 兜底：若 test 既没有 logged_in_page 也没有 page，
-        # 仍走 pytest-playwright 默认 page（保持旧用例兼容）。
-        page = request.getfixturevalue("page")
+    # 不再 fallback 到 request.getfixturevalue("page")：
+    # 无浏览器的测试（如 API 测试）不应触发 pytest-playwright 创建页面，
+    # 否则脚本结束后会反复出现空页面开关。
     test_name = request.node.name
     inst = create_assertion(page, test_name)
 
@@ -404,6 +417,139 @@ def api_assert(request):
     except Exception:
         try:
             inst.print_summary(tw=None)
+        except Exception:
+            pass
+
+
+def _legacy_ai_draw_page_disabled(logged_in_context, request):
+    """AI 绘图专用已登录 page。
+
+    与 logged_in_page 的区别：
+    - 登录方式：优先复用 logged_in_context 的 .znzmo.cn 域 SESSION cookie
+    - cookie 无效时：在 ai.znzmo.cn 页面内完成登录（兜底方案）
+    - 适用场景：AI 绘图相关测试（定价采集、Agent 模式等）
+    - 复用策略：同 logged_in_page，首个用例复用 anchor_page，后续 new_page
+
+    使用方式：
+        def test_xxx(self, ai_draw_page, assertion):
+            page = PricingCapturePage(ai_draw_page)
+            page.goto()
+            ...
+    """
+    from common.api.ai_draw_auth import login_ai_draw, verify_ai_draw_session
+
+    # 多源账号解析（与 logged_in_context 保持一致）
+    cli_user = request.config.getoption("--login-username", default=None)
+    cli_pwd  = request.config.getoption("--login-password", default=None)
+    env_user = os.getenv("TEST_LOGIN_USERNAME")
+    env_pwd  = os.getenv("TEST_LOGIN_PASSWORD")
+
+    if cli_user and cli_pwd:
+        username, password = cli_user, cli_pwd
+    elif env_user and env_pwd:
+        username, password = env_user, env_pwd
+    else:
+        from common.yaml_loader import load_yaml
+        login_data = load_yaml("tests/data/login_data.yaml") or {}
+        cases = login_data.get("cases") or []
+        if not cases:
+            raise RuntimeError("无法解析登录账号（login_data.yaml 无 cases）")
+        creds = cases[0]
+        username, password = creds["username"], creds["password"]
+
+    # 方案 A（优先）：复用 logged_in_context 的 cookie，直接导航
+    # logged_in_context 已通过 su.znzmo.com 登录，.znzmo.cn 域 cookie 应该共享
+    anchor_page = getattr(logged_in_context, "_anchor_page", None)
+    consumed = getattr(logged_in_context, "_ai_draw_anchor_consumed", False)
+
+    reuse_anchor = (
+        anchor_page is not None
+        and not anchor_page.is_closed()
+        and not consumed
+    )
+
+    if reuse_anchor:
+        logged_in_context._ai_draw_anchor_consumed = True  # type: ignore[attr-defined]
+        page = anchor_page
+    else:
+        page = logged_in_context.new_page()
+
+    page.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
+
+    # 检查 session 是否对 ai.znzmo.cn 有效
+    session_valid = verify_ai_draw_session(logged_in_context)
+
+    if session_valid:
+        logger.info("复用 logged_in_context 的 SESSION（ai.znzmo.cn 验活通过）")
+        # 即使 session 有效，也需要将 page 导航到 ai.znzmo.cn 域，
+        # 否则 page 仍在 su.znzmo.com，SPA 路由切换会受弹窗/重定向干扰
+        try:
+            from common.api.ai_draw_auth import _AI_DRAW_HOME
+            page.goto(_AI_DRAW_HOME, wait_until="domcontentloaded", timeout=20_000)
+            page.wait_for_timeout(3000)
+            # 验证导航成功（防 SPA 重定向到 panoramicRender）
+            try:
+                page.wait_for_url("**/menuKey=home**", timeout=10_000)
+                logger.info("ai_draw_page 预导航到 ai.znzmo.cn 完成，当前 URL: %s", page.url)
+            except Exception:
+                logger.warning("ai_draw_page 预导航后 URL 验证未通过，当前: %s", page.url)
+        except Exception as e:
+            logger.warning("ai_draw_page 预导航失败: %s", e)
+    else:
+        logger.info("logged_in_context 的 SESSION 对 ai.znzmo.cn 无效，执行 AI 绘图专用登录")
+        success = login_ai_draw(page, username, password)
+        if not success:
+            raise RuntimeError("AI 绘图登录失败（login_ai_draw 返回 False）")
+        if not verify_ai_draw_session(logged_in_context):
+            raise RuntimeError("AI 绘图登录后服务端验活失败")
+        logger.info("AI 绘图专用登录完成，session 验活通过")
+
+    try:
+        yield page
+    finally:
+        if not reuse_anchor:
+            try:
+                if not page.is_closed():
+                    page.close()
+            except Exception:
+                pass
+
+
+@pytest.fixture(scope="function")
+def ai_draw_page(browser, request):
+    """AI draw page with an independent ai.znzmo.cn storage_state."""
+    from common.selector_finder.login_session import ensure_storage_state
+
+    username, password = _resolve_login_credentials(request)
+    state_path = ensure_storage_state(
+        AI_DRAW_PROFILE.home_url,
+        username,
+        password,
+        headless=get_config().current_env.headless,
+    )
+    if not state_path:
+        raise RuntimeError("无法初始化 AI 绘图登录态：缺少账号或 storage_state")
+
+    context = browser.new_context(storage_state=state_path)
+    context.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    context.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
+    page = context.new_page()
+    page.set_default_timeout(DEFAULT_TIMEOUT_MS)
+    page.set_default_navigation_timeout(DEFAULT_TIMEOUT_MS)
+    page.goto(AI_DRAW_PROFILE.home_url, wait_until="domcontentloaded", timeout=30_000)
+    page.wait_for_timeout(1500)
+
+    try:
+        yield page
+    finally:
+        try:
+            if not page.is_closed():
+                page.close()
+        except Exception:
+            pass
+        try:
+            context.close()
         except Exception:
             pass
 

@@ -6,13 +6,13 @@ description: Use when the user provides a Markdown test case document (table for
 # Markdown 用例 → 自动化代码 转换约定（testA）
 
 将外部 Markdown 测试用例（表格 / TSV 形式）转换为本仓库可直接 `pytest` 运行的代码。
-本 skill 是 **Claude 专用**，与 Cursor IDE 的 `.cursor/rules/*.mdc` 无关。
+本 skill 是 **Codex 专用**，与 Cursor IDE 的 `.claude/rules/*.mdc` 无关。
 
-> 本规则只补充转换流程约束。POM / 数据 / 用例本身的细节仍以 `.cursor/rules/` 下既有文档为权威：
+> 本规则只补充转换流程约束。POM / 数据 / 用例本身的细节仍以 `.claude/rules/` 下既有文档为权威：
 > - `pageobject-conventions.mdc`
 > - `test-suite-conventions.mdc`
 > - `test-data-conventions.mdc`
-> - `data-model-conventions.mdc`
+> - `test-data-conventions（含数据对象约定）.mdc`
 > - `test-steps-conventions.mdc`
 >
 > 冲突时**以这些既有规则为准**，本 skill 只做"转换 / 生成 / 占位 / 报告"层的额外约束。
@@ -71,7 +71,7 @@ description: Use when the user provides a Markdown test case document (table for
 ### 后端校验 / 接口类步骤翻译（非 UI 步骤）
 
 并非所有步骤都翻译成 Page 方法。涉及后端状态 / 接口 / 缓存的步骤，直接用对应 fixture
-（细则见 `.cursor/rules/test-suite-conventions.mdc` 规则 5）：
+（细则见 `.claude/rules/test-suite-conventions.mdc` 规则 5）：
 
 | 步骤特征（Markdown 原文语义） | 翻译为 |
 |------|------|
@@ -90,8 +90,8 @@ description: Use when the user provides a Markdown test case document (table for
 | 优先级 | 来源 | 触发条件 / 操作 |
 |------|------|------|
 | ① | 现有 `pages/elements/*.yaml` 的 key | 文本/语义匹配命中 |
-| ② | **MCP 浏览器实抓** | 用户已开启 Chrome 扩展、URL 可访问。Claude 调用 `mcp__Claude_in_Chrome__find` / `read_page` 直接拿元素 ref，并选择稳定的 `role=` / `text=` / `data-*` 类 selector 写入 yaml |
-| ③ | **`playwright codegen`**（用户自驱） | 命令模板：`python -m playwright codegen <url>`；用户操作完，把生成的 selector 贴回对话，Claude 写入 yaml |
+| ② | **MCP 浏览器实抓** | 用户已开启 Chrome 扩展、URL 可访问。Codex 调用 `mcp__Claude_in_Chrome__find` / `read_page` 直接拿元素 ref，并选择稳定的 `role=` / `text=` / `data-*` 类 selector 写入 yaml |
+| ③ | **`playwright codegen`**（用户自驱） | 命令模板：`python -m playwright codegen <url>`；用户操作完，把生成的 selector 贴回对话，Codex 写入 yaml |
 | ④ | `'TODO_SELECTOR'` + 报告高亮 | 以上均不可用时使用，CONVERSION-REPORT.md 中显式列出 |
 
 约束：
@@ -148,7 +148,7 @@ class AtmRenderPage(BasePage):
 ## 数据规则
 
 - 账号、文案期望、参数化数据等放 `tests/data/{feature}_data.yaml` **根级**键。
-- **账号字段（username / password）必须经由账号池解析**（见 Step 4.5 + `.claude/skills/account-pool/SKILL.md`），禁止直接硬写一个从未在池子里登记的账号；如池子无匹配，先补池子再继续。
+- **账号字段（username / password）必须经由账号池解析**（见 Step 4.5 + 下方「账号池解析」章节），禁止直接硬写一个从未在池子里登记的账号；如池子无匹配，先补池子再继续。
 - **导航入口 URL 不放 yaml**（见上节「页面入口规则」）；断言用的期望 URL / 跳转 URL 等非重复配置可放 yaml。
 - 参数化用例放 `cases` 列表，字段与 `data_types/{feature}_data_types.py` 中 dataclass 一一对应。
 - 期望值不在测试方法里写死，统一从 `_DATA[...]` 或 `case_data.xxx` 取。
@@ -180,18 +180,18 @@ print(json.dumps({'name': result.name, 'tier': result.tier, 'todo': result.todo}
 | 2 | step.object + expect.field 组合 | 直接用 `name` 字段值 |
 | 3 | 仅 step.object | 直接用 `name` 字段值 |
 | 4 | 仅 expect.field（含字典 miss）| 直接用 `name`；若 `todo` 非空，在断言行**上方**加 `todo` 注释 |
-| 5 | 兜底（步骤前 8 字）| **Claude 先判断**：能给更精炼业务名则替换；否则保留并加 `# TODO[checkpoint_name]: <todo内容>` |
+| 5 | 兜底（步骤前 8 字）| **Codex 先判断**：能给更精炼业务名则替换；否则保留并加 `# TODO[checkpoint_name]: <todo内容>` |
 
 ### Tier 5 示例
 
-composer 返回 `{"name": "等待页面响应", "tier": 5, "todo": "..."}`，Claude 判断无业务语义 → 保留兜底：
+composer 返回 `{"name": "等待页面响应", "tier": 5, "todo": "..."}`，Codex 判断无业务语义 → 保留兜底：
 
 ```python
 # TODO[checkpoint_name]: step: '等待页面响应' | expect: '无报错' — 自动命名兜底，建议手动改名或补充字典
 assertion.assert_true(cond, name="等待页面响应", message="...")
 ```
 
-composer 返回 `{"name": "验证用户标签下拉", "tier": 5, "todo": "..."}`，Claude 能给更好名字 → 替换（不加注释）：
+composer 返回 `{"name": "验证用户标签下拉", "tier": 5, "todo": "..."}`，Codex 能给更好名字 → 替换（不加注释）：
 
 ```python
 assertion.assert_true(cond, name="设计师标签选项存在", message="...")
@@ -242,11 +242,11 @@ assertion.assert_true(cond, name="设计师标签选项存在", message="...")
 | `env` | 涉及"网络中断"、"弱网"、"CDN"、"离线" | 生成代码 + `context.set_offline()` / 限速骨架 |
 | `待考虑` | web 端可自动化但暂缺 mock / clock 等工具（如 `page.clock` 跨日、接口桩未就绪） | 生成 `pytest.skip("【待考虑】...")` 骨架，留待实装 |
 | `manual` | "目视判断"、"对比基准截图"、"大模型识别"、"两端对比"、"【待澄清】" 等 **web 端可达但需人工目视** 的部分 | 生成 `pytest.skip("manual: ...")` 骨架，仅保留步骤注释 |
-| `非web` | 依赖**桌面客户端 / 渲染后端 / 真机跨平台 / 真实跨日** 等浏览器无法构造的能力（详见 CLAUDE.md 规则 9） | **不纳入自动化、不生成任何代码（含 skip 骨架）**，仅在 CONVERSION-REPORT.md「非自动化范围 / 转人工」登记 AUTO-* 编号 + 原因 |
+| `非web` | 依赖**桌面客户端 / 渲染后端 / 真机跨平台 / 真实跨日** 等浏览器无法构造的能力（详见 AGENTS.md 规则 9） | **不纳入自动化、不生成任何代码（含 skip 骨架）**，仅在 CONVERSION-REPORT.md「非自动化范围 / 转人工」登记 AUTO-* 编号 + 原因 |
 
 - `manual` / `待考虑` 用例**不要**伪造断言；保留步骤注释 + skip 标记，等待人工接管 / 工具就绪。
 - **后端数据核对归 `auto`**：用例需"查库确认后端状态"时用 `mysql_db` 查库断言即可达成，**不再因"要查库"标 `manual`**；纯接口测试同样归 `auto`（`api_client` + `api_assert`）。
-- `非web` 用例（**最高优先级判定**）：依据 **CLAUDE.md 规则 9**，只要触发条件命中即**直接排除**，连 skip 骨架都不生成，避免套件被无法运行的占位塞满；维护既有套件时，此类 skip 用例应一并移出。
+- `非web` 用例（**最高优先级判定**）：依据 **AGENTS.md 规则 9**，只要触发条件命中即**直接排除**，连 skip 骨架都不生成，避免套件被无法运行的占位塞满；维护既有套件时，此类 skip 用例应一并移出。
 
 ## TODO 占位规范（统一格式，便于 grep）
 
@@ -349,7 +349,7 @@ def test_download_click_event(self, page, assertion, gio_tracking, keyword, expe
        直接使用 `tests/data/account_pool.yaml` 中 `tags` 包含 `default` 和 `generic_user` 的账号，不打断用户
      - Markdown 前置条件含具体角色/状态/能力描述（如"VIP 用户"、"已有订单"、"能下载图钉图片"）→ 进 step 2
 
-  2. **提取需求关键词，映射到 snake_case 标签**（遵守 `.claude/skills/account-pool/SKILL.md` 命名约定）：
+  2. **提取需求关键词，映射到 snake_case 标签**（遵守下方「账号池解析·标签命名约定」）：
      ```
      "VIP 已登录用户"          → [vip]
      "有历史订单的用户"         → [has_orders]
@@ -357,12 +357,12 @@ def test_download_click_event(self, page, assertion, gio_tracking, keyword, expe
      ```
 
   3. **按账号池匹配算法处理**（严格 AND + 最小超集 + top 3 + 0/1/2~3 决策分支），
-     详见 `.claude/skills/account-pool/SKILL.md` 的「匹配算法」段落。
+     详见下方「账号池解析·匹配算法」。
 
   4. **拿到选中账号** → 把 `username` 和 `password` 写入 `tests/data/{feature}_data.yaml` 根级。
 
 - **0 候选场景** → 不要继续 Step 5，停下让用户补账号入池后再继续；
-  详见 `.claude/skills/account-pool/SKILL.md` 的「新增账号工作流」。
+  详见下方「账号池解析·新增账号工作流」。
 
 ### Step 5. 生成 dataclass + 数据 yaml（仅参数化用例需要）
 - `data_types/{feature}_data_types.py` + `tests/data/{feature}_data.yaml`；
@@ -389,4 +389,81 @@ pytest --collect-only tests/cases/test_{feature}.py -q
 - 元素定位错 → 改 yaml（**不改 test**）
 - 行为/时序错 → 改 Page 方法（**不改 test**）
 - 用例编排错 → 才改 test
-- 发现疑似**功能缺陷**（非脚本定位/时序问题）→ 立即按 `CLAUDE.md 缺陷反馈与阻断机制（规则 8）` 反馈；严重缺陷停止生成、等用户指示，不默默 skip
+- 发现疑似**功能缺陷**（非脚本定位/时序问题）→ 立即按 `.claude/AGENTS.md 缺陷反馈与阻断机制（规则 8）` 反馈；严重缺陷停止生成、等用户指示，不默默 skip
+
+---
+
+# 账号池解析（从 account-pool 合入）
+
+## 用途
+
+给 `case-to-code` 生成新自动化用例时使用：根据用例对账号的需求标签，从 `tests/data/account_pool.yaml` 挑出最合适的账号，把它的 `username / password` 写进新生成的 `tests/data/<feature>_data.yaml`。
+
+**不是运行时机制**：conftest / fixture / Page 类 / test 代码完全不读账号池。
+
+## 池子数据 schema
+
+文件位置：`tests/data/account_pool.yaml`
+
+```yaml
+accounts:
+  - username: "..."           # 必填
+    password: "..."           # 必填
+    tags: [..., ...]          # 必填，至少 1 个 snake_case 标签
+    description: "..."        # 必填，一句话人类可读说明
+    added_at: "YYYY-MM-DD"    # 可选，纯审计
+    added_for: "..."          # 可选，纯审计
+```
+
+## 标签命名约定（强约束）
+
+新增账号前必须先 `grep` 已有标签，能复用就复用，避免同义异写。
+
+| 类别 | 命名规则 | 示例 |
+|------|---------|------|
+| 业务能力 | `<功能>_<动作>` 或 `<功能>er` | `pin_image_downloader`, `atm_renderer` |
+| 状态/数据 | `<状态>` 或 `<状态>_<数量>` | `has_orders`, `empty_cart`, `no_permission` |
+| 角色身份 | 单词 | `vip`, `free_tier`, `admin` |
+| 通用兜底 | `default`, `generic_user` | "任何登录态都行"时使用 |
+
+**严格 AND 字符串匹配**：`vip` ≠ `VIP` ≠ `is_vip`。新增前先查已有标签：
+
+```bash
+grep -h "      -" tests/data/account_pool.yaml | sort -u
+```
+
+## 匹配算法（严格执行）
+
+输入：用例需求标签数组 `required_tags`（例 `[vip, has_orders]`）
+
+```
+1. 过滤（严格 AND）：保留 account.tags 是 required_tags 超集的账号
+2. 排名（最小超集优先）：候选集按 len(account.tags) 升序
+3. 并列时：按 added_at 升序
+4. 截断：取 top 3
+5. 决策：
+   - 0 候选 → 停下，告诉用户补账号入池
+   - 1 候选 → 直接用
+   - 2~3 候选 → 调用 AskUserQuestion 让用户选
+```
+
+## 特殊默认路径
+
+当用例前置条件**未明确**账号需求（如只写"已登录"），跳过匹配，直接使用 `tags` 包含 `default` 和 `generic_user` 的账号，不打断用户。
+
+## 拿到账号后做什么
+
+把选中账号的 `username` 和 `password` **写入** `tests/data/<feature>_data.yaml` 根级。测试用例代码沿用现有模式从 `_DATA["username"]` 读取，**不感知账号池**。
+
+## 新增账号工作流
+
+0 候选时告知用户，由用户主导追加：用户决定账号 → 告知 username/password + 业务特性 → 模型按标签命名约定追加到 `account_pool.yaml` → 用户确认 → 继续流程。
+
+## 不做的事
+
+- ❌ 运行时读账号池（不引入 fixture、marker、AccountPool.get()）
+- ❌ 跨标签语义/模糊匹配（embedding、近义词）
+- ❌ 账号状态机 / 并发锁 / xdist 隔离
+- ❌ 加密存储
+- ❌ 自动注册新账号 / 自动检测账号失效
+- ❌ 修改 `login_data.yaml` 格式或 conftest 读取逻辑

@@ -1,0 +1,98 @@
+---
+alwaysApply: true
+description: testA 项目结构与导航（Playwright + pytest + POM）
+---
+
+# testA 项目结构与导航
+
+## 项目概述
+
+基于 **Python + pytest + Playwright（sync API）** 的 UI 自动化框架，采用 **Page Object**，配置集中在 `config/`，用例与数据分离在 `tests/cases` 与 `tests/data`。
+
+## 目录结构
+
+```text
+testA/
+├── common/                    # 公共能力（断言、等待、浏览器、Cookie 等）
+│   ├── assertions.py
+│   ├── browser_manager.py
+│   ├── cookie_manager.py
+│   ├── retry_utils.py
+│   ├── wait_utils.py
+│   ├── yaml_loader.py
+│   └── __init__.py
+├── config/
+│   ├── settings.yaml          # 多环境与执行相关配置
+│   └── settings.py            # 配置加载与校验（单例）
+├── data_types/                # 用例数据对象（dataclass）
+├── pages/
+│   ├── base_page.py           # 所有 Page 的基类
+│   ├── elements/              # 页面元素 YAML（与 methods 一一对应）
+│   └── methods/               # 页面对象实现（POM）
+├── tests/
+│   ├── cases/                 # pytest 用例
+│   ├── data/                  # 用例数据 YAML
+│   └── steps/
+│       └── test_base.py       # 数据加载、标签过滤、断言辅助类
+├── core/
+│   └── __init__.py            # 兼容 re-export（过渡期，新代码勿依赖）
+├── .claude/rules/             # 自动化与项目约定（Cursor 规则）
+├── conftest.py
+├── pytest.ini
+├── test_suite.yaml            # run_suite 分组/标签调度
+├── run_suite.py
+├── requirements.txt
+└── README.md
+```
+
+## 技术栈
+
+- pytest、pytest-playwright（`page` fixture）
+- Playwright sync API
+- PyYAML
+- allure-pytest、pytest-xdist（可选）
+
+## 核心入口
+
+| 用途 | 路径 |
+|------|------|
+| 页面基类 | `pages/base_page.py` |
+| 用例数据加载 / 断言辅助 | `tests/steps/test_base.py` |
+| 全局 fixture、诊断断言 | `conftest.py` |
+| 统一配置 | `config/settings.py` + `config/settings.yaml` |
+| 套件执行 | `run_suite.py` + `test_suite.yaml` |
+
+## 新代码放置约定（摘要）
+
+- 新页面：`pages/elements/{name}_elements.yaml` + `pages/methods/{name}_page.py`
+- 新用例：`tests/cases/test_{feature}.py`
+- 测试数据：`tests/data/{feature}_data.yaml`（与 `test_{feature}.py` 一一对应，单文件含执行与断言数据），详见 `test-data-conventions.mdc`
+- 新数据类型：`data_types/{domain}_data_types.py`
+- 新公共工具：`common/{tool}.py` 并在 `common/__init__.py` 导出
+
+细则见本文件末尾「自动化用例生成约定」章节及 `pageobject-conventions.mdc`、`test-data-conventions.mdc`、`test-suite-conventions.mdc`、`test-steps-conventions.mdc` 等。
+
+---
+
+# 自动化用例生成约定（testA）— 总览
+
+生成或扩展 UI 自动化时，按下列文档分角色阅读；**目录与命名以本文件为纲**，细则见各子文件。
+
+| 文档 | 内容 |
+|------|------|
+| [pageobject-conventions.mdc](pageobject-conventions.mdc) | Page + elements YAML、`BasePage`、分层与等待 |
+| [test-data-conventions.mdc](test-data-conventions.mdc) | 每功能 `tests/data/{feature}_data.yaml` + dataclass 约定 |
+| [test-suite-conventions.mdc](test-suite-conventions.mdc) | `tests/cases`、`page`/`assertion`、参数化模板、**DB/Redis/API 能力（规则 5）** |
+| [test-steps-conventions.mdc](test-steps-conventions.mdc) | 可选 `tests/plans` 步骤 YAML（设计/对照用） |
+
+## 强制顺序（新功能）
+
+1. `pages/elements/{page}_elements.yaml`
+2. `pages/methods/{page}_page.py`（继承 `pages/base_page.py`，`get_locator` 取元素）
+3. `data_types/`（若参数化）
+4. `tests/data/{feature}_data.yaml`（与 `test_{feature}.py` 同名；单文件含 cases 与断言预期）
+5. `tests/cases/test_*.py`
+
+## 规则位置
+
+约定文档**仅**维护在 **`.claude/rules/`**（本文件为总索引）；与 `README.md` 冲突时以仓库实际代码与 README 为准。

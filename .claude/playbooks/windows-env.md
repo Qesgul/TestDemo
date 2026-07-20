@@ -1,12 +1,20 @@
 # 问题域：Windows 终端环境
 
-## 含中文 / ¥ 的输出不在终端 print（GBK 报错），改写 UTF-8 文件再 Read
-- **问题域**: WindowsGBK
-- **症状**: 在 Windows 终端 `print` 含中文或 `¥` 等非 ASCII 字符的内容时，触发 `UnicodeEncodeError`（GBK 编码无法表示），脚本中断或输出乱码。
-- **根因**: Windows 终端默认编码为 GBK，Python `print` 走终端编码，中文 / `¥` 等字符在 GBK 下编码失败。
-- **解决方案**: **含中文 / `¥` 的内容不在终端 print**，改为写入 **UTF-8 文件**，再用 Read 工具读出查看：
-  - 写：`open(path, "w", encoding="utf-8").write(text)`（或 Write 工具，默认 UTF-8）。
-  - 看：用 Read 工具读该文件，避免经过终端 GBK 编码。
-  - 排查 / 调试输出（采集结果、断言明细、解码内容等）一律走「UTF-8 文件 + Read」，不在终端直接打印中文。
-- **适用 agent**: 所有需 print 中文的 agent（selector-debug / gio-tracking / code-engineer / session-recap / ...）
+## 速查规则
+
+| 现象 | 直接做 | 不要做 |
+|---|---|---|
+| 中文、`¥`、采集结果在终端乱码或 `UnicodeEncodeError` | 写 UTF-8 文件，再用 Read / Get-Content -Encoding UTF8 查看 | 直接 `print()` 大段中文到默认 Windows 终端 |
+
+## 中文输出走 UTF-8 文件
+
+### 速查
+- **看到这个现象**: Windows 终端打印中文或 `¥` 报 GBK 编码错误，或输出乱码。
+- **直接做**: `open(path, "w", encoding="utf-8").write(text)` 写文件，再读取文件查看。
+- **不要做**: 不在终端直接 `print` 大段中文、价格符号、采集结果或解码内容。
+- **适用场景**: 所有需要输出中文的 agent。
 - **最近验证日期**: 2026-06-09
+
+### 详情
+- **根因**: Windows 终端默认编码常为 GBK，Python stdout 走终端编码。
+- **适用内容**: 采集结果、断言明细、埋点解码、测试报告片段、含 `¥` 的价格文本。

@@ -1,0 +1,119 @@
+# AI 定价采集 - 测试数据（平面填彩 / 实景改造 / 全景渲染）
+#
+# 运行方式：
+#   pytest tests/cases/test_ai_pricing.py \
+#     --override-ini="addopts=-q -s --headed" -v
+#
+# 说明：
+#   完整价格矩阵：
+#     平面填彩 (menuKey=floorPlanColor)     → 3 子模式（标准/Nano/GPT Image 2）
+#     实景改造 (menuKey=insituRenovation)   → 2 子模式（标准/Nano）
+#     全景渲染 (menuKey=panoramicRender)     → 需从左侧菜单进入，待探索
+#
+#   页面结构与创作渲染/效果图美化相同：BottomPartButtons modeText → popover → modeTitle
+#   选中态判断：容器 class 含 "active"（不用子元素 count）
+
+# ── 登录账号 ──────────────────────────────────────────────────────────────────
+accounts:
+  diamond:
+    username: "17768100279"
+    password: "Qyff2011"
+
+# ── UI 价格用例（子模式切换采集）────────────────────────────────────────────
+# navigate_via_menu: True = 从左侧菜单进入（全景渲染需此方式）
+ui_cases:
+  # ── 平面填彩 × 3 子模式 ──
+  - case_id: "UI-FPC-001"
+    product_name: "平面填彩"
+    menu_key: "floorPlanColor"
+    sub_mode_name: "标准模式"
+    expected_price: 16
+
+  - case_id: "UI-FPC-002"
+    product_name: "平面填彩"
+    menu_key: "floorPlanColor"
+    sub_mode_name: "Nano Banana Pro"
+    expected_price: 15
+
+  - case_id: "UI-FPC-003"
+    product_name: "平面填彩"
+    menu_key: "floorPlanColor"
+    sub_mode_name: "GPT Image 2"
+    expected_price: 15
+
+  # ── 实景改造 × 2 子模式 ──
+  - case_id: "UI-ISR-001"
+    product_name: "实景改造"
+    menu_key: "insituRenovation"
+    sub_mode_name: "标准模式"
+    expected_price: 16
+
+  - case_id: "UI-ISR-002"
+    product_name: "实景改造"
+    menu_key: "insituRenovation"
+    sub_mode_name: "Nano Banana Pro"
+    expected_price: 15
+
+  # ── 全景渲染（从左侧菜单进入，价格待探索）──
+  - case_id: "UI-PNR-001"
+    product_name: "全景渲染"
+    menu_key: "panoramicRender"
+    sub_mode_name: "标准模式"
+    expected_price: null
+    navigate_via_menu: true
+
+# ── API 价格用例（直接调用 aiDrawPrice 接口）─────────────────────────────────
+api_cases:
+  # ── 平面填彩 × 3 ──
+  # 注意：标准模式 API 返回单图价格(4)，需 batchSize=4 才得 UI 总价(16)
+  # Nano/GPT Image 2 单图价格 15，无 batchSize 逻辑
+  - case_id: "API-FPC-001"
+    scenario_name: "平面填彩-标准模式"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: "1604"
+      workFlowType: 2
+      batchSize: 2
+      pictureQuality: 0
+    expected_amount: 6
+
+  - case_id: "API-FPC-002"
+    scenario_name: "平面填彩-Nano Banana Pro"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1604"
+      workFlowType: 3
+    expected_amount: 15
+
+  - case_id: "API-FPC-003"
+    scenario_name: "平面填彩-GPT Image 2"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1604"
+      workFlowType: 4
+    expected_amount: 15
+
+  # ── 实景改造 × 2 ──
+  # 标准模式 API 返回单图价格(4)，需 batchSize=4 才得 UI 总价(16)
+  - case_id: "API-ISR-001"
+    scenario_name: "实景改造-标准模式"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1606"
+      workFlowType: 2
+      batchSize: 4
+      pictureQuality: 0
+    expected_amount: 16
+
+  - case_id: "API-ISR-002"
+    scenario_name: "实景改造-Nano Banana Pro"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1606"
+      workFlowType: 3
+    expected_amount: 15

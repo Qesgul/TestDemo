@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 from playwright.sync_api import BrowserContext, Page
 
+from common.auth_session import sanitize_filename
 from common.browser_manager import BrowserManager
 from config.settings import get_config
 
@@ -29,15 +30,19 @@ class CookieManager:
 
     @classmethod
     def _sanitize_filename(cls, filename: str) -> str:
-        import re
-
-        return re.sub(r'[<>:"/\\|?*@]', "_", filename)
+        return sanitize_filename(filename)
 
     @classmethod
-    def _get_cookie_filename(cls, account_identifier: str, env: str = None) -> str:
+    def _get_cookie_filename(
+        cls,
+        account_identifier: str,
+        env: str = None,
+        auth_scope: str = "material",
+    ) -> str:
         current_env = env or cls._config().env.value
         safe_account_id = cls._sanitize_filename(account_identifier)
-        filename = f"cookies_{current_env}_{safe_account_id}.json"
+        safe_scope = cls._sanitize_filename(auth_scope or "material")
+        filename = f"cookies_{current_env}_{safe_scope}_{safe_account_id}.json"
         return str(cls._cookie_dir() / filename)
 
     @classmethod
@@ -46,16 +51,18 @@ class CookieManager:
         account_identifier: str,
         context: BrowserContext,
         env: str = None,
+        auth_scope: str = "material",
     ) -> None:
         cookie_data = {
             "account_identifier": account_identifier,
             "env": env or cls._config().env.value,
+            "auth_scope": auth_scope,
             "timestamp": datetime.now().isoformat(),
             "cookies": context.cookies(),
         }
 
         cls._cookie_dir().mkdir(parents=True, exist_ok=True, mode=0o700)
-        filename = cls._get_cookie_filename(account_identifier, env)
+        filename = cls._get_cookie_filename(account_identifier, env, auth_scope)
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(cookie_data, f, ensure_ascii=False, indent=2, default=str)
@@ -68,8 +75,13 @@ class CookieManager:
         cls,
         account_identifier: str,
         env: str = None,
+        auth_scope: str = "material",
     ) -> Optional[Dict[str, Any]]:
-        filename = cls._get_cookie_filename(account_identifier, env)
+        filename = cls._get_cookie_filename(account_identifier, env, auth_scope)
+        if not os.path.exists(filename) and auth_scope == "material":
+            current_env = env or cls._config().env.value
+            legacy = str(cls._cookie_dir() / f"cookies_{current_env}_{cls._sanitize_filename(account_identifier)}.json")
+            filename = legacy
         if not os.path.exists(filename):
             return None
 
@@ -97,8 +109,8 @@ class CookieManager:
             raise RuntimeError(f"Failed to load cookies: {e}") from e
 
     @classmethod
-    def delete_cookies(cls, account_identifier: str, env: str = None) -> bool:
-        filename = cls._get_cookie_filename(account_identifier, env)
+    def delete_cookies(cls, account_identifier: str, env: str = None, auth_scope: str = "material") -> bool:
+        filename = cls._get_cookie_filename(account_identifier, env, auth_scope)
         if os.path.exists(filename):
             try:
                 os.remove(filename)
@@ -113,6 +125,7 @@ class CookieManager:
         cookie_data: Dict[str, Any],
         max_age_hours: int = 24,
         expected_account_identifier: Optional[str] = None,
+        expected_auth_scope: Optional[str] = None,
     ) -> bool:
         if "timestamp" not in cookie_data or "cookies" not in cookie_data:
             return False
@@ -124,6 +137,16 @@ class CookieManager:
                 logger.warning(
                     "Cookie 账号不匹配：文件存储=%s，请求账号=%s，跳过 cookie 登录",
                     stored, expected_account_identifier,
+                )
+                return False
+
+        if expected_auth_scope is not None:
+            stored_scope = cookie_data.get("auth_scope")
+            if stored_scope and stored_scope != expected_auth_scope:
+                logger.warning(
+                    "Cookie auth scope mismatch: stored=%s requested=%s",
+                    stored_scope,
+                    expected_auth_scope,
                 )
                 return False
 

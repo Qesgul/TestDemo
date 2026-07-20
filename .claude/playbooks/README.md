@@ -1,65 +1,37 @@
 # 踩坑库（Playbooks）
 
-本目录是 TestDemo 项目的**自动化调试经验知识库**：把「反复踩过、已经定位并解决」的项目特有痛点，按统一模板沉淀为可复用解法，供各 agent 在动手前查阅、踩坑后回写，形成知识闭环。
+本目录只存**已解决、可复用的自动化调试解法**。使用时先看下面路由表，命中后读对应文件的「速查」，仍卡住再读「详情」。
 
----
+## 快速路由
 
-## 用途
+| 看到的现象 / 关键词 | 先读文件 | 适用 agent |
+|---|---|---|
+| selector 多命中、点错元素、hash class、active 判断、`is_visible(timeout=...)` | `selector.md` | `selector-debug` / `code-engineer` |
+| 登录弹窗、扫码默认态、跨子域 session、`.znzmo.cn` 登录、账号锁定、URL 没跳到目标页 | `browser-conventions.md（登录与会话章节）` | `selector-debug` / `gio-tracking` / `code-engineer` |
+| GIO 事件找不到、body 明文搜不到、埋点断言怎么写 | `gio-tracking.md` | `gio-tracking` |
+| 下一条用例开下载弹窗超时、fixture teardown 后状态残留 | `selector.md（弹窗状态残留章节）` | `code-engineer` / `test-runner` |
+| Windows 终端中文乱码、`UnicodeEncodeError`、`¥` 打印失败 | `windows-env.md` | 所有 agent |
 
-- **consult（查解法）**：agent 调试前，按「问题域」检索对应条目，把「症状 / 根因 / 解决方案」注入自己的处理流程，避免重复踩坑。
-- **capture（回写扩充）**：新问题解决后，把解法结构化追加到对应问题域文件；命中已有条目则去重 / 更新，并刷新「最近验证日期」。
+## 使用规则
 
----
+1. **consult（查解法）**：调试前按关键词读对应文件，只执行命中的「直接做」。
+2. **capture（回写）**：新坑解决后按 `_template.md` 追加，先写速查，详情从简。
+3. **不进库**：研发缺陷不进踩坑库。核心交互未实现、接口报错、埋点 handler 未挂、页面白屏等，按规则8输出【缺陷反馈】/【阻断提示】。
 
-## 字段规范
+## 条目规范
 
-每个条目严格按 `_template.md` 结构，字段固定为：
+每个条目必须包含：
 
 | 字段 | 说明 |
 |---|---|
-| **问题域** | 归类关键词（如 `登录弹窗` / `selector同名hash` / `跨子域session` / `埋点cookie` / `WindowsGBK`），用于检索 |
-| **症状** | 可观察的客观现象（报错、count 数、上报缺失等） |
-| **根因** | 定位到的真实原因 |
-| **解决方案** | 可复用步骤 / 代码片段 / 选择器策略 |
-| **适用 agent** | 该解法主要服务哪些 agent（如 `selector-debug` / `gio-tracking`） |
-| **最近验证日期** | 该解法最近一次被验证有效的日期，`YYYY-MM-DD` |
+| 看到这个现象 | 可检索的报错、UI 现象、count 数、事件缺失 |
+| 直接做 | 可复制执行的步骤、工具或代码策略 |
+| 不要做 | 已验证会浪费时间或误判的做法 |
+| 适用场景 | 适用页面、工具或 agent |
+| 最近验证日期 | `YYYY-MM-DD` |
 
-**约定**：
+## 维护边界
 
-- 一个文件对应一个问题域大类（`selector.md` / `login-session.md` / `gio-tracking.md` / `dialog-fixture.md` / `windows-env.md` …），同类条目追加在同一文件。
-- 条目标题用二级标题 `## <问题标题>`，便于 grep 检索与目录化。
-- 新增条目必须填全 6 个字段；缺「最近验证日期」视为不合规。
-
----
-
-## 维护责任
-
-本库由 **`troubleshooter` agent 守护**：
-
-- 仅 `troubleshooter`（或主 agent 内部调用它）负责新增 / 去重 / 更新条目。
-- 写 `.claude/playbooks/` 属知识文档，**免确认**（规则5 例外），但**不碰生产代码、不做任何 git 操作**。
-- 其余 agent 只**读取引用**，不直接改库；遇到新解法时把素材交回 `troubleshooter` 回写。
-
----
-
-## 各 agent 如何引用
-
-- `selector-debug` → 引用 `selector.md`、`login-session.md`（抓取 / 验证 / 失败定位前先查）。
-- `gio-tracking` → 引用 `gio-tracking.md`、`login-session.md`（埋点校验、登录态前先查）。
-- `code-engineer` → 引用 `dialog-fixture.md`、`selector.md`、`login-session.md`（写 fixture / teardown、转码、登录态前先查）。
-- 所有需在终端 print 中文的 agent → 引用 `windows-env.md`。
-
-引用方式：动手前 `Read` 对应文件，按命中条目的「解决方案」执行；无命中再走常规排查，解决后交 `troubleshooter` capture 回写。
-
----
-
-## 与规则8 的边界（重要）
-
-**本库只存「已解决的自动化调试解法」**——即问题根因属于**自动化脚本侧**（定位策略、时序、环境、登录态、探针用法等）且已有可复用解法的经验。
-
-**不进库**：属于**研发缺陷**的问题（核心交互未实现、关键接口报错、埋点 handler 未挂、页面白屏等）。这类问题按 **规则8** 走【缺陷反馈】/【阻断提示】流程上报研发，**不在踩坑库沉淀解法**——因为「解法」是研发修代码，而非自动化侧可复用的绕过手段（绕过 = 伪造，触红线）。
-
-简言之：
-
-- 自动化侧能复用解决的 → 进库（本目录）。
-- 研发侧缺陷 → 规则8 反馈，不进库、不伪造断言绕过。
+- 由 `troubleshooter` 或主 agent 统一维护。
+- 本目录是知识文档，不碰生产代码、不执行 git 操作。
+- 目标是“快速命中”，不是写完整复盘；长背景放到「详情」，不要压住速查结论。

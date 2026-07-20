@@ -3,7 +3,7 @@
 URL: https://www.znzmo.com/yunxuanLanding.html?fromwhere=0
 需求: 3D云渲染落地页优化PRD | 用例: 05_test_cases_final_auto.md（120 条 AUTO-*）
 
-自动化范围（CLAUDE.md 规则 9：仅 web 端纳入自动化）：
+自动化范围（.claude/AGENTS.md 规则 9：仅 web 端纳入自动化）：
   auto    纯浏览器 UI 操作 + 可见/文案/滚动/下载触发
   network GIO 埋点上报 + 福利领取接口 route 打桩
   env     网络中断模拟（AUTO-BONUS-009）

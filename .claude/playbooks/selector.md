@@ -1,33 +1,106 @@
 # 问题域：selector 定位与验证
 
-## selector 唯一性必须 count==1，禁用 count>0
-- **问题域**: selector唯一性
-- **症状**: 用宽松的 `count>0` 判定 selector「有效」，结果同名 class 多命中被漏判，运行时定位到错误元素（如本次 `promo_package_option` 实际 count=3，却被当成功）。
-- **根因**: `count>0` 只要页面上有任意一个匹配就通过，无法发现「同名 class / 同结构多元素」造成的多命中；真正可靠的判定是「页面上有且仅有一个匹配」。
-- **解决方案**: 用官方工具验证唯一性，判定标准严格为 `count==1`：
-  - `python scripts/verify_locator.py --specs-json <to_verify.json>`，读输出里的 `unique`/`count`，只接受 `count==1`。
-  - 或代码内 `common/selector_finder/verifier.build_locator` 构造后断言 `count==1`。
-  - **禁止** 用 `count>0` 放行，多命中一律视为未通过，进同批自修复（加 scope 父容器缩小范围）。
-- **适用 agent**: selector-debug
+## 速查规则
+
+| 现象 | 直接做 | 不要做 |
+|---|---|---|
+| selector 看似可用但点错元素 | 用 `scripts/verify_locator.py --specs-json` 验证 `count == 1` | 用 `count > 0` 放行 |
+| 同名 hash class 多命中 | 加稳定父容器 scope，必要时用标准 CSS 结构伪类 | 直接 `.first()` / `.nth()` 糊过去 |
+| 展开下拉后 selector 多命中 | 在目标交互状态重新验证 count | 只在初始页面验证 |
+| 判断选中态全都为 True | 看选项父容器 class 是否含 `active/selected/checked` | 用子元素 `activeIcon` count 判断 |
+| `is_visible(timeout=...)` 不等待 | 等待用 `wait_for()` / `expect()`；即时判断才用无参 `is_visible()` | 给 `is_visible/is_enabled/is_checked` 传 timeout |
+
+## selector 唯一性必须 count==1
+
+### 速查
+- **看到这个现象**: `count>0` 校验通过，但运行时命中错误元素或多元素。
+- **直接做**: 用 `scripts/verify_locator.py --specs-json <to_verify.json>` 或 `common/selector_finder/verifier.build_locator`，只接受 `count == 1`。
+- **不要做**: 禁止用 `count > 0` 作为 selector 可用标准。
+- **适用场景**: `selector-debug`。
 - **最近验证日期**: 2026-06-09
 
-## 同名 hash class 无法区分时，用标准 CSS 结构定位而非 .first()
-- **问题域**: selector同名hash
-- **症状**: 目标元素的 class 是构建产物 hash（如 `.promo_package_option_a3f9c2`），页面上多个兄弟元素共用同一 hash class，无法靠 class 单独定位到唯一的那个。
-- **根因**: hash class 不携带语义、且多元素复用，单层选择器必然多命中；ai-selector 规则3 禁止把 hash class 作为定位依据，规则6 禁止依赖 `first()/last()/nth()`。
-- **解决方案**: 用**标准 CSS 结构定位**锁定唯一目标——通过父容器 + 结构伪类，如 `父容器 > 子:first-child`（`:first-child` / `:nth-child(n)` 属标准 CSS 伪类，是页面结构的一部分，**不是** Playwright 的 `.first()` 链式调用，符合 ai-selector 规则6）。
-  - 正确：`{type: css, selector: ".promo_wrapper > .promo_package_option:first-child"}`，再 `verify_locator` 确认 `count==1`。
-  - 错误：`page.locator(".promo_package_option").first()`（违反规则6，且脆弱）。
-- **适用 agent**: selector-debug
+### 详情
+- **根因**: `count>0` 只能证明页面存在匹配，不能证明唯一；同名 class / 同结构元素会被漏判。
+- **处理**: 多命中时加 scope 父容器、语义属性或稳定 CSS 结构，重新验证。
+
+## 同名 hash class 用 CSS 结构定位
+
+### 速查
+- **看到这个现象**: 构建产物 hash class 多个兄弟元素共用，单靠 class 无法唯一定位。
+- **直接做**: 用父容器 + 标准 CSS 结构伪类，例如 `.promo_wrapper > .promo_package_option:first-child`，再验证 `count == 1`。
+- **不要做**: 不用 `page.locator(".promo_package_option").first()` 作为长期方案。
+- **适用场景**: `selector-debug`。
 - **最近验证日期**: 2026-06-09
 
-## Playwright 立即型 API（is_visible/is_enabled/is_checked）不接 timeout 参数
-- **问题域**: PlaywrightAPI用法
-- **症状**: 给 `Locator.is_visible()` / `is_enabled()` / `is_checked()` 传 `timeout` 参数（如 `is_visible(timeout=500)`）不生效——这些是**立即返回型** API，不等待元素出现；部分版本对该参数**静默忽略、不报错**，极易漏看，误以为「带了等待」实则当下就判定。
-- **根因**: Playwright Python 把 `is_*` 系列设计为「即时状态查询」，不接受 timeout；真正带等待语义的是 `wait_for` / `expect`。
-- **解决方案**:
-  - 仅做**即时判断** → 用无参 `locator.is_visible()` / `is_enabled()` / `is_checked()`。
-  - 需要**等待**元素出现 / 可见再判断 → 用 `locator.wait_for(state="visible", timeout=...)` 或 `expect(locator).to_be_visible(timeout=...)`。
-- **出处**: `conftest.py` teardown 曾误写 `is_visible(timeout=500)`，本会话已改为 `is_visible()`。
-- **适用 agent**: selector-debug / gio-tracking / code-engineer
+### 详情
+- **根因**: hash class 不携带语义，且常被多个元素复用。
+- **补充**: `:first-child` / `:nth-child(n)` 是 CSS 结构伪类，不是 Playwright `.first()` 链式调用。
+
+## 展开/交互后重新验证命中数
+
+### 速查
+- **看到这个现象**: 初始状态 `count=1`，展开下拉或弹窗后变成 `count=3+`。
+- **直接做**: 在目标状态验证 selector；YAML 用 `scope` 限定父容器，PageObject 用嵌套 locator。
+- **不要做**: 不要只在初始页面截图或 DOM 状态下验证。
+- **适用场景**: `selector-debug` / `code-engineer`。
+- **最近验证日期**: 2026-07-07
+
+### 详情
+```yaml
+model_option_item:
+  type: css
+  selector: '[class*="mode__"]'
+  scope: '[class*="agentSelectPopoverContent"]'
+```
+
+```python
+panel = self.get_locator("model_dropdown_panel").first
+options = panel.locator('[class*="mode__"]')
+```
+
+## 选中态看父容器 class
+
+### 速查
+- **看到这个现象**: 用 `activeIcon` 子元素判断选中态，所有选项都返回 True。
+- **直接做**: 读取选项容器自身 class，判断是否包含 `active` / `selected` / `checked`。
+- **不要做**: 不用子元素图标数量判断选中态。
+- **适用场景**: `code-engineer` / `selector-debug`。
+- **最近验证日期**: 2026-07-08
+
+### 详情
+```python
+# 错误：activeIcon 每项都有
+is_active = option.locator('[class*="activeIcon"]').count() > 0
+
+# 正确：看容器 class
+is_active = "active" in (option.get_attribute("class") or "").lower()
+```
+
+## Playwright 立即型 API 不接 timeout
+
+### 速查
+- **看到这个现象**: `Locator.is_visible(timeout=500)` 看似写了等待，但仍立即返回。
+- **直接做**: 即时判断用无参 `is_visible()`；等待用 `locator.wait_for(state="visible", timeout=...)` 或 `expect(locator).to_be_visible(timeout=...)`。
+- **不要做**: 不给 `is_visible/is_enabled/is_checked` 传 timeout。
+- **适用场景**: `selector-debug` / `gio-tracking` / `code-engineer`。
 - **最近验证日期**: 2026-06-16
+
+### 详情
+- **根因**: Playwright Python 的 `is_*` 系列是即时状态查询，等待语义属于 `wait_for` / `expect`。
+- **出处**: `conftest.py` teardown 曾误写 `is_visible(timeout=500)`，已改为 `is_visible()`。
+
+---
+
+## 弹窗状态残留阻塞下一条用例
+
+### 速查
+- **看到这个现象**: 上条用例打开 `DownloadConfirmModal` 后未显式关闭，下一条 `wait_for_download_dialog` 超时。
+- **直接做**: 在 `logged_in_page` fixture teardown 中、`page.close()` 前点击 `[class^="DownloadConfirmModal__btnClose__"]`，向服务端发送取消信号。
+- **不要做**: 不只关闭 page；不依赖模块级 autouse fixture 在 page 已关闭后补救。
+- **适用场景**: `code-engineer` / `test-runner` / `selector-debug`。
+- **最近验证日期**: 2026-06-16
+
+### 详情
+- **根因**: fixture teardown LIFO 导致 `logged_in_page` 先关 page，模块级 `_auto_close_download_dialog` 后执行时已经关不到弹窗，服务端"下载流程进行中"短暂残留。
+- **注意**: 判断关闭按钮可见性用无参 `is_visible()`。
+- **验证**: VIP 账号两轮多组连续开弹窗用例，级联超时零复发。

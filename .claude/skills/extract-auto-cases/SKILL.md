@@ -9,7 +9,7 @@ description: Use when the user provides existing test cases (Markdown table OR E
 *固定列结构*的「自动化测试用例」。本层是**设计层**，产物是代码生成（`case-to-code` skill）的上游输入，
 本 skill 不直接出 Playwright/pytest 代码。
 
-> 本 skill 是 **Claude 专用**，与 Cursor IDE 的 `.cursor/rules/*.mdc` 无关。
+> 本 skill 是 **Codex 专用**，与 Cursor IDE 的 `.claude/rules/*.mdc` 无关。
 > 与 `case-to-code` 的关系：本 skill 产出「自动化测试用例（md/excel）」→ 交给 `case-to-code` 生成可运行代码。
 > 自动化可行性分级词汇（`auto/network/env/manual`）**与 `case-to-code` 保持一致**，确保两段流水线无缝衔接。
 
@@ -132,16 +132,16 @@ out.save("xxx_auto.xlsx")
   - 待澄清清单（`【待澄清】` / 缺优先级 / 缺需求追溯）
 - 收尾建议：可把 `xxx_auto.md` 交给 `case-to-code` 生成可运行代码。
 
-## 红线（与 CLAUDE.md 规则 8 / gio 指南一致）
+## 红线（与 AGENTS.md 规则 8 / gio 指南一致）
 
 - **不伪造断言**：`manual` 用例只写"人工目视"，绝不用 `assert_true(True)` 之类糊弄。
-- **不掩盖缺陷**：改写中发现疑似功能缺陷（区别于用例本身写得含糊），按 `CLAUDE.md 规则 8` 格式即时反馈；
+- **不掩盖缺陷**：改写中发现疑似功能缺陷（区别于用例本身写得含糊），按 `AGENTS.md 规则 8` 格式即时反馈；
   严重缺陷先阻断、等指示，不默默 skip。
 - **不丢用例**：不可自动化的用例标 `manual` 保留，不静默删除。
 - **不换格式**：输入什么格式输出什么格式，不擅自转。
 - **需求缺失要标注**：没有需求文档时，「需求追溯」列填 `-`，并在提取报告里提示"未做需求查漏"。
 
-## 改动确认（CLAUDE.md 规则 5）
+## 改动确认（AGENTS.md 规则 5）
 
 写出 `xxx_auto.md` / `xxx_auto.xlsx` 属于「新建文件」，**必须先输出【改动方案】等用户确认**后再写。
 采集/解析阶段可先把分级与查漏结果打印到终端供确认。

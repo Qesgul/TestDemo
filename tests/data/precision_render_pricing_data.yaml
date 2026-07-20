@@ -1,0 +1,164 @@
+# 精准渲染定价采集 - 测试数据
+#
+# 运行方式：
+#   pytest tests/cases/test_precision_render_pricing.py \
+#     --override-ini="addopts=-q -s --headed" -v
+#
+# 说明：
+#   完整价格矩阵（7 个组合）：
+#     精准渲染 × 标准模式         = 6  知点（subServiceType=1601, workFlowType=2）
+#     精准渲染 × 思考模式         = 12 知点（subServiceType=1601, workFlowType=2, deepMode=1）
+#     精准渲染 × Nano Banana Pro  = 15 知点（subServiceType=1601, workFlowType=3）
+#     创作渲染 × 标准模式         = 16 知点（subServiceType=1602, workFlowType=2）
+#     创作渲染 × Nano Banana Pro  = 15 知点（subServiceType=1602, workFlowType=3）
+#     效果图美化 × 标准模式       = 4  知点（subServiceType=1603, workFlowType=2）
+#     效果图美化 × Nano Banana Pro= 15 知点（subServiceType=1603, workFlowType=3）
+#
+#   页面路由：
+#     精准渲染   → menuKey=precisionRender  （DeepMode 面板切换）
+#     创作渲染   → menuKey=ideaRender       （modeText popover 子模式切换）
+#     效果图美化 → menuKey=imageEnhancement （modeText popover 子模式切换）
+#
+#   登录账号已统一到 pricing_baseline.yaml 的 members 段。
+
+# ── 目标页面 ──────────────────────────────────────────────────────────────────
+target_url: "https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=precisionRender"
+
+# ── UI 价格用例（创作模式×子模式 组合采集，共 7 个）──────────────────────────
+# creation_mode_index: radio 按钮索引（0=精准渲染, 1=创作渲染, 2=效果图美化）
+# deep_mode_index: DeepMode 面板选项索引（仅精准渲染页: 0=标准, 1=思考, 2=Nano）；-1=无
+# sub_mode_name: 子模式名称（创作渲染/效果图美化通过 modeText popover 切换）
+ui_cases:
+  # ── 精准渲染 × 3 DeepModes ──
+  - case_id: "UI-PR-001"
+    creation_mode_index: 0
+    creation_mode_name: "精准渲染"
+    deep_mode_index: 0
+    deep_mode_name: "标准模式"
+    expected_price: 6
+
+  - case_id: "UI-PR-002"
+    creation_mode_index: 0
+    creation_mode_name: "精准渲染"
+    deep_mode_index: 1
+    deep_mode_name: "思考模式"
+    expected_price: 12
+
+  - case_id: "UI-PR-003"
+    creation_mode_index: 0
+    creation_mode_name: "精准渲染"
+    deep_mode_index: 2
+    deep_mode_name: "Nano Banana Pro"
+    expected_price: 15
+
+  # ── 创作渲染 × 2 子模式（modeText popover 切换）──
+  - case_id: "UI-PR-004"
+    creation_mode_index: 1
+    creation_mode_name: "创作渲染"
+    deep_mode_index: -1
+    deep_mode_name: "标准模式"
+    sub_mode_name: "标准模式"
+    expected_price: 16
+
+  - case_id: "UI-PR-005"
+    creation_mode_index: 1
+    creation_mode_name: "创作渲染"
+    deep_mode_index: -1
+    deep_mode_name: "Nano Banana Pro"
+    sub_mode_name: "Nano Banana Pro"
+    expected_price: 15
+
+  # ── 效果图美化 × 2 子模式（modeText popover 切换）──
+  - case_id: "UI-PR-006"
+    creation_mode_index: 2
+    creation_mode_name: "效果图美化"
+    deep_mode_index: -1
+    deep_mode_name: "标准模式"
+    sub_mode_name: "标准模式"
+    expected_price: 4
+
+  - case_id: "UI-PR-007"
+    creation_mode_index: 2
+    creation_mode_name: "效果图美化"
+    deep_mode_index: -1
+    deep_mode_name: "Nano Banana Pro"
+    sub_mode_name: "Nano Banana Pro"
+    expected_price: 15
+
+# ── API 价格用例（直接调用 aiDrawPrice 接口，共 7 个）────────────────────────
+# 参数从 UI 拦截确认（2026-07-07）
+api_cases:
+  # ── 精准渲染 × 3 ──
+  - case_id: "API-PR-001"
+    scenario_name: "精准渲染-标准模式"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1601"
+      workFlowType: 2
+    expected_amount: 6
+
+  - case_id: "API-PR-002"
+    scenario_name: "精准渲染-思考模式"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1601"
+      workFlowType: 2
+      deepMode: 1
+    expected_amount: 12
+
+  - case_id: "API-PR-003"
+    scenario_name: "精准渲染-Nano Banana Pro"
+    params:
+      channel: "znzmo"
+      serviceType: "16"
+      subServiceType: "1601"
+      workFlowType: 3
+    expected_amount: 15
+
+  # ── 创作渲染 × 2 ──
+  - case_id: "API-PR-004"
+    scenario_name: "创作渲染-标准模式"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: "1602"
+      workFlowType: 2
+      batchSize: 4
+      pictureQuality: 0
+    expected_amount: 16
+
+  - case_id: "API-PR-005"
+    scenario_name: "创作渲染-Nano Banana Pro"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: "1602"
+      workFlowType: 3
+      batchSize: 4
+      pictureQuality: 0
+    expected_amount: 15
+
+  # ── 效果图美化 × 2 ──
+  - case_id: "API-PR-006"
+    scenario_name: "效果图美化-标准模式"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: "1603"
+      workFlowType: 2
+      batchSize: 1
+      pictureQuality: 2
+    expected_amount: 4
+
+  - case_id: "API-PR-007"
+    scenario_name: "效果图美化-Nano Banana Pro"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: "1603"
+      workFlowType: 3
+      batchSize: 1
+      pictureQuality: 2
+    expected_amount: 15

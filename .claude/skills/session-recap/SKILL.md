@@ -55,7 +55,7 @@ git diff --name-only <范围>
 | 数据文件 | `tests/data/*.yaml` | 测试数据/快照 |
 | 公共工具 | `common/*.py` | 工具类改动 |
 | 脚本 | `scripts/*.py` | 辅助脚本 |
-| 规则/配置 | `CLAUDE.md` / `.cursor/rules/*.mdc` | 规范更新 |
+| 规则/配置 | `AGENTS.md` / `.claude/rules/*.mdc` | 规范更新 |
 | 其他 | 剩余文件 | — |
 
 ---
@@ -119,6 +119,17 @@ pytest --collect-only tests/cases/<改动的 test_*.py> -q
 
 ## Step 6：汇总输出
 
+### 6a. 可复用知识候选
+
+复盘结束前，识别本次是否产生可跨项目复用的内容：业务规则、接口契约、测试数据构造规则、常见缺陷、自动化踩坑、评审模式或发布事故教训。若有，追加“知识候选”小节，每项包含：
+
+- 建议类型：`business-rule` / `contract` / `test-heuristic` / `case` / `test-data` / `review-pattern` / `incident` / `playbook`
+- 一句话结论、适用范围、触发词
+- 证据来源和置信度：`confirmed` / `inferred` / `proposed`
+- 是否需要人工核验、是否可能与现有卡重复
+
+候选项交给 `$test-knowledge-curator` 处理。默认只输出建议，不直接写入或升级中心知识库；中心库固定为 `D:\code\test-knowledge-base`，正式卡必须通过其校验和来源核验。
+
 ```
 【复盘报告已生成】
 
@@ -153,7 +164,7 @@ pytest --collect-only tests/cases/<改动的 test_*.py> -q
 
 ```
 用户：总结今天的改动
-Claude：
+Codex：
   Step 1 → 确认范围：今天 git log
   Step 2 → 列出改动文件
   Step 3 → 输出问题报告

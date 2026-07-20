@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""校验多 agent 架构：agent frontmatter + 工具白名单 + CLAUDE.md 路由表一致性。
+"""校验多 agent 架构：agent frontmatter + 工具白名单 + .claude/AGENTS.md 路由表一致性。
 退出码 0 = 全部通过；非 0 = 有失败（打印 FAIL 明细）。"""
 import sys, re, pathlib
 import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 AGENTS_DIR = ROOT / ".claude" / "agents"
-CLAUDE_MD = ROOT / "CLAUDE.md"
+CLAUDE_MD = ROOT / ".claude/AGENTS.md"
 
 EXPECTED_AGENTS = {
-    "test-design", "auto-case-extract", "auto-planner", "code-engineer",
+    "test-design", "auto-planner", "code-engineer",
     "selector-debug", "gio-tracking", "test-runner", "test-tooling",
-    "session-recap", "cleanup", "troubleshooter",
+    "session-recap", "troubleshooter",
 }
 ALLOWED_TOOLS = {"Read", "Write", "Edit", "Bash", "Glob", "Grep", "Skill",
                  "WebSearch", "WebFetch", "Task"}
@@ -27,6 +27,8 @@ def parse_frontmatter(text):
 def check_agents():
     found = set()
     for md in sorted(AGENTS_DIR.glob("*.md")):
+        if md.stem.startswith("_"):
+            continue  # 跳过共享文件（如 _common-rules.md）
         stem = md.stem
         fm = parse_frontmatter(md.read_text(encoding="utf-8"))
         if fm is None:
@@ -53,13 +55,13 @@ def check_agents():
 
 def check_route_table():
     if not CLAUDE_MD.exists():
-        errors.append("CLAUDE.md 不存在")
+        errors.append(".claude/AGENTS.md 不存在")
         return
     text = CLAUDE_MD.read_text(encoding="utf-8")
     # 路由表区段：从 "Agent 路由表" 标题到下一个二级标题之间
     seg = re.split(r"Agent 路由表", text, maxsplit=1)
     if len(seg) < 2:
-        errors.append("CLAUDE.md 缺少『Agent 路由表』区段")
+        errors.append(".claude/AGENTS.md 缺少『Agent 路由表』区段")
         return
     body = re.split(r"\n##\s", seg[1], maxsplit=1)[0]
     routed = set(re.findall(r"`([a-z-]+)`", body))

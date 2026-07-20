@@ -1,0 +1,110 @@
+---
+globs: tests/data/**/*_data.yaml
+description: testA 测试数据约定（每功能单文件 {feature}_data.yaml）
+---
+
+# 测试数据约定（testA）
+
+## 一文件一功能
+
+每个 `tests/cases/test_{feature}.py` 对应**唯一**数据文件 **`tests/data/{feature}_data.yaml`**。
+
+- **禁止**为同一功能再拆多个 YAML（例如单独的 `*_expected.yaml`）；执行数据、参数化 `cases`、断言预期等均写入该 `{feature}_data.yaml`。
+- 用例只读取本功能对应路径下的上述文件（`load_yaml` / `load_typed_cases_from_yaml`）。
+
+## 门禁自检
+
+`tests/cases/test_architecture_sanity.py` 中的 **`test_per_feature_data_yaml_convention`** 会校验：`login_data.yaml`、`recharge_flow_data.yaml` 存在且 `cases` 可解析为 `LoginCaseData`；`create_inspiration_flow_data.yaml` 存在且含 `username` / `password` 与至少一个 `expected_*` 键。新增同类流程时可在该测试中扩展路径列表。
+
+## 文件内结构（推荐）
+
+### 参数化（与 `test_base.load_typed_cases_from_yaml` 一致）
+
+根键 **`cases`**，列表元素字段与 `data_types` 中 dataclass 一致：
+
+```yaml
+cases:
+  - case_name: "valid_login"
+    username: "example_user"
+    password: "example_pass"
+    expected_message: "登录成功"
+    tags: []   # 可选；与 settings.execution.tags 做交集过滤
+```
+
+### 流程 / 断言预期
+
+与 `cases` **同文件**：可根级平铺键（账号、`expected_*` 等），或使用 `expectations` 子对象集中存放；用例内 `load_yaml` 后按约定路径取用。
+
+```yaml
+cases: []
+username: "example_user"
+password: "example_pass"
+expected_url: "https://example.com/path"
+```
+
+## 读取示例
+
+```python
+from tests.steps.test_base import load_typed_cases_from_yaml, case_ids
+
+CASES = load_typed_cases_from_yaml("tests/data/login_data.yaml", LoginCaseData)
+```
+
+```python
+from common.yaml_loader import load_yaml
+
+data = load_yaml("tests/data/create_inspiration_flow_data.yaml")
+# data["expected_*"] 或 data["expectations"]["..."]，与文件内结构一致
+```
+
+## 数据与断言
+
+- **期望值、阈值、文案**优先写在本功能的 `{feature}_data.yaml`。
+- 用例中只做「读对应 `{feature}_data.yaml` → 调 Page → 断言」，避免写死魔法字符串。
+
+## YAML 质量
+
+- UTF-8；含特殊字符的字符串建议加引号。
+- 大段 JSON 字符串若不可避免，在文件头或该键上方用注释说明维护方式。
+
+---
+
+# 数据对象约定（dataclass）
+
+## 设计原则
+
+1. **用例输入 / 期望值结构**用 `@dataclass` 定义在 `data_types/`，文件名建议 `{domain}_data_types.py`。
+2. 与 **页面 DOM 结构**强绑定的临时结构，优先放在对应 `pages/methods` 内或测试私有辅助；只有跨用例复用再提升到 `data_types/`。
+3. 字段命名使用 **snake_case**，与 YAML 键名一致，便于 `load_typed_cases_from_yaml` 直接解包。
+
+## 与 YAML 对齐
+
+参数化用例数据在对应功能的 **`tests/data/{feature}_data.yaml`** 的 `cases` 列表中；每一项字段应与 dataclass 字段一一对应；多余字段会导致构造失败，缺失字段需有默认值。
+
+## 推荐写法
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class LoginCaseData:
+    case_name: str
+    username: str
+    password: str
+    expected_message: str
+```
+
+- 需要可变或可选字段时使用 `field(default=...)` / `Optional[...]`。
+- `frozen=True` 适合纯数据用例，避免测试中误改。
+
+## 加载方式
+
+在测试中通过 `tests/steps/test_base.py`：
+
+- `load_typed_cases_from_yaml("tests/data/{feature}_data.yaml", XxxCaseData)`
+- `case_ids(cases)` 作为 `pytest.mark.parametrize` 的 `ids`
+
+## 禁止
+
+- 在 `data_types` 中引用 `Page` / `Locator` 或执行浏览器操作。
+- 在数据类中写断言逻辑（断言留在用例 + `assertion` fixture）。

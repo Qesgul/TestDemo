@@ -1,0 +1,1401 @@
+[
+  {
+    "timestamp": "2026-07-03T13:58:24.769396",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 1
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:24.918452",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 1
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:43.201430",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 1
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:43.909726",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 8,
+        "originalAmount": 8,
+        "commonAmount": 8,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:45.399369",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 4
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:46.929652",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 1
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:48.160162",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "17",
+      "subServiceType": "1701",
+      "isIntelligentAgentTask": 1,
+      "bananaChannel": 3
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 8,
+        "originalAmount": 8,
+        "commonAmount": 8,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": true,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:51.516537",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1601",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 4,
+        "originalAmount": 4,
+        "commonAmount": 4,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:54.370105",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "znzmo",
+      "serviceType": "16",
+      "subServiceType": "1601",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": 1
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:55.711894",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1601",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:57.347425",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1602",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:58:59.541974",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1602",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:01.162057",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1603",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 3,
+        "originalAmount": 3,
+        "commonAmount": 3,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:02.703346",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1603",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:08.653548",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1604",
+      "workFlowType": 2,
+      "batchSize": 2,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 6,
+        "originalAmount": 6,
+        "commonAmount": 6,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:11.720746",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1604",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:13.657207",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1604",
+      "workFlowType": 4,
+      "batchSize": 1,
+      "pictureQuality": 2
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:15.623376",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1606",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:18.134079",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1606",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:20.446960",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1612",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 3,
+        "originalAmount": 3,
+        "commonAmount": 3,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:23.060205",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1612",
+      "workFlowType": 3,
+      "batchSize": 1,
+      "pictureQuality": 2,
+      "referenceImg": "",
+      "sceneName": [],
+      "deepMode": null
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 15,
+        "originalAmount": 15,
+        "commonAmount": 15,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:27.493394",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 8,
+        "originalAmount": 8,
+        "commonAmount": 8,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:31.696791",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1602",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:33.712601",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1601",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 2
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 4,
+        "originalAmount": 4,
+        "commonAmount": 4,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:35.477046",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1604",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:38.487029",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1606",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:41.065343",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1607",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:43.423958",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1608",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:50.702627",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1604",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:52.452455",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1609",
+      "workFlowType": 2,
+      "batchSize": 4,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 12,
+        "originalAmount": 12,
+        "commonAmount": 12,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:54.072577",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "",
+      "serviceType": "16",
+      "subServiceType": "1610",
+      "workFlowType": 2,
+      "batchSize": 1,
+      "pictureQuality": 0
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 2,
+        "originalAmount": 2,
+        "commonAmount": 2,
+        "tasteAmount": 0,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": false,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:57.380103",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "4k",
+      "baseImageId": 20016951
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 0,
+        "originalAmount": null,
+        "commonAmount": null,
+        "tasteAmount": null,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": true,
+        "amountType": null,
+        "freeCount": null,
+        "advancedFreeCount": null,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:57.435459",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "4kfix",
+      "baseImageId": 20016951
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 0,
+        "originalAmount": null,
+        "commonAmount": null,
+        "tasteAmount": null,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": true,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:57.492920",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "4k",
+      "baseImageId": 20016951
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 0,
+        "originalAmount": null,
+        "commonAmount": null,
+        "tasteAmount": null,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": true,
+        "amountType": null,
+        "freeCount": null,
+        "advancedFreeCount": null,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2026-07-03T13:59:57.557486",
+    "url": "https://api.znzmo.cn/ai/api/aiDrawCoin/aiDrawPrice",
+    "method": "POST",
+    "request_body": {
+      "channel": "4kfix",
+      "baseImageId": 20016951
+    },
+    "response_status": 200,
+    "response_body": {
+      "error": {
+        "errorCode": "0",
+        "errorMsg": "成功"
+      },
+      "data": {
+        "amount": 0,
+        "originalAmount": null,
+        "commonAmount": null,
+        "tasteAmount": null,
+        "balance": 8354,
+        "commonBalance": 8354,
+        "tasteBalance": 0,
+        "canUseTasteCoin": false,
+        "isFreeTry": true,
+        "amountType": null,
+        "freeCount": 0,
+        "advancedFreeCount": 0,
+        "extraConditions": null,
+        "batchSize": null,
+        "useWebDailyFree": null,
+        "vipType": 2,
+        "hourType": 1,
+        "svipDiscount": 0
+      }
+    }
+  }
+]

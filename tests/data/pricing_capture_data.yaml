@@ -1,0 +1,60 @@
+# 定价采集 - 测试数据
+#
+# 运行方式：
+#   pytest tests/cases/test_pricing_capture.py \
+#     --override-ini="addopts=-q -s --headed"
+#
+# 说明：
+#   aiDrawPrice 接口按 serviceType/subServiceType 区分功能定价，不按 modelId。
+#   UI 上的 3 种模型（GPT Image 2 / Nano Banana Pro / Nano Banana 2）
+#   同属"智能生图-Agent模式"（serviceType=17），共享同一价格。
+#
+#   登录账号已统一到 pricing_baseline.yaml 的 members 段。
+
+# ── 目标页面 ──────────────────────────────────────────────────────────────────
+target_url: "https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=agent"
+
+# ── UI 模型价格用例（页面左下角切换模型，右下角读价格）─────────────────────────
+# model_index: 下拉面板中的索引（0-based）
+ui_cases:
+  - case_id: "UI-PRICE-001"
+    model_index: 0
+    model_name: "GPT Image 2"
+    model_desc: "更懂复杂指令、文字渲染精准"
+    expected_price: null
+
+  - case_id: "UI-PRICE-002"
+    model_index: 1
+    model_name: "Nano Banana Pro"
+    model_desc: "专家级出图，高审美标准"
+    expected_price: null
+
+  - case_id: "UI-PRICE-003"
+    model_index: 2
+    model_name: "Nano Banana 2"
+    model_desc: "标准旗舰，兼顾速度与质量"
+    expected_price: null
+
+# ── API 价格用例（直接调用 aiDrawPrice 接口）─────────────────────────────────
+# 参数从 UI 拦截确认（2026-07-07）
+api_cases:
+  - case_id: "API-PRICE-001"
+    scenario_name: "智能生图-Agent模式"
+    params:
+      channel: "znzmo"
+      serviceType: "17"
+      subServiceType: "1701"
+      isIntelligentAgentTask: 1
+      bananaChannel: 1
+    expected_amount: null
+
+  - case_id: "API-PRICE-002"
+    scenario_name: "智能生图-标准模式"
+    params:
+      channel: ""
+      serviceType: "16"
+      subServiceType: ""
+      workFlowType: 2
+      batchSize: 4
+      pictureQuality: 0
+    expected_amount: null

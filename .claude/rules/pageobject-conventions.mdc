@@ -1,0 +1,227 @@
+---
+globs: pages/**/*.py
+description: testA PageObject 与元素 YAML 约定
+---
+
+# PageObject 约定（testA）
+
+## 核心原则
+
+- 页面操作封装在 `pages/methods/{page_name}_page.py`。
+- 选择器只定义在 `pages/elements/{page_name}_elements.yaml`，**不在 Page 方法内硬编码** CSS/XPath（兜底场景须注释说明原因并尽量收敛）。
+- 所有业务 Page **继承** `pages/base_page.py` 中的 `BasePage`。
+
+## 类与文件命名
+
+| 类型 | 命名 |
+|------|------|
+| 页面类 | `{Feature}Page`，如 `LoginPage` |
+| 元素文件 | `{page_name}_elements.yaml`，与 `{page_name}_page.py` 对应 |
+| 页面模块文件 | `{page_name}_page.py`，小写 + 下划线 |
+
+## 构造函数
+
+```python
+from typing import Optional
+from playwright.sync_api import Page
+from pages.base_page import BasePage
+
+class ExamplePage(BasePage):
+    def __init__(self, page: Optional[Page] = None, auto_close_popups: bool = False) -> None:
+        super().__init__(
+            page=page,
+            elements_yaml_path="pages/elements/example_page_elements.yaml",
+            auto_close_popups=auto_close_popups,
+        )
+```
+
+## 元素访问
+
+- 统一使用：`self.get_locator("yaml中的键名")`。
+- 需要 `.first` / `.nth(i)` 时在业务方法中链式调用，键名仍来自 YAML。
+- 不为「仅用一两次」的定位单独封装成 `def xxx_input(self)` 之类方法；**高频复用**再考虑封装。
+
+## 方法分层（与 BasePage 对齐）
+
+建议按注释区块组织：
+
+1. **页面导航**：`goto_*`、`open_*`
+2. **业务操作**：点击、填写、切换 Tab 等
+3. **状态查询**：`is_*`、`get_*`（返回 bool / str / int 等，不做断言）
+
+## 等待与稳定性
+
+- 优先使用 Playwright **auto-wait**（`click`/`fill`/`wait_for`），避免无意义固定 `sleep`。
+- 需要等待页面状态时，使用 `self.wait`（`WaitUtils`）或 `self.page.wait_for_load_state`，与 `BasePage.goto` 的 `wait_state` 约定一致。
+
+## 跨页面
+
+- 单个 Page 类只负责**当前页面**；跳转到其他页面应返回新 Page 或由用例持有下一页的 `Page` 并构造对应 Page 对象。
+
+---
+
+## PageObject 与 Locator 红线（规则 5）
+
+以下红线适用于 `pages/methods/**/*.py` 与 `pages/elements/**/*.yaml`，新增或修改 PageObject 时必须遵守。
+
+### 1. 优先使用 Locator，禁止退回 ElementHandle 思路
+
+PageObject 中优先使用 Playwright `Locator` 能力，并通过 `self.get_locator("yaml_key")` 获取元素。
+
+禁止优先使用以下低稳定性写法：
+
+```python
+# ❌ 禁止作为常规写法
+page.query_selector(".btn").click()
+page.query_selector_all(".item")
+element_handle.click()
+```
+
+推荐：
+
+```python
+# ✅ 推荐
+self.get_locator("submit_button").click()
+self.get_locator("result_items").count()
+```
+
+确需 `evaluate()` 读取 class、computed style、DOM 属性时，只做状态查询，不绕过正常点击和填写动作。
+
+### 2. Selector 必须稳定且唯一
+
+写入 `pages/elements/*.yaml` 前必须验证目标唯一命中，标准是 `count == 1`，禁止用 `count > 0` 作为通过标准。
+
+优先级建议：
+
+```text
+role / label / text / placeholder
+> data-testid 或稳定业务属性
+> 稳定 CSS 结构
+> XPath 兜底
+```
+
+同名 hash class、多命中 class、动态 class 不应直接落 YAML。确需 CSS 结构定位时，应收敛到稳定父容器下，并在 YAML 注释或 Page 方法注释中说明原因。
+
+### 3. PageObject 只封装页面能力，不承载测试结论
+
+Page 方法按职责分为导航、业务操作、状态查询：
+
+```python
+def open_detail(self, item_id: str): ...
+def click_place_model(self): ...
+def is_download_success_visible(self) -> bool: ...
+```
+
+PageObject 中不写大段业务断言，不决定用例通过/失败；测试结论放在 `tests/cases` 中，由 `assertion` fixture 或 Playwright `expect` 表达。
+
+允许 Page 方法返回可断言的信息，例如 `bool`、`str`、列表文本、接口响应摘要；不允许用 Page 方法吞掉异常后返回固定成功。
+
+### 4. 不在 Page 方法中散落硬编码 selector
+
+选择器统一维护在 `pages/elements/{page_name}_elements.yaml`。
+
+Page 方法里临时写 CSS/XPath 只允许作为短期兜底，必须满足：
+
+- 注释说明为什么不能落 YAML 或为什么必须动态拼接；
+- 定位范围足够收敛；
+- 后续可沉淀为 YAML key 时及时迁移。
+
+### 5. 方法命名必须表达业务语义
+
+方法名要描述用户行为或页面状态，禁止模糊命名：
+
+```python
+# ✅ 推荐
+click_place_model()
+open_material_detail()
+is_vip_payment_modal_visible()
+get_search_result_titles()
+
+# ❌ 禁止
+click_btn()
+go_page()
+check_modal()
+get_texts()
+```
+
+同一类操作命名保持一致，例如 `click_*` 表示动作，`is_*` 表示布尔状态，`get_*` 表示读取数据，`open_*` / `goto_*` 表示导航。
+
+### 6. Page 方法不做环境准备
+
+账号读取、登录态构造、storage state、接口 mock、数据库造数、测试清理等属于 fixture / common 工具职责，不写进具体 PageObject。
+
+PageObject 只关心当前页面能做什么，避免一个 Page 类同时承担登录、造数、跳转、断言和清理。
+
+---
+
+## 方法签名一致性（规则 3）
+
+同类方法（即功能语义相近的方法，如"读取列表文本"系列）的**默认参数必须统一**：
+
+| 参数 | 统一约定 |
+|---|---|
+| `max_items: int` | `0` = 全部读取；正整数 = 最多取 N 条 |
+
+**错误示例**（同类方法默认值不一致）：
+```python
+def get_su_model_items_texts(self, max_items: int = 0): ...   # 全取
+def get_current_tab_items_texts(self, max_items: int = 5): ... # 只取5条 ❌
+```
+
+**正确示例**：
+```python
+def get_su_model_items_texts(self, max_items: int = 0): ...
+def get_current_tab_items_texts(self, max_items: int = 0): ... # 同样默认全取 ✓
+```
+
+新增同类方法时，**必须对齐已有方法的默认参数语义**，不能凭直觉自定义。
+
+---
+
+## 元素与时序实战教训（规则 7）
+
+1. **文档 selector ≠ 可用 selector**：PRD / 用例里的按钮名、文案不能直接当 selector 落 YAML，
+   必须浏览器实抓并验证唯一命中后再写入（详见 case-to-code 抓元素指引 → 步骤优先级 ①→④）。
+
+2. **transform / fixed 元素查 class，不用 `is_visible()`**：通过 CSS `transform` 或 `fixed`
+   控制显隐的元素（如 `.ylStickyBar`），`is_visible()` 恒返回 `True`；判断显隐状态应改用
+   `element.evaluate("el => el.classList.contains('xxx--visible')")` 或读取 computed style。
+
+3. **弹窗 / 展开选项先展开再确认元素类型**：Popover / Modal 内的目标元素，必须先触发展开、
+   等其出现再断言或点击，不可假设"点入口 = 目标就绪"
+   （例：下载埋点需 CTA → Popover 版本项两步，才能触发 `render_download_click`）。
+
+4. **含 `reload` 的 `goto()` 会重置计时器**：`BasePage.goto()` 默认调用
+   `_reload_to_dismiss_popups()` 触发 `page.reload()`，重置页面计时器与 SDK 初始化；
+   时序类断言（曝光、倒计时、动态数字）须把 reload 的影响纳入等待预算。
+
+5. **禁止 JS 移除遮挡元素**：类似 `_JS_REMOVE_MASK` 这类通过 JavaScript 移除遮罩/弹窗的操作，
+   **必须避免使用**，除非实在无法通过正常交互绕过才考虑。
+   原因：
+   - JS 移除元素会破坏页面状态，导致后续操作异常
+   - 遮罩/弹窗的出现本身可能是业务逻辑（如"不支持该场景"），移除后会掩盖真实问题
+   - 移除后不会自动恢复，影响后续测试
+   正确做法：
+   - 先判断遮罩是否为预期状态（如场景不支持时的提示）
+   - 通过 Playwright 原生交互绕过（如点击空白区域关闭弹窗、使用 `force=True` 绕过遮挡）
+   - 只有在确认是页面 bug 且无法绕过时，才考虑 JS 移除，并在注释中说明原因
+
+---
+
+## 新增方法验证清单（规则 4）
+
+新增或修改 Page 方法后，必须完成以下验证：
+
+1. **列出所有调用方**：在项目中 `grep` 该方法名，确认调用处全部覆盖
+2. **覆盖所有调用上下文**：若方法在多个 Tab / 状态下被调用，每个场景都要验证返回值符合预期（不能只验 SU Tab 正常，不验"为你精选"Tab）
+3. **验证边界值**：
+   - `max_items=0` → 必须真正返回全部条目
+   - 列表为空时 → 方法不应抛异常，应返回 `[]`
+4. **打印验证输出**：每个调用路径至少输出一次 `len(result)` 和首条内容，肉眼确认数据合理
+
+```python
+# 验证示例
+items = page_obj.get_current_tab_items_texts()
+print(f"[验证] Tab 条目数: {len(items)}, 首条: {items[0] if items else '空'}")
+assert len(items) == expected_count, f"期望 {expected_count} 条，实际 {len(items)} 条"
+```

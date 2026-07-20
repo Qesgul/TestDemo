@@ -1,0 +1,40 @@
+# AI 定价采集 — 共享页面元素定义（平面填彩 / 实景改造 / 全景渲染）
+#
+# URL:
+#   平面填彩 → menuKey=floorPlanColor
+#   实景改造 → menuKey=insituRenovation
+#   全景渲染 → 需从左侧菜单点击进入（goto 会被重定向到 home）
+#
+# 所有选择器使用 [class*="xxx"] 模糊匹配，规避 CSS Modules 动态 hash。
+# 页面结构与创作渲染/效果图美化相同：BottomPartButtons 模式切换。
+# 创建日期：2026-07-07
+
+# ── 左侧菜单（全景渲染入口）────────────────────────────────────────────────────
+menu_item:
+  type: text
+  text: "全景渲染"
+
+# ── 模式切换按钮（BottomPartButtons modeText）──────────────────────────────────
+mode_text_button:
+  type: css
+  selector: '[class*="modeText"]'
+
+# ── 模式切换 Popover 弹出层 ──────────────────────────────────────────────────
+mode_popover:
+  type: css
+  selector: '[class*="bottompartBottonsPopover"]'
+
+# ── 模式选项标题（面板内选项行的文本，用于精确匹配模式名称）─────────────────────
+mode_title:
+  type: css
+  selector: '[class*="modeTitle"]'
+
+# ── 价格展示（生成按钮上的知点数）─────────────────────────────────────────────
+zd_icon_text:
+  type: css
+  selector: '[class*="zdIconText"]'
+
+# ── 知点余额（右上角）─────────────────────────────────────────────────────────
+coin_balance:
+  type: css
+  selector: '[class*="zidianAmount"]'

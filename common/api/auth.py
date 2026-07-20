@@ -11,6 +11,7 @@ storage_state 格式：{"cookies": [...], "origins": []}
 import logging
 from typing import Optional
 
+from common.auth_session import load_default_account
 from common.cookie_manager import CookieManager
 from common.yaml_loader import load_yaml
 
@@ -69,6 +70,9 @@ def verify_session_alive(context) -> bool:
 
 def _default_account() -> Optional[str]:
     """默认登录账号：取 tests/data/login_data.yaml cases[0].username（与 logged_in_context 一致）。"""
+    account = load_default_account()
+    if account:
+        return account.get("username")
     data = load_yaml("tests/data/login_data.yaml") or {}
     cases = data.get("cases") or []
     if not cases:
@@ -91,9 +95,11 @@ def cas_login(playwright_instance, context, anchor_page, username: str, password
         password: 密码。
     """
     # ── Step 0: cookie 缓存（本地有效性 + 服务端验活）─────────────
-    cookie_data = CookieManager.load_cookies(username)
+    cookie_data = CookieManager.load_cookies(username, auth_scope="material")
     if cookie_data and CookieManager.is_cookie_valid(
-        cookie_data, expected_account_identifier=username
+        cookie_data,
+        expected_account_identifier=username,
+        expected_auth_scope="material",
     ):
         logger.info("账号 %s 发现本地有效 cookie，注入并做服务端验活", username)
         try:
@@ -144,7 +150,7 @@ def cas_login(playwright_instance, context, anchor_page, username: str, password
 
     # ── Step 4: 保存 cookie ────────────────────────────────────────
     try:
-        CookieManager.save_cookies(username, context)
+        CookieManager.save_cookies(username, context, auth_scope="material")
         logger.info("账号 %s cookie 已保存", username)
     except Exception as e:
         logger.warning("cookie 保存失败（不影响本次登录）: %s", e)
@@ -322,7 +328,7 @@ def load_storage_state(account_identifier: Optional[str] = None) -> Optional[dic
     account = account_identifier or _default_account()
     if not account:
         return None
-    data = CookieManager.load_cookies(account)
-    if not data or not CookieManager.is_cookie_valid(data):
+    data = CookieManager.load_cookies(account, auth_scope="material")
+    if not data or not CookieManager.is_cookie_valid(data, expected_auth_scope="material"):
         return None
     return {"cookies": data.get("cookies", []), "origins": []}

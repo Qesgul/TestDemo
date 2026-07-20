@@ -1,0 +1,59 @@
+# 精准渲染定价采集 - 页面元素定义
+# URL: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=precisionRender
+#
+# 所有选择器使用 [class*="xxx"] 模糊匹配，规避 CSS Modules 动态 hash 后缀。
+# 下拉面板内的元素统一用 scope 限定父容器，避免多命中。
+# 创建日期：2026-07-07
+
+# ── 创作模式（radio 按钮组）────────────────────────────────────────────────────
+# 3 种模式：精准渲染 / 创作渲染 / 效果图美化
+radio_item:
+  type: css
+  selector: '[class*="radioItem"]'
+
+# ── DeepMode 触发器（点击展开面板）─────────────────────────────────────────────
+deep_mode_trigger:
+  type: css
+  selector: '[class*="deepModeWrapperContainer"]'
+
+# ── DeepMode 面板（tooltip 弹出层）─────────────────────────────────────────────
+deep_mode_panel:
+  type: css
+  selector: '[class*="aiDrawTooltip"]'
+
+# ── DeepMode 选项行 — scope 限定在面板内 ──────────────────────────────────────
+deep_mode_option:
+  type: css
+  selector: '[class*="mode__"]'
+  scope: '[class*="aiDrawTooltip"]'
+
+# ── DeepMode 选项标题文本 — scope 限定在面板内 ─────────────────────────────────
+deep_mode_title:
+  type: css
+  selector: '[class*="modeTitle"]'
+  scope: '[class*="aiDrawTooltip"]'
+
+# ── 模式切换按钮（创作渲染 / 效果图美化的 BottomPartButtons 模式选择器）────────
+mode_text_button:
+  type: css
+  selector: '[class*="modeText"]'
+
+# ── 模式切换 Popover 弹出层 ──────────────────────────────────────────────────
+mode_popover:
+  type: css
+  selector: '[class*="bottompartBottonsPopover"]'
+
+# ── 模式选项标题（面板内选项行的文本，用于精确匹配模式名称）─────────────────────
+mode_title:
+  type: css
+  selector: '[class*="modeTitle"]'
+
+# ── 价格展示（生成按钮上的知点数）─────────────────────────────────────────────
+zd_icon_text:
+  type: css
+  selector: '[class*="zdIconText"]'
+
+# ── 知点余额（右上角）─────────────────────────────────────────────────────────
+coin_balance:
+  type: css
+  selector: '[class*="zidianAmount"]'

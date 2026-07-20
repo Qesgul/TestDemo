@@ -79,9 +79,11 @@ class LoginPage(BasePage):
 
         :return: True 表示 cookie 登录成功且验证通过
         """
-        cookie_data = CookieManager.load_cookies(username)
+        cookie_data = CookieManager.load_cookies(username, auth_scope="material")
         if not cookie_data or not CookieManager.is_cookie_valid(
-            cookie_data, expected_account_identifier=username
+            cookie_data,
+            expected_account_identifier=username,
+            expected_auth_scope="material",
         ):
             _logger.info("账号 %s 未找到匹配的有效 cookie，跳过 cookie 登录", username)
             # 主动清理 context 残留 cookie，防止切换账号时复用旧登录态
@@ -104,7 +106,7 @@ class LoginPage(BasePage):
                 return True
 
             _logger.warning("账号 %s cookie 已注入但登录状态验证失败，cookie 可能已失效", username)
-            CookieManager.delete_cookies(username)
+            CookieManager.delete_cookies(username, auth_scope="material")
             return False
         except Exception as e:
             _logger.warning("cookie 登录过程异常: %s", e)
@@ -194,7 +196,7 @@ class LoginPage(BasePage):
         self._login_with_credentials(username, password)
 
         try:
-            CookieManager.save_cookies(username, self.page.context)
+            CookieManager.save_cookies(username, self.page.context, auth_scope="material")
             _logger.info("登录成功，cookie 已保存")
         except Exception as e:
             _logger.warning("cookie 保存失败（不影响本次登录）: %s", e)

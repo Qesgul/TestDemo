@@ -1,0 +1,1640 @@
+{
+  "normal": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A2-banana-Pro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A2-banana-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A3-精准渲染标准": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1602-bs4": {
+        "amount": 32,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1603": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1604-bs2": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1606-bs4": {
+        "amount": 32,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1610": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1612": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-601-选区": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-602-选区": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-605-全图": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-608-全图": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-623-全图": {
+        "amount": 5,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "AI改图-627-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      },
+      "A8-4kfix": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": -1
+      }
+    }
+  },
+  "gold": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A2-banana-Pro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A2-banana-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A3-精准渲染标准": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1602-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1603": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1604-bs2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1606-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1610": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1612": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-601-选区": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-602-选区": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-605-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-608-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-623-全图": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-627-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A8-4kfix": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      }
+    }
+  },
+  "platinum": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A2-banana-Pro": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A2-banana-GPT": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A3-精准渲染标准": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1602-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1603": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1604-bs2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1606-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1610": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1612": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-601-选区": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-602-选区": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-605-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-608-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-623-全图": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "AI改图-627-GPT": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      },
+      "A8-4kfix": {
+        "amount": 2,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 3
+      }
+    }
+  },
+  "diamond": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A2-banana-Pro": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A2-banana-GPT": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A3-精准渲染标准": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1602-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1603": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1604-bs2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1606-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1610": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1612": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-601-选区": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-602-选区": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-605-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-608-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-623-全图": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-627-GPT": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A8-4kfix": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      }
+    }
+  },
+  "black": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 7,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A2-banana-Pro": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A2-banana-GPT": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A3-精准渲染标准": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1602-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1603": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1604-bs2": {
+        "amount": 8,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1606-bs4": {
+        "amount": 16,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1610": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1612": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-601-选区": {
+        "amount": 4,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-602-选区": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-605-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-608-全图": {
+        "amount": 6,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-623-全图": {
+        "amount": 3,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "AI改图-627-GPT": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      },
+      "A8-4kfix": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 4
+      }
+    }
+  },
+  "old_gold": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A2-banana-Pro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A2-banana-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A3-精准渲染标准": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1602-bs4": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1603": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1604-bs2": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1606-bs4": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1610": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A7-1612": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-601-选区": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-602-选区": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-605-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-608-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "AI改图-623-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 0
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-627-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 10,
+        "hourType": 0,
+        "vipType": 0
+      },
+      "A8-4kfix": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 10,
+        "hourType": 0,
+        "vipType": 0
+      }
+    }
+  },
+  "old_diamond": {
+    "标准模式": {
+      "A1-banana2": {
+        "amount": 10,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A2-banana-Pro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A2-banana-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A3-精准渲染标准": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1602-bs4": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1603": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1604-bs2": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1606-bs4": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1610": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A7-1612": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-601-选区": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-602-选区": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-605-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-608-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "AI改图-623-全图": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": -1,
+        "hourType": 0,
+        "vipType": 2
+      }
+    },
+    "BananaPro": {
+      "A4-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1603-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1604-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1606-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "A7-1612-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-601-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-602-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-605-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-608-BananaPro": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-627-BananaPro": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      }
+    },
+    "GPT Image2": {
+      "A7-1604-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-602-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-605-GPT": {
+        "amount": 15,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      },
+      "AI改图-627-GPT": {
+        "amount": 12,
+        "isFreeTry": false,
+        "freeCount": null,
+        "hourType": null,
+        "vipType": null
+      }
+    },
+    "4K": {
+      "A8-4K": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      },
+      "A8-4kfix": {
+        "amount": 0,
+        "isFreeTry": true,
+        "freeCount": 0,
+        "hourType": 0,
+        "vipType": 2
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+# AIDrawEdit 定价采集页面元素
+# URL: https://ai.znzmo.cn/AIDrawEdit?domain=0
+
+# ── 领域选择（左上角 dropdown）─────────────────────────────────────────────────
+domain_selector:
+  type: css
+  selector: '[class*="customSelect"][class*="fieldSelect"]'
+
+domain_dropdown_item:
+  type: css
+  selector: '.ant-dropdown [class*="fieldSelect"]'
+
+# ── 场景 tab（顶部）───────────────────────────────────────────────────────────
+# 场景用文本匹配，无唯一 class
+
+# ── 模型选择器 ────────────────────────────────────────────────────────────────
+mode_select_btn:
+  type: css
+  selector: '[class*="modeSelectBtn"]'
+
+mode_option:
+  type: css
+  selector: '[class*="ModeSelectList__mode"]'
+
+mode_option_active:
+  type: css
+  selector: '[class*="ModeSelectList__active"]'
+
+# ── 价格显示 ──────────────────────────────────────────────────────────────────
+price_text:
+  type: css
+  selector: '[class*="zdIconText"]'
+
+# ── 工具栏 ────────────────────────────────────────────────────────────────────
+# 涂抹/橡皮等用文本匹配，class 为 toolbtn
+
+# ── 遮罩层 ────────────────────────────────────────────────────────────────────
+selection_mask:
+  type: css
+  selector: '[class*="SelectionMask"]'
+
+# ── 上传 ──────────────────────────────────────────────────────────────────────
+file_input:
+  type: css
+  selector: 'input[type="file"]'

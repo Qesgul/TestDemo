@@ -4,11 +4,11 @@ description: >
   Use when generating or filling Playwright selectors/locators from test cases or
   element descriptions. Triggers on: "用AI获取selector"、"帮我找元素的selector"、
   "ai-selector"、"fill TODO_SELECTOR"、"自动生成定位器"、"selector_finder"。
-  工作模式：Claude 自身读取页面快照（ARIA 树 + 截图），按内置 9 条规则**批量**生成并
+  工作模式：Codex 自身读取页面快照（ARIA 树 + 截图），按内置 9 条规则**批量**生成并
   验证 locator，写入 pages/elements/*.yaml。一次循环搞定多个元素，无需 API Key。
 ---
 
-# AI Selector Finder v3（Claude-Driven · 批量贪心）
+# AI Selector Finder v3（Codex-Driven · 批量贪心）
 
 ## 当前能力
 
@@ -16,7 +16,7 @@ description: >
 |------|------|
 | 批量 yaml 复用：一次扫描所有 yaml，多元素并行匹配 | ✅ |
 | 快照抓取：ARIA 树（YAML）+ 截图 → 文件 | ✅ |
-| Claude 批量分析：一份快照 → 多元素 × 3 候选 | ✅ |
+| Codex 批量分析：一份快照 → 多元素 × 3 候选 | ✅ |
 | 批量验证：verify_locator.py --specs-json，一次浏览器跑 N 个 spec | ✅ |
 | 同批自修复：失败元素一起重试 1 次（复用快照 + 错误信息塞 prompt） | ✅ |
 | 跨状态贪心：找不到的元素留到下一轮主循环 | ✅ |
@@ -127,7 +127,7 @@ python scripts/capture_snapshot.py \
 - `.planning/snapshot/loop_<N>/a11y.yaml`
 - `.planning/snapshot/loop_<N>/screenshot.png`
 
-#### 4b. Claude 批量分析
+#### 4b. Codex 批量分析
 
 把以下信息综合分析，**一次性**给所有 pending 元素生成候选：
 
@@ -160,7 +160,7 @@ elements:
     reason: "需先点击家装才会显示模式切换控件"
 ```
 
-**Claude（你）阅读 a11y.yaml + screenshot.png 后，直接生成上述 YAML 结构作为对话回复。**
+**Codex（你）阅读 a11y.yaml + screenshot.png 后，直接生成上述 YAML 结构作为对话回复。**
 
 #### 4c. 批量 verify
 
@@ -201,7 +201,7 @@ for row in verify_results:
 
 #### 4e. 同批自修复（仅 retry_bucket 非空时）
 
-Claude 阅读相同的 a11y.yaml + screenshot.png，对 retry_bucket 元素重新分析：
+Codex 阅读相同的 a11y.yaml + screenshot.png，对 retry_bucket 元素重新分析：
 
 ```
 [上轮 verify 结果 — 失败元素]
@@ -331,7 +331,7 @@ loop_count += 1
 
 ## LLM 输出 schema 约束
 
-每轮主循环 Claude 必须返回 **完整覆盖所有 pending 元素** 的 YAML：
+每轮主循环 Codex 必须返回 **完整覆盖所有 pending 元素** 的 YAML：
 
 ```yaml
 elements:
@@ -348,7 +348,7 @@ elements:
     found: ...
 ```
 
-**降级处理**：如果 Claude 自己解析输出时发现格式错误（YAML 解析异常），整批回退到单元素模式（每个 pending 元素单独走一次"读快照→生成 3 候选→verify"）。
+**降级处理**：如果 Codex 自己解析输出时发现格式错误（YAML 解析异常），整批回退到单元素模式（每个 pending 元素单独走一次"读快照→生成 3 候选→verify"）。
 
 ---
 

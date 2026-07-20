@@ -78,3 +78,13 @@ utils/埋点测试优化版本1.py
 
 # Playwright storage_state 登录态缓存（含 cookies，禁止入库）
 .auth/
+
+# 本地 cookie 缓存文件（含敏感信息，禁止入库）
+common/cookies_*.json
+
+# 工作流输出目录（临时调试产物，可重新生成）
+.workflow/pricing-output/
+
+# 根目录临时文档
+CONVERSION-REPORT.md
+下载AB自动化补全方案.md

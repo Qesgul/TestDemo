@@ -33,7 +33,7 @@ common/selector_finder/       ← 核心 selector 逻辑模块
 pages/                        ← Page Object 全部文件
 tests/                        ← 测试用例全部文件
 data_types/                   ← 数据类型定义
-.claude/skills/               ← Claude skill 定义
+.claude/skills/               ← Codex skill 定义
 .claude/agents/               ← agent 定义
 .claude/playbooks/            ← 踩坑库知识
 docs/                         ← 设计文档 / 实施计划

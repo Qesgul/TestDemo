@@ -37,6 +37,7 @@ environments:
         - "--disable-background-timer-throttling"
         - "--disable-renderer-backgrounding"
         - "--disable-backgrounding-occluded-windows"
+        - "--start-maximized"
   test:
     base_url: "https://example.com"
     headless: false
