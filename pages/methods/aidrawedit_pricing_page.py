@@ -196,6 +196,25 @@ class AIDrawEditPricingPage:
 
         return False
 
+    # ===== 选区清除 =====
+
+    def clear_selection(self) -> None:
+        """清除当前选区状态（退出编辑模式）。
+
+        上传图片后页面可能自动进入智能选择，需要清除以确保非编辑模式采集准确。
+        按 Escape 关闭选区 UI，再按一次确保完全退出。
+        """
+        for _ in range(3):
+            self.page.keyboard.press("Escape")
+            self.page.wait_for_timeout(300)
+        # 如果仍有选区遮罩，点击页面顶部非 canvas 区域
+        if self._is_selection_mask_visible():
+            try:
+                self.page.mouse.click(10, 10)
+                self.page.wait_for_timeout(500)
+            except Exception:
+                pass
+
     # ===== 涂抹 =====
 
     def paint_on_canvas(self, distance: int = 300) -> None:
@@ -260,13 +279,16 @@ class AIDrawEditPricingPage:
             return False
 
         # 关闭可能存在的 tooltip（如"换视角"场景的"请填写视角描述"）
-        # 点击画布空白区域转移焦点，不用 Escape（避免影响选区/模型状态）
+        # 点击页面顶部空白区域转移焦点，避免点击 canvas 触发智能选择
         try:
-            canvas = self.page.locator("canvas").first
-            if canvas.is_visible(timeout=1000):
-                box = canvas.bounding_box()
-                self.page.mouse.click(box["x"] + 10, box["y"] + 10)
-                self.page.wait_for_timeout(200)
+            header = self.page.locator('header, [class*="header"], [class*="topBar"], [class*="nav"]').first
+            if header.is_visible(timeout=500):
+                box = header.bounding_box()
+                self.page.mouse.click(box["x"] + 5, box["y"] + box["height"] + 20)
+            else:
+                # fallback: 点击页面左上角非 canvas 区域
+                self.page.mouse.click(10, 10)
+            self.page.wait_for_timeout(200)
         except Exception:
             pass
 

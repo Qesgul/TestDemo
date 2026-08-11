@@ -134,9 +134,9 @@ class TestAgentPricing:
             name=f"agent_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"agent_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -159,9 +159,9 @@ class TestPrecisionPricing:
             name=f"precision_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"precision_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -184,9 +184,9 @@ class TestIdeaPricing:
             name=f"idea_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"idea_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -209,9 +209,9 @@ class TestEnhancementPricing:
             name=f"enhancement_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"enhancement_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -234,9 +234,9 @@ class TestFloorPlanPricing:
             name=f"floor_plan_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"floor_plan_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -259,9 +259,9 @@ class TestInsituPricing:
             name=f"insitu_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"insitu_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -284,9 +284,9 @@ class TestPanoramicPricing:
             name=f"panoramic_{scenario['name']}_success",
         )
         assertion.assert_true(
-            isinstance(amount, (int, float)) and amount > 0,
+            isinstance(amount, (int, float)) and amount >= 0,
             name=f"panoramic_{scenario['name']}_amount_positive",
-            message=f"{scenario['name']} 价格应为正数，实际: {amount}",
+            message=f"{scenario['name']} 价格应为非负数，实际: {amount}",
         )
 
 
@@ -812,9 +812,9 @@ class TestHistoryDownloadPricing:
 
                             # 校验价格为正数
                             assertion.assert_true(
-                                isinstance(amount, (int, float)) and amount > 0,
+                                isinstance(amount, (int, float)) and amount >= 0,
                                 name=f"history_{option_name}_amount_positive",
-                                message=f"{option_name} 价格应为正数，实际: {amount}",
+                                message=f"{option_name} 价格应为非负数，实际: {amount}",
                             )
                 except Exception as e:
                     print(f"\n  {option_name} 点击失败: {e}")

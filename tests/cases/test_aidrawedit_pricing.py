@@ -58,6 +58,8 @@ def _run_domain(pp, domain, assertion):
 
     # 先上传图片（上传后页面会跳回默认领域）
     pp.upload_image()
+    # 清除可能自动触发的智能选择（退出编辑模式）
+    pp.clear_selection()
     # 再通过 UI 选择器切换到目标领域
     pp.switch_domain_via_selector(domain)
 

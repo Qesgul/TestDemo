@@ -8,9 +8,15 @@ sir，我是 **test-design** 子 agent，承担「测试设计」和「可自动
 
 > 通用规则见 [`_common-rules.md`](_common-rules.md)，以下仅列本 agent 差异。
 
-## 生成前置（必须执行，在调用任何 skill 之前）
+## 生成前置（必须执行）
+
+无特殊要求时，收到需求后默认完成“需求精简 → 需求分析/测试点 → 初版用例 → 评审 → 最终用例 → xlsx → 测试报告”闭环；仅在用户明确指定某一阶段时才缩小范围。
 
 收到需求后，**立即按以下顺序执行，不跳过**：
+
+### 步骤 0：精简需求
+
+调用 `req-slim` 将需求文档整理为结构化精简版本；用户已提供明确的精简 PRD 时直接复用，不重复精简。
 
 ### 步骤 1：读知识库索引
 ```
@@ -32,7 +38,7 @@ Glob D:\code\testcase\**\test-points.md
 - 风险提示写法
 - 澄清建议的颗粒度
 
-完成上述两步后，才开始调用 `testcase-gen` 生成测试点。
+完成上述步骤后，调用 `testcase-gen` 完成需求分析、生成 `test-points.md`，再生成 `test-cases-v1.md`。
 
 ### 步骤 3：读卡时做冲突检测（防卡片过时）
 读知识卡过程中，若发现**当前 PRD 与卡片内容矛盾**（如卡片说"非VIP不展示VIP立减"，但本需求明确要展示）：
@@ -50,7 +56,7 @@ Glob D:\code\testcase\**\test-points.md
 ## 复用 skill（用 Skill 工具调用）
 
 - `testcase-gen`：需求分析 + 生成 `test-points.md`（测试点）与 `test-cases.md`（测试用例）。
-- `req-slim`：需求文档冗余时先精简压缩为结构化、token 高效格式。
+- `req-slim`：默认将原始需求精简压缩为结构化、token 高效格式；已有精简 PRD 时直接复用。
 - `ui-test-case-reviewer`：对已生成 UI 用例评审、按评审意见修改、生成测试报告。
 - `extract-auto-cases`：筛选可自动化用例、按 12 列模板重写、用需求文档填补覆盖缺口。
 
@@ -67,6 +73,8 @@ Glob D:\code\testcase\**\test-points.md
 3. **根据评审意见修改用例** → `test-cases-final.md`（这步不能跳过！）
 4. 基于 final 版本生成 xlsx → `utils/testcase_to_xlsx.py`
 5. 生成测试报告 → `test-report.md`（含评审修改说明）
+
+除用户明确要求只做其中一个阶段外，以上产物必须全部生成。
 
 详细规范见 `.claude/rules/test-design-workflow.mdc`。
 

@@ -84,6 +84,24 @@ common/cookies_*.json
 
 # 工作流输出目录（临时调试产物，可重新生成）
 .workflow/pricing-output/
+.workflow/*.json
+.workflow/*.txt
+.workflow/pricing-api-tests/
+.workflow/pricing-tools/
+.workflow/pricing-tools.zip
+.workflow/ai-draw-member-pricing-01/
+
+# Playwright MCP 会话日志/快照（一次性产物，不入库）
+.playwright-mcp/
+
+# ZCode 会话计划产物
+.zcode/plans/
+
+# 空运行目录
+runs/
+
+# 测试图片夹具（大文件，不入库）
+tests/data/test_images/
 
 # 根目录临时文档
 CONVERSION-REPORT.md

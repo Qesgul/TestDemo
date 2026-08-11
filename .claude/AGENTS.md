@@ -59,6 +59,8 @@
   （如 `test-points.md`、`test-cases.md`、`*-review*.md`、`*报告*.md`、`*_auto.md`，及对应 `.xlsx` / `-slim.md`）
 - **限定位置**：测试用例工作目录（如 `D:\code\testcase\**`）或上述文档的同目录
 
+`rapid-qa-runner` 的需求验收运行产物同样免确认，但仅限需求目录 `runs/<run_id>/` 下的执行契约、报告、截图、Trace、网络证据和自动化候选交接；不得借此修改 TestDemo 五件套、配置或账号池。
+
 **仍必须确认（不在例外内）**：
 
 - 生产代码改动（`pages/`、`tests/`、`data_types/`、`common/`、`conftest.py` 等）与任何配置文件
@@ -172,6 +174,8 @@
 
 等用户决策后再继续，不擅自跳过、不伪造断言绕过。
 
+**Rapid QA 例外**：`rapid-qa-runner` 在真实环境验收中发现冒烟或核心路径缺陷时，仍须立即按上述格式上报并登记 Bug，但不停止整个 Run。后续用例命中相同失败步骤时标记为被该 Bug 阻塞并继续执行不受影响用例；同一根因不重复报 Bug。只有继续执行可能造成安全、隐私、数据破坏或不可逆副作用时，才停止相关执行并等待用户决策。
+
 ### ③ 已上线功能同样适用
 
 即使功能已上线，自动化调试中发现的缺陷（埋点缺失、交互失效、文案错误等）同样按上述格式反馈，不因「已上线 = 默认正确」而忽略。
@@ -271,6 +275,8 @@
 |---|---|
 | 生成测试用例 / 分析需求 / 写测试用例 / 测试设计 / 用例设计 / 评审用例 / 检查用例 / 生成测试报告 | `test-design` |
 | 提取自动化测试用例 / 从用例提取自动化 / 筛选可自动化用例 / 把测试用例转成自动化用例 | `test-design` |
+| 提测后测试 / 快速发布测试 / 按需求和用例执行真实环境测试 / 提测验收 | `rapid-qa-runner` |
+| 账号池匹配 / 登录态准备 / Cookie 文件交接 / 账号特征选择 | `account-session-provider` |
 | 出自动化方案 / 自动化怎么实现 / 实现方案 / 自动化可行性评估 | `auto-planner` |
 | 把这份用例转成自动化 / 根据 markdown 生成代码 / convert test cases / 生成 5 件套 / fill 5件套 | `code-engineer` |
 | 用AI获取selector / 帮我找元素的selector / fill TODO_SELECTOR / 自动生成定位器 / selector_finder / 调试失败 / 定位问题 / 验证 selector 唯一性 | `selector-debug` |
@@ -391,7 +397,7 @@
 单条请求跨多 agent（如「根据需求生成用例并转成代码」）→ 主 agent 拆解为有序子任务，按流水线编排，逐阶段把产物作为下阶段输入；跨 agent 上下文由主 agent 维护并以**契约数据**传递（子 agent 独立上下文，不共享记忆）。
 
 ### 串行 / 并行 / 优先级
-- **必须串行（有数据依赖）**：① `test-design` → ② `test-design`（含可自动化筛选） → ③ `auto-planner` →（**方案评审 gate**）→ ④ `code-engineer` → ⑤ `selector-debug` → ⑥ `test-runner`（执行验证）。
+- **必须串行（有数据依赖）**：① `test-design`（提测前完成测试设计与最终用例）→ ② `rapid-qa-runner`（提测后按最终用例验收）→ ③ `test-design`（结合 Rapid Run 已验证候选筛选自动化用例）→ ④ `auto-planner` →（**方案评审 gate**）→ ⑤ `code-engineer` → ⑥ `selector-debug` → ⑦ `test-runner`（执行验证）。用户已提供最终用例时，可从②开始，但不得跳过 Rapid Run 直接把未验证场景转码。
 - **方案评审 gate（强约束）**：**有可自动化用例但尚无代码时，必须先过 ③ `auto-planner` + 主 agent 复核可行性 + 用户一次确认，方案通过后才进 ④ 转码**，不允许跳过方案直接生成代码。
 - **可并行**：同批多个独立用例的 selector 抓取；⑦ `gio-tracking` 与 ⑤ `selector-debug` 在不同用例上；⑧ `session-recap` / ⑨ `session-recap`（含清理） 运维类与主流程无依赖、可异步。
 - **提效支线（`test-tooling`）**：与转码线（④⑤）**并行的独立支线**，由测试经理在 WBS 阶段判断「本需求有高频重复任务」时主动派发（造数 / AB 切量复位 / 探针预热等）；写 `utils/` `scripts/`，与转码线写不同文件、互不冲突，不占主串行位。其产物**默认只生成不执行**。

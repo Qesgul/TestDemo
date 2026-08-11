@@ -1,0 +1,99 @@
+# 智能生图提示词模板扩充 - 测试数据
+# 更新时间: 2026-07-20
+
+# 账号信息
+account:
+  username: "17768100279"
+  password: "Qyff2011"
+
+# 页面 URL
+page_url: "https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=agent"
+
+# 横幅/气泡文案
+banner:
+  tag: "新功能"
+  text: "模板库升级：内容扩充，更多选择；支持"
+  highlight: "收藏、新建、搜索"
+
+bubble:
+  title: "模板库升级"
+  text: "内容扩充，更多选择；支持收藏、新建、搜索"
+
+# 输入框
+input:
+  placeholder: "请输入您的需求或"
+  use_template_text: "使用模板 →"
+
+# 搜索
+search:
+  placeholder: "搜索模板"
+  max_length: 50
+  overflow_toast: "超出最大输入长度"
+  no_result_title: "未找到相关模板"
+  no_result_subtitle: "换个关键词试试"
+  no_result_create: "创建自己的模板"
+  debounce_ms: 300
+
+# 新建模板
+new_template:
+  content_placeholder: "请输入模板内容"
+  name_placeholder: "请输入模板名称"
+  content_max_length: 2000
+  name_max_length: 50
+  name_required_toast: "请输入模板名称"
+  content_required_toast: "请输入模板内容"
+  success_toast: "创建成功"
+  close_confirm_text: "关闭后当前内容将丢失，是否确认关闭？"
+  delete_confirm_text: "确认要删除该模板吗？删除后将无法恢复！"
+
+# 封面图校验
+cover:
+  allowed_formats: ["jpg", "jpeg", "png"]
+  format_error_toast: "请上传.jpg/.jpeg/.png 格式的文件"
+  min_size_kb: 50
+  max_size_mb: 20
+  size_error_toast: "大小不合规"
+  max_width_px: 30000
+  max_height_px: 30000
+  max_total_pixels: 250000000  # 2.5亿
+  resolution_error_toast: "图片分辨率异常"
+
+# 搜索排序评分规则
+scoring:
+  name_exact: 100
+  name_contains: 80
+  name_partial_per_word: 20
+  name_partial_max: 60
+  content_contains: 30
+  content_partial_per_word: 5
+  content_partial_max: 20
+
+# 搜索测试关键词（用于参数化）
+search_keywords:
+  - keyword: "早晨"
+    expect_result: true
+    description: "搜索已知存在的模板"
+  - keyword: "技术立面图"
+    expect_result: true
+    description: "搜索已知存在的模板"
+  - keyword: "xyzabc_not_exist_12345"
+    expect_result: false
+    description: "搜索不存在的模板"
+  - keyword: ""
+    expect_result: false
+    description: "空关键词不触发搜索"
+
+# 新建模板测试数据
+create_template:
+  valid:
+    name: "自动化测试模板"
+    content: "这是一个自动化测试创建的模板内容，用于验证新建模板功能。"
+  long_name: "这是一个超过五十个字符的模板名称用于测试字数上限校验是否正确触发toast提示当输入超过五十个字符时"
+  long_content: "这是一段超过两千个字符的模板内容用于测试字数上限校验..."
+  sensitive_name: "敏感词测试"
+  sensitive_content: "含敏感信息的内容"
+
+# 删除确认弹窗
+delete_confirm:
+  ok_text: "确认"
+  cancel_text: "取消"

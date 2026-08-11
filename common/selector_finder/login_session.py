@@ -50,6 +50,8 @@ def is_logged_in(page) -> bool:
 
 def is_ai_draw_logged_in(page) -> bool:
     try:
+        if page.get_by_text("登录|注册有礼", exact=True).is_visible(timeout=3000):
+            return False
         return page.locator('[class*="zidianAmount"]').first.is_visible(timeout=3000)
     except Exception:
         return False
@@ -99,6 +101,16 @@ def znzmo_ui_login(page, user: str, pwd: str) -> bool:
                 break
         except Exception:
             continue
+
+    if not opened:
+        try:
+            entry = page.get_by_text("登录|注册有礼", exact=True)
+            if entry.is_visible(timeout=2000):
+                entry.click()
+                page.wait_for_timeout(1500)
+                opened = True
+        except Exception:
+            pass
 
     if not opened:
         # Some material pages show LoginModal automatically.

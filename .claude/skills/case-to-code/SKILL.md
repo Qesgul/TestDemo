@@ -399,7 +399,7 @@ pytest --collect-only tests/cases/test_{feature}.py -q
 
 给 `case-to-code` 生成新自动化用例时使用：根据用例对账号的需求标签，从 `tests/data/account_pool.yaml` 挑出最合适的账号，把它的 `username / password` 写进新生成的 `tests/data/<feature>_data.yaml`。
 
-**不是运行时机制**：conftest / fixture / Page 类 / test 代码完全不读账号池。
+**不是测试用例运行时机制**：conftest / fixture / Page 类 / test 代码完全不读账号池；账号认证子工作流是唯一允许在受控本地流程中读取账号池并生成目标域 storage_state 的运行时例外。
 
 ## 池子数据 schema
 

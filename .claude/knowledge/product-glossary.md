@@ -65,6 +65,34 @@
 
 ---
 
+## AI 绘图 workFlowType 枚举
+
+> 数据来源：`components/AIDrawPage/InfiniteCanvasV3/shared/generateConfig.js`（workflowTypeFor 函数，第 860-884 行）
+
+| 值 | 含义 | 触发条件 |
+|---|---|---|
+| **0** | Znzmo 标准模式 | 非Agent + 智能模式 + subServiceType 以 '6' 开头 |
+| **2** | GPT Image 2 / Agent 模式 | Agent 菜单固定值；或非Agent + GPT Image 2 模型 |
+| **3** | Banana Pro | 非Agent + Banana Pro/2 模型；或图片>2张兜底 |
+
+**判定逻辑**：
+```
+Agent 菜单 → 固定 2
+图片>2张兜底 → 3
+智能模式(canvasDrawType=0)：
+  BananaPro → 3
+  GptImage2 → 2
+  Znzmo/null + subServiceType 以 '6' 开头 → 0
+  Znzmo/null + 其他 → 2
+用户已选具体模型：
+  Banana Pro(canvasDrawType=2) → 3
+  其他 → 2
+```
+
+**AI改图（edit-img）**：serviceType=6, subServiceType=627，workFlowType 由所选模型决定（Banana→3, 其他→2/0）
+
+---
+
 ## 素材下载计价关键词
 
 | 术语 | 定义 |

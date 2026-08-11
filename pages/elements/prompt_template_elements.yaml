@@ -1,0 +1,187 @@
+# 智能生图 - 提示词模板扩充功能 元素定位
+# URL: https://ai.znzmo.cn/community/AIDrawPage.html?menuKey=agent
+# 所有 selector 均经 DOM 探查脚本验证（2026-07-20）
+
+# ===== 横幅提示（未登录/空状态）=====
+banner_container:
+  type: css
+  selector: '[class*="upgradeBanner"]'
+banner_tag:
+  type: css
+  selector: '[class*="upgradeBannerTag"]'
+banner_text:
+  type: css
+  selector: '[class*="upgradeBannerText"]'
+banner_highlight:
+  type: css
+  selector: '[class*="upgradeBannerHighlight"]'
+banner_btn_view:
+  type: css
+  selector: '[class*="upgradeBannerPrimaryControl"]'
+banner_btn_got_it:
+  type: css
+  selector: '[class*="upgradeBannerSecondaryControl"]'
+
+# ===== 气泡提示（登录且有历史记录）=====
+# 注：气泡与横幅互斥，气泡出现条件为登录+有历史记录
+bubble_container:
+  type: css
+  selector: '[class*="upgradeBubble"], [class*="bubbleTip"], [class*="BubbleTip"]'
+bubble_title:
+  type: css
+  selector: '[class*="bubbleTitle"], [class*="BubbleTitle"]'
+bubble_text:
+  type: css
+  selector: '[class*="bubbleText"], [class*="BubbleText"]'
+bubble_btn_view:
+  type: css
+  selector: '[class*="bubblePrimary"], [class*="BubblePrimary"], [class*="bubble"] [class*="PrimaryControl"]'
+bubble_btn_got_it:
+  type: css
+  selector: '[class*="bubbleSecondary"], [class*="BubbleSecondary"], [class*="bubble"] [class*="SecondaryControl"]'
+
+# ===== 输入框 =====
+input_textarea:
+  type: css
+  selector: 'textarea.ant-input'
+input_placeholder_area:
+  type: css
+  selector: '[class*="templatePlaceholder"]'
+input_placeholder_text:
+  type: css
+  selector: '[class*="placeholderText"]'
+input_use_template:
+  type: css
+  selector: '[class*="placeholderControl"]'
+input_box:
+  type: css
+  selector: '[class*="agentInputBox"]'
+
+# ===== 全部模板按钮 =====
+all_template_btn:
+  type: css
+  selector: '[class*="allTempBtn"]'
+
+# ===== 浮窗（Popover）=====
+popup_container:
+  type: css
+  selector: '.ant-popover'
+popup_inner:
+  type: css
+  selector: '[class*="tempPop"]'
+popup_menu:
+  type: css
+  selector: '[class*="TempPop__menu"]'
+popup_menu_scroll:
+  type: css
+  selector: '[class*="TempPop__menuScroll"]'
+popup_menu_item:
+  type: css
+  selector: '[class*="TempPop__menuItem"]'
+popup_menu_item_active:
+  type: css
+  selector: '[class*="activeMenuItem"]'
+popup_submenu_item:
+  type: css
+  selector: '[class*="TempPop__subMenuItem"]'
+popup_create_btn:
+  type: css
+  selector: '[class*="createMenuControl"]'
+popup_split:
+  type: css
+  selector: '[class*="TempPop__split"]'
+popup_right:
+  type: css
+  selector: '[class*="TempPop__right"]'
+popup_header:
+  type: css
+  selector: '[class*="TempPop__header"]'
+popup_title:
+  type: css
+  selector: '[class*="TempPop__title"]'
+popup_content:
+  type: css
+  selector: '[class*="TempPop__content"]'
+popup_content_item:
+  type: css
+  selector: '[class*="contentItem"]'
+popup_close:
+  type: css
+  selector: '[class*="closeControl"]'
+
+# ===== 搜索框 =====
+search_box:
+  type: css
+  selector: '[class*="TempPop__searchBox"]'
+search_input:
+  type: placeholder
+  placeholder: 搜索模板
+search_suffix:
+  type: css
+  selector: '[class*="searchSuffix"]'
+search_icon:
+  type: css
+  selector: '[class*="searchIcon"]'
+
+# ===== 空状态（我的模板为空时）=====
+empty_state:
+  type: css
+  selector: '[class*="emptyState"]'
+empty_title:
+  type: css
+  selector: '[class*="emptyTitle"]'
+empty_controls:
+  type: css
+  selector: '[class*="emptyControls"]'
+empty_control_icon:
+  type: css
+  selector: '[class*="emptyControlIcon"]'
+personal_empty_state:
+  type: css
+  selector: '[class*="personalEmptyState"]'
+
+# ===== 新建模板弹窗 =====
+modal_container:
+  type: css
+  selector: '.ant-modal'
+modal_close:
+  type: css
+  selector: '.ant-modal-close'
+modal_body:
+  type: css
+  selector: '.ant-modal-body'
+
+# ===== 登录弹窗 =====
+login_modal:
+  type: css
+  selector: '[class*="LoginModal__loginModalContainer"]'
+login_container:
+  type: css
+  selector: '[class*="login-container"]'
+
+# ===== 模板卡片操作（hover 后出现）=====
+card_favorite_btn:
+  type: css
+  selector: '[class*="collect"], [class*="Collect"], [class*="favorite"], [class*="Favorite"], [class*="favIcon"], [class*="FavIcon"]'
+card_delete_btn:
+  type: css
+  selector: '[class*="deleteBtn"], [class*="DeleteBtn"], [class*="removeBtn"], [class*="RemoveBtn"]'
+card_action_mask:
+  type: css
+  selector: '[class*="contentItem"] [class*="mask"], [class*="contentItem"] [class*="Mask"], [class*="contentItem"] [class*="overlay"], [class*="contentItem"] [class*="action"]'
+
+# ===== Toast =====
+toast:
+  type: css
+  selector: '.ant-message-notice, [class*="ant-message"]'
+
+# ===== 删除确认弹窗 =====
+confirm_modal:
+  type: css
+  selector: '.ant-modal-confirm, [class*="confirmModal"], [class*="ConfirmModal"]'
+confirm_ok_btn:
+  type: css
+  selector: '.ant-modal-confirm .ant-btn-primary, [class*="confirmModal"] [class*="primary"], [class*="ConfirmModal"] [class*="ok"]'
+confirm_cancel_btn:
+  type: css
+  selector: '.ant-modal-confirm .ant-btn:not(.ant-btn-primary), [class*="confirmModal"] [class*="cancel"]'

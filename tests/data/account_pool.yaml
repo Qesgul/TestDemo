@@ -1,6 +1,6 @@
 # 账号池 - authoring-time 工具
 #
-# 本文件仅供 case-to-code / 生成新自动化用例时被模型读取，运行时代码不读此文件。
+# 本文件供 case-to-code 与受控 account-session-provider 在本地读取；不得将凭据输出到报告、日志或模型上下文。
 # 详细使用约定见 .claude/skills/account-pool/SKILL.md
 # 设计文档：docs/superpowers/specs/2026-05-26-account-pool-design.md
 #
